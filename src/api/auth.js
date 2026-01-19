@@ -118,6 +118,20 @@ class AuthAPI {
       body: JSON.stringify(data)
     })
   }
+
+  /**
+   * 获取当前用户信息
+   * @param {number} userId - 用户ID
+   * @returns {Promise<Object>} 用户信息
+   */
+  async getCurrentUser(userId) {
+    return this.request('/api/auth/me', {
+      method: 'GET',
+      headers: {
+        'X-User-Id': userId
+      }
+    })
+  }
 }
 
 export default new AuthAPI()

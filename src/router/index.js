@@ -33,19 +33,19 @@ const routes = [
       {
         path: 'students',
         name: 'Students',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/StudentManagementPage.vue'),
         meta: { title: '学生信息管理' }
       },
       {
         path: 'emergency-contacts',
         name: 'EmergencyContacts',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/EmergencyContactManagementPage.vue'),
         meta: { title: '应急联系人管理' }
       },
       {
         path: 'attendance',
         name: 'Attendance',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/AttendanceManagementPage.vue'),
         meta: { title: '考勤管理' }
       },
       {
@@ -63,7 +63,7 @@ const routes = [
       {
         path: 'scores',
         name: 'Scores',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/ScoreManagementPage.vue'),
         meta: { title: '考试成绩管理' }
       },
       {
@@ -87,43 +87,43 @@ const routes = [
       {
         path: 'users',
         name: 'Users',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/UserManagementPage.vue'),
         meta: { title: '用户管理' }
       },
       {
         path: 'roles',
         name: 'Roles',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/RoleManagementPage.vue'),
         meta: { title: '角色权限管理' }
       },
       {
         path: 'data-permissions',
         name: 'DataPermissions',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/DataPermissionManagementPage.vue'),
         meta: { title: '数据查询权限管理' }
       },
       {
         path: 'teacher-classes',
         name: 'TeacherClasses',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/TeacherClassManagementPage.vue'),
         meta: { title: '教师班级关联' }
       },
       {
         path: 'grade-admin-grades',
         name: 'GradeAdminGrades',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/GradeAdminGradeManagementPage.vue'),
         meta: { title: '年级管理员关联' }
       },
       {
         path: 'announcements',
         name: 'Announcements',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/AnnouncementManagementPage.vue'),
         meta: { title: '校园公告管理' }
       },
       {
         path: 'visitors',
         name: 'Visitors',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/VisitorManagementPage.vue'),
         meta: { title: '来访登记管理' }
       },
       {
@@ -141,13 +141,13 @@ const routes = [
       {
         path: 'profile',
         name: 'Profile',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/ProfilePage.vue'),
         meta: { title: '个人信息' }
       },
       {
         path: 'change-password',
         name: 'ChangePassword',
-        component: () => import('../views/PlaceholderPage.vue'),
+        component: () => import('../views/ChangePasswordPage.vue'),
         meta: { title: '修改密码' }
       }
     ]

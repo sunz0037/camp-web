@@ -7,19 +7,43 @@
       </div>
 
       <div class="login-body">
-        <!-- 身份选择 -->
-        <div class="identity-selector">
+        <!-- 登录方式选择 -->
+        <div class="login-method-selector">
           <button
-            v-for="identity in identities"
-            :key="identity.type"
-            :class="['identity-btn', { active: selectedIdentity === identity.type }]"
-            @click="selectIdentity(identity.type)"
-            :disabled="identity.type === 3"
+            :class="['method-btn', { active: loginMethod === 'password' }]"
+            @click="switchLoginMethod('password')"
           >
-            {{ identity.label }}
-            <span v-if="identity.type === 3" class="coming-soon">（暂未开放）</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            账号密码登录
+          </button>
+          <button
+            :class="['method-btn', { active: loginMethod === 'face' }]"
+            @click="switchLoginMethod('face')"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            人脸识别登录
           </button>
         </div>
+
+        <!-- 账号密码登录 -->
+        <div v-if="loginMethod === 'password'" class="password-login">
+          <!-- 身份选择 -->
+          <div class="identity-selector">
+            <button
+              v-for="identity in identities"
+              :key="identity.type"
+              :class="['identity-btn', { active: selectedIdentity === identity.type }]"
+              @click="selectIdentity(identity.type)"
+              :disabled="identity.type === 3"
+            >
+              {{ identity.label }}
+              <span v-if="identity.type === 3" class="coming-soon">（暂未开放）</span>
+            </button>
+          </div>
 
         <!-- 登录表单 -->
         <form v-if="selectedIdentity !== 3" @submit.prevent="handleLogin" class="login-form">
@@ -79,9 +103,61 @@
           </button>
         </form>
 
-        <!-- 家长/访客提示 -->
-        <div v-else class="guest-notice">
-          <p>家长/访客登录功能暂未开放</p>
+          <!-- 家长/访客提示 -->
+          <div v-else class="guest-notice">
+            <p>家长/访客登录功能暂未开放</p>
+          </div>
+        </div>
+
+        <!-- 人脸识别登录 -->
+        <div v-if="loginMethod === 'face'" class="face-login">
+          <!-- 视频区域 -->
+          <div class="video-wrapper">
+            <video ref="videoElement" id="face-video" autoplay muted playsinline></video>
+            <canvas ref="canvasElement" id="face-overlay"></canvas>
+            
+            <!-- 加载提示 -->
+            <div v-if="faceLoading" class="face-loader">
+              <div class="spinner"></div>
+              <p class="loading-text">{{ faceLoadingText }}</p>
+            </div>
+          </div>
+
+          <!-- 状态提示 -->
+          <div :class="['face-status', statusClass]">
+            <span>{{ faceStatusText }}</span>
+          </div>
+
+          <!-- 控制按钮 -->
+          <div class="face-controls">
+            <button 
+              @click="startFaceVerification" 
+              :disabled="!faceReady || isVerifying"
+              class="face-btn face-btn-verify"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              {{ isVerifying ? '验证中...' : '开始人脸验证' }}
+            </button>
+            <button 
+              v-if="isVerifying"
+              @click="stopFaceVerification" 
+              class="face-btn face-btn-stop"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+              </svg>
+              停止验证
+            </button>
+          </div>
+
+          <!-- 提示信息 -->
+          <div class="face-hint">
+            <p>请确保光线充足，正对摄像头</p>
+            <p>系统将自动识别您的身份</p>
+          </div>
         </div>
       </div>
     </div>
@@ -99,12 +175,301 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import authAPI from '../api/auth.js'
 import ActivatePasswordDialog from './ActivatePasswordDialog.vue'
 
 const router = useRouter()
+
+// 登录方式：password 或 face
+const loginMethod = ref('password')
+
+// 人脸识别相关
+const videoElement = ref(null)
+const canvasElement = ref(null)
+const faceLoading = ref(false)
+const faceLoadingText = ref('正在初始化...')
+const faceReady = ref(false)
+const isVerifying = ref(false)
+const faceStatusText = ref('请点击开始验证')
+const statusClass = ref('status-waiting')
+let faceAPI = null
+let animationId = null
+let videoStream = null
+const MATCH_THRESHOLD = 0.55
+
+// 切换登录方式
+const switchLoginMethod = (method) => {
+  loginMethod.value = method
+  if (method === 'face') {
+    initFaceRecognition()
+  } else {
+    stopFaceVerification()
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop())
+      videoStream = null
+    }
+  }
+}
+
+// 初始化人脸识别
+const initFaceRecognition = async () => {
+  // 等待 face-api.js 加载完成
+  const checkFaceAPI = () => {
+    return new Promise((resolve) => {
+      if (window.faceapi) {
+        resolve(window.faceapi)
+      } else {
+        // 如果还没加载，等待一段时间后重试
+        let attempts = 0
+        const checkInterval = setInterval(() => {
+          attempts++
+          if (window.faceapi) {
+            clearInterval(checkInterval)
+            resolve(window.faceapi)
+          } else if (attempts > 50) {
+            // 10秒后放弃
+            clearInterval(checkInterval)
+            resolve(null)
+          }
+        }, 200)
+      }
+    })
+  }
+  
+  faceAPI = await checkFaceAPI()
+  
+  if (!faceAPI) {
+    faceLoading.value = false
+    faceStatusText.value = '人脸识别库加载失败，请刷新页面重试'
+    statusClass.value = 'status-error'
+    return
+  }
+  
+  await loadFaceModels()
+}
+
+// 加载人脸识别模型
+const loadFaceModels = async () => {
+  try {
+    faceLoading.value = true
+    faceLoadingText.value = '正在加载AI模型...'
+    
+    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models'
+    await Promise.all([
+      faceAPI.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+      faceAPI.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+      faceAPI.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+    ])
+    
+    faceLoadingText.value = '正在启动摄像头...'
+    await startVideo()
+    
+    faceLoading.value = false
+    faceReady.value = true
+    faceStatusText.value = '系统就绪，请点击开始验证'
+    statusClass.value = 'status-ready'
+  } catch (err) {
+    console.error('人脸识别初始化失败:', err)
+    faceLoading.value = false
+    faceStatusText.value = '初始化失败：' + err.message
+    statusClass.value = 'status-error'
+  }
+}
+
+// 启动摄像头
+const startVideo = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { width: 1280, height: 720 } 
+    })
+    videoStream = stream
+    if (videoElement.value) {
+      videoElement.value.srcObject = stream
+      await new Promise((resolve) => {
+        if (videoElement.value) {
+          videoElement.value.onloadedmetadata = () => {
+            syncCanvasSize()
+            resolve()
+          }
+        }
+      })
+    }
+  } catch (err) {
+    console.error('摄像头访问失败:', err)
+    faceStatusText.value = '无法访问摄像头，请检查权限设置'
+    statusClass.value = 'status-error'
+    throw err
+  }
+}
+
+// 同步画布尺寸
+const syncCanvasSize = () => {
+  if (videoElement.value && canvasElement.value) {
+    const displaySize = { 
+      width: videoElement.value.clientWidth, 
+      height: videoElement.value.clientHeight 
+    }
+    canvasElement.value.width = displaySize.width
+    canvasElement.value.height = displaySize.height
+    if (faceAPI) {
+      faceAPI.matchDimensions(canvasElement.value, displaySize)
+    }
+  }
+}
+
+// 开始人脸验证
+const startFaceVerification = () => {
+  if (!faceReady.value || !faceAPI) {
+    showToast('系统未就绪，请稍候')
+    return
+  }
+  
+  isVerifying.value = true
+  faceStatusText.value = '正在验证身份...'
+  statusClass.value = 'status-verifying'
+  runVerificationLoop()
+}
+
+// 停止人脸验证
+const stopFaceVerification = () => {
+  isVerifying.value = false
+  if (animationId) {
+    cancelAnimationFrame(animationId)
+    animationId = null
+  }
+  if (canvasElement.value) {
+    const ctx = canvasElement.value.getContext('2d')
+    ctx.clearRect(0, 0, canvasElement.value.width, canvasElement.value.height)
+  }
+  faceStatusText.value = '验证已停止'
+  statusClass.value = 'status-waiting'
+}
+
+// 验证循环
+const runVerificationLoop = async () => {
+  if (!isVerifying.value || !videoElement.value || !canvasElement.value || !faceAPI) {
+    return
+  }
+  
+  try {
+    const options = new faceAPI.SsdMobilenetv1Options({ minConfidence: 0.5 })
+    const detections = await faceAPI
+      .detectAllFaces(videoElement.value, options)
+      .withFaceLandmarks()
+      .withFaceDescriptors()
+    
+    const displaySize = { 
+      width: canvasElement.value.width, 
+      height: canvasElement.value.height 
+    }
+    const resizedDetections = faceAPI.resizeResults(detections, displaySize)
+    const ctx = canvasElement.value.getContext('2d')
+    ctx.clearRect(0, 0, canvasElement.value.width, canvasElement.value.height)
+    
+    if (resizedDetections.length > 0) {
+      // 检测到人脸，绘制识别框
+      resizedDetections.forEach(detection => {
+        const box = detection.detection.box
+        const mirroredX = displaySize.width - box.x - box.width
+        const color = '#10b981'
+        const label = '检测到人脸'
+        
+        drawFaceBox(ctx, mirroredX, box.y, box.width, box.height, color, label)
+      })
+      
+      // TODO: 这里应该调用后端API进行人脸匹配
+      // 暂时显示检测到人脸的提示
+      faceStatusText.value = '检测到人脸，正在验证身份...'
+      statusClass.value = 'status-verifying'
+      
+      // 模拟验证成功（实际应该调用后端API）
+      // handleFaceLoginSuccess(detection)
+    } else {
+      faceStatusText.value = '未检测到人脸，请正对摄像头'
+      statusClass.value = 'status-waiting'
+    }
+  } catch (err) {
+    console.error('人脸检测失败:', err)
+  }
+  
+  animationId = requestAnimationFrame(runVerificationLoop)
+}
+
+// 绘制人脸框
+const drawFaceBox = (ctx, x, y, w, h, color, label) => {
+  ctx.strokeStyle = color
+  ctx.lineWidth = 3
+  const len = Math.min(w, h) * 0.15
+  ctx.beginPath()
+  ctx.moveTo(x, y + len)
+  ctx.lineTo(x, y)
+  ctx.lineTo(x + len, y)
+  ctx.moveTo(x + w - len, y)
+  ctx.lineTo(x + w, y)
+  ctx.lineTo(x + w, y + len)
+  ctx.moveTo(x + w, y + h - len)
+  ctx.lineTo(x + w, y + h)
+  ctx.lineTo(x + w - len, y + h)
+  ctx.moveTo(x + len, y + h)
+  ctx.lineTo(x, y + h)
+  ctx.lineTo(x, y + h - len)
+  ctx.stroke()
+  
+  ctx.fillStyle = color
+  ctx.globalAlpha = 0.8
+  ctx.font = 'bold 14px sans-serif'
+  const textWidth = ctx.measureText(label).width
+  ctx.fillRect(x, y - 28, textWidth + 10, 28)
+  ctx.globalAlpha = 1.0
+  ctx.fillStyle = 'white'
+  ctx.fillText(label, x + 5, y - 10)
+}
+
+// 处理人脸登录成功
+const handleFaceLoginSuccess = (userInfo) => {
+  stopFaceVerification()
+  faceStatusText.value = `身份确认成功，欢迎 ${userInfo.name || '用户'} 访问`
+  statusClass.value = 'status-success'
+  
+  // 保存用户信息并跳转
+  if (userInfo.userInfo) {
+    localStorage.setItem('userInfo', JSON.stringify(userInfo.userInfo))
+  }
+  if (userInfo.token) {
+    localStorage.setItem('token', userInfo.token)
+  }
+  
+  setTimeout(() => {
+    router.push('/home/')
+  }, 1500)
+}
+
+// Toast 提示
+const showToast = (message) => {
+  // 简单的提示，可以后续优化
+  console.log('Toast:', message)
+}
+
+// 窗口大小变化时同步画布
+const handleResize = () => {
+  if (loginMethod.value === 'face') {
+    syncCanvasSize()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  stopFaceVerification()
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => track.stop())
+  }
+})
 
 // 身份类型
 const identities = [
@@ -459,6 +824,213 @@ watch(selectedIdentity, () => {
 
 .guest-notice p {
   margin: 0;
+}
+
+/* 登录方式选择器 */
+.login-method-selector {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 0.25rem;
+  background: #f5f5f7;
+  border-radius: 10px;
+}
+
+.method-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #666;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.method-btn:hover {
+  color: #667eea;
+}
+
+.method-btn.active {
+  background: white;
+  color: #667eea;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 人脸识别登录样式 */
+.face-login {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 2px solid #e5e7eb;
+}
+
+#face-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+#face-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.face-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 20;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #667eea;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #667eea;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.face-status {
+  padding: 0.875rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.status-waiting {
+  background: #f5f5f7;
+  color: #666;
+  border: 1px solid #e5e7eb;
+}
+
+.status-ready {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.status-verifying {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #93c5fd;
+}
+
+.status-success {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.status-error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.face-controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.face-btn {
+  flex: 1;
+  padding: 0.875rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.face-btn-verify {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.face-btn-verify:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.face-btn-verify:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.face-btn-stop {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.face-btn-stop:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.face-hint {
+  text-align: center;
+  color: #666;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.face-hint p {
+  margin: 0.25rem 0;
+}
+
+.password-login {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 </style>
 
