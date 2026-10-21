@@ -140,7 +140,7 @@
             </div>
             <div class="form-row">
               <div class="form-group form-group-half">
-                <label>密码 <span class="required" v-if="dialogMode === 'create">*</span></label>
+                <label>密码 <span class="required" v-if="dialogMode === 'create'">*</span></label>
                 <input 
                   type="password" 
                   v-model="formData.password" 

@@ -80,7 +80,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import authAPI from '../api/auth.js'
-import userAPI from '../api/user.js'
+import * as userAPI from '../api/user.js'
 import Toast from '../components/Toast.vue'
 
 const loading = ref(false)

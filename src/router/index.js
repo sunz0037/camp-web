@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { SKIP_LOGIN_FOR_DEV, ensureDevAuth } from '../config/api.js'
 import LoginPage from '../components/LoginPage.vue'
 import HomePage from '../views/HomePage.vue'
 
@@ -161,25 +162,37 @@ const router = createRouter({
 
 // 路由守卫：检查登录状态
 router.beforeEach((to, from, next) => {
+  // 测试阶段跳过登录
+  if (SKIP_LOGIN_FOR_DEV) {
+    ensureDevAuth()
+    if (to.path === '/' || to.path === '/login') {
+      next({ path: '/home/', replace: true })
+      return
+    }
+    if (to.path === '/home') {
+      next({ path: '/home/', replace: true })
+      return
+    }
+    next()
+    return
+  }
+
   const token = localStorage.getItem('token')
   const userInfo = localStorage.getItem('userInfo')
-  
+
   // 如果访问/home但没有子路径，重定向到首页dashboard
   if (to.path === '/home') {
     next({ path: '/home/', replace: true })
     return
   }
-  
+
   if (to.meta.requiresAuth) {
     if (!token || !userInfo) {
-      // 需要登录但未登录，跳转到登录页
       next('/login')
     } else {
-      // 已登录，允许访问
       next()
     }
   } else {
-    // 如果已登录，访问登录页时跳转到首页
     if ((to.path === '/login' || to.path === '/') && token && userInfo) {
       next('/home/')
     } else {

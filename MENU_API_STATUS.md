@@ -1,576 +1,104 @@
-# 前端菜单及接口实现情况
+# 前端功能清单与完成情况
 
-**最后更新**：2024年12月
+**核对日期**：2026-10-21  
+**范围**：`camp-web` 当前工作区源码（路由、侧边栏、页面、`src/api`）  
+**说明**：本次只核对前端是否把主流程接到接口。后端仓库不在当前工作区，后端是否可用未重新核对。
 
-本文档整理了 `camp-web` 前端所有菜单项及其对应的接口实现情况。
+`MENU_API_STATUS.md` 原先写于 2024-12，当时把 17 个菜单标成占位页。那些页面后来已经做成独立管理页，下面以当前代码为准。
 
----
+## 完成度
 
-## 菜单结构概览
+侧边栏共 **21** 项：
 
-```
-首页
-├── 学生管理
-│   ├── 学生信息管理
-│   ├── 应急联系人管理
-│   └── 考勤管理
-├── 教学管理
-│   ├── 科目管理
-│   ├── 考试安排管理
-│   └── 考试成绩管理
-├── 系统管理
-│   ├── 年级管理
-│   ├── 班级管理
-│   ├── 用户管理
-│   ├── 角色权限管理
-│   ├── 数据查询权限管理
-│   ├── 教师班级关联
-│   └── 年级管理员关联
-├── 校园管理
-│   ├── 校园公告管理
-│   └── 来访登记管理
-├── 数据管理
-│   ├── 批量导入导出
-│   └── 统计报表
-└── 个人中心
-    ├── 个人信息
-    └── 修改密码
-```
-
----
-
-## 一、首页
-
-**路由路径**：`/home`  
-**组件**：`HomeDashboard.vue`  
-**前端状态**：✅ 已实现
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/weather` | GET | 获取天气信息（前端调用） | ❌ 未实现 |
-
-**说明**：首页主要展示仪表盘信息，目前使用占位数据，天气接口未实现。
-
----
-
-## 二、学生管理
-
-### 2.1 学生信息管理
-
-**路由路径**：`/home/students`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/students` | GET | 查询学生列表（权限过滤、分页、关键词搜索） | ✅ 已实现 |
-| `/api/students` | POST | 创建学生信息 | ✅ 已实现 |
-| `/api/students/{id}` | GET | 查询学生详情 | ✅ 已实现 |
-| `/api/students/{id}` | PUT | 更新学生信息 | ✅ 已实现 |
-| `/api/students/{id}` | DELETE | 删除学生信息 | ✅ 已实现 |
-| `/api/students/batch-import` | POST | 批量导入学生（Excel） | 🟡 部分实现 |
-| `/api/students/export` | GET | 导出学生信息（Excel） | 🟡 部分实现 |
-
-**总结**：后端接口已实现，前端页面待开发。
-
----
-
-### 2.2 应急联系人管理
-
-**路由路径**：`/home/emergency-contacts`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/students/{studentId}/emergency-contacts` | POST | 添加应急联系人 | ❌ 未实现 |
-| `/api/students/{studentId}/emergency-contacts` | GET | 查询应急联系人列表 | ❌ 未实现 |
-| `/api/emergency-contacts/{id}` | GET | 查询应急联系人详情 | ❌ 未实现 |
-| `/api/emergency-contacts/{id}` | PUT | 更新应急联系人 | ❌ 未实现 |
-| `/api/emergency-contacts/{id}` | DELETE | 删除应急联系人 | ❌ 未实现 |
-| `/api/emergency-contacts/{id}/primary` | PUT | 设置主要联系人 | ❌ 未实现 |
-
-**总结**：前后端均未实现。
-
----
-
-### 2.3 考勤管理
-
-**路由路径**：`/home/attendance`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/attendance/classes` | GET | 查询班级每日考勤汇总列表 | ✅ 已实现 |
-| `/api/attendance/classes` | POST | 创建或更新班级每日考勤汇总 | ✅ 已实现 |
-| `/api/attendance/students` | GET | 查询学生异常考勤记录列表 | ✅ 已实现 |
-| `/api/attendance/students` | POST | 创建学生异常考勤记录 | ✅ 已实现 |
-| `/api/attendance/students/{id}` | PUT | 更新学生异常考勤记录 | ✅ 已实现 |
-| `/api/attendance/students/{id}` | DELETE | 删除学生异常考勤记录 | ✅ 已实现 |
-
-**总结**：后端接口已实现，前端页面待开发。
-
----
-
-## 三、教学管理
-
-### 3.1 科目管理
-
-**路由路径**：`/home/courses`  
-**组件**：`CourseManagementPage.vue`  
-**前端状态**：✅ 已实现
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 | 前端调用 |
-|---------|------|---------|---------|---------|
-| `/api/courses` | GET | 查询科目列表（多条件过滤、分页） | ✅ 已实现 | ✅ `getCourseList` |
-| `/api/courses/{id}` | GET | 查询科目详情 | ✅ 已实现 | ✅ `getCourseDetail` |
-| `/api/courses` | POST | 创建科目 | ✅ 已实现 | ✅ `createCourse` |
-| `/api/courses/{id}` | PUT | 更新科目信息 | ✅ 已实现 | ✅ `updateCourse` |
-| `/api/courses/{id}` | DELETE | 删除科目 | ✅ 已实现 | ✅ `deleteCourse` |
-| `/api/courses/enabled` | GET | 获取所有启用的科目 | ✅ 已实现 | ✅ `getAllEnabledCourses` |
-
-**总结**：前后端均已完整实现。
-
----
-
-### 3.2 考试安排管理
-
-**路由路径**：`/home/exam-schedules`  
-**组件**：`ExamScheduleManagementPage.vue`  
-**前端状态**：✅ 已实现
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 | 前端调用 |
-|---------|------|---------|---------|---------|
-| `/api/exam-schedules` | GET | 查询考试安排列表（多条件过滤、分页） | ✅ 已实现 | ✅ `list` |
-| `/api/exam-schedules/{id}` | GET | 查询考试安排详情 | ✅ 已实现 | ✅ `getById` |
-| `/api/exam-schedules` | POST | 创建考试安排 | ✅ 已实现 | ✅ `create` |
-| `/api/exam-schedules/{id}` | PUT | 更新考试安排 | ✅ 已实现 | ✅ `update` |
-| `/api/exam-schedules/{id}` | DELETE | 删除考试安排 | ✅ 已实现 | ✅ `delete` |
-| `/api/exam-schedules/{id}/cancel` | PUT | 取消考试安排 | ✅ 已实现 | ✅ `cancel` |
-| `/api/grades/all-enabled` | GET | 获取所有启用的年级（用于筛选） | ✅ 已实现 | ✅ `getAllEnabledGrades` |
-
-**总结**：前后端均已完整实现。
-
----
-
-### 3.3 考试成绩管理
-
-**路由路径**：`/home/scores`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/scores` | POST | 创建成绩记录 | ✅ 已实现 |
-| `/api/scores/batch` | POST | 批量录入成绩 | 🟡 部分实现 |
-| `/api/scores` | GET | 查询成绩列表（多条件过滤、分页） | ✅ 已实现 |
-| `/api/scores/{id}` | GET | 查询成绩详情 | ✅ 已实现 |
-| `/api/scores/{id}` | PUT | 更新成绩 | ✅ 已实现 |
-| `/api/scores/{id}` | DELETE | 删除成绩 | ✅ 已实现 |
-| `/api/students/{studentId}/scores/statistics` | GET | 查询学生成绩统计（平均分、GPA） | ❌ 未实现 |
-| `/api/scores/export` | GET | 导出成绩（Excel） | 🟡 部分实现 |
-
-**总结**：后端核心接口已实现，前端页面待开发。
-
----
-
-## 四、系统管理
-
-### 4.1 年级管理
-
-**路由路径**：`/home/grades`  
-**组件**：`GradeManagementPage.vue`  
-**前端状态**：✅ 已实现
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 | 前端调用 |
-|---------|------|---------|---------|---------|
-| `/api/grades` | GET | 查询年级列表（分页、过滤） | ✅ 已实现 | ✅ `getGradeList` |
-| `/api/grades/{id}` | GET | 查询年级详情 | ✅ 已实现 | ✅ `getGradeDetail` |
-| `/api/grades` | POST | 创建年级 | ✅ 已实现 | ✅ `createGrade` |
-| `/api/grades/{id}` | PUT | 更新年级 | ✅ 已实现 | ✅ `updateGrade` |
-| `/api/grades/{id}` | DELETE | 删除年级 | ✅ 已实现 | ✅ `deleteGrade` |
-| `/api/grades/all-enabled` | GET | 获取所有启用的年级 | ✅ 已实现 | ✅ `getAllEnabledGrades` |
-| `/api/grades/by-type/{gradeType}` | GET | 根据年级类型查询 | ✅ 已实现 | ✅ `getGradesByType` |
-
-**总结**：前后端均已完整实现。
-
----
-
-### 4.2 班级管理
-
-**路由路径**：`/home/classes`  
-**组件**：`ClassManagementPage.vue`  
-**前端状态**：✅ 已实现
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 | 前端调用 |
-|---------|------|---------|---------|---------|
-| `/api/classes` | GET | 查询班级列表（分页、过滤） | ✅ 已实现 | ✅ `getClassList` |
-| `/api/classes/{id}` | GET | 查询班级详情 | ✅ 已实现 | ✅ `getClassDetail` |
-| `/api/classes` | POST | 创建班级 | ✅ 已实现 | ✅ `createClass` |
-| `/api/classes/{id}` | PUT | 更新班级 | ✅ 已实现 | ✅ `updateClass` |
-| `/api/classes/{id}` | DELETE | 删除班级 | ✅ 已实现 | ✅ `deleteClass` |
-| `/api/classes/by-grade/{gradeId}` | GET | 根据年级ID查询班级列表 | ✅ 已实现 | ✅ `getClassesByGradeId` |
-| `/api/classes/by-grade/{gradeId}/enabled` | GET | 根据年级ID查询启用的班级列表 | ✅ 已实现 | ✅ `getEnabledClassesByGradeId` |
-| `/api/grades/all-enabled` | GET | 获取所有启用的年级（用于筛选） | ✅ 已实现 | ✅ `getAllEnabledGrades` |
-
-**特殊功能**：
-- 班级管理页面包含"授课科目"按钮，可跳转到班级授课科目管理页面
-
-**总结**：前后端均已完整实现。
-
----
-
-### 4.3 班级授课科目管理
-
-**路由路径**：`/home/class-courses`  
-**组件**：`ClassCourseManagementPage.vue`  
-**前端状态**：✅ 已实现
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 | 前端调用 |
-|---------|------|---------|---------|---------|
-| `/api/class-courses/by-class/{classId}` | GET | 查询班级的所有授课科目 | ✅ 已实现 | ✅ `getClassCoursesByClassId` |
-| `/api/class-courses/by-class/{classId}/enabled` | GET | 查询班级的启用授课科目 | ✅ 已实现 | ✅ `getEnabledClassCoursesByClassId` |
-| `/api/class-courses/{id}` | GET | 查询详情 | ✅ 已实现 | ✅ `getClassCourseDetail` |
-| `/api/class-courses` | POST | 添加班级授课科目 | ✅ 已实现 | ✅ `createClassCourse` |
-| `/api/class-courses/batch` | POST | 批量添加班级授课科目 | ✅ 已实现 | ✅ `batchCreateClassCourses` |
-| `/api/class-courses/{id}` | PUT | 更新班级授课科目 | ✅ 已实现 | ✅ `updateClassCourse` |
-| `/api/class-courses/{id}` | DELETE | 删除班级授课科目 | ✅ 已实现 | ✅ `deleteClassCourse` |
-| `/api/courses/enabled` | GET | 获取所有启用的科目（用于添加科目） | ✅ 已实现 | ✅ `getAllEnabledCourses` |
-
-**总结**：前后端均已完整实现。
-
----
-
-### 4.4 用户管理
-
-**路由路径**：`/home/users`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/users` | POST | 创建用户 | ❌ 未实现 |
-| `/api/users` | GET | 查询用户列表 | ❌ 未实现 |
-| `/api/users/{id}` | GET | 查询用户详情 | ❌ 未实现 |
-| `/api/users/{id}` | PUT | 更新用户信息 | ❌ 未实现 |
-| `/api/users/{id}` | DELETE | 删除用户 | ❌ 未实现 |
-| `/api/users/{id}/status` | PUT | 启用/禁用用户 | ❌ 未实现 |
-
-**总结**：前后端均未实现。
-
----
-
-### 4.5 角色权限管理
-
-**路由路径**：`/home/roles`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/roles` | POST | 创建角色 | ✅ 已实现 |
-| `/api/roles` | GET | 查询角色列表（分页） | ✅ 已实现 |
-| `/api/roles/{id}` | GET | 查询角色详情 | ✅ 已实现 |
-| `/api/roles/{id}` | PUT | 更新角色 | ✅ 已实现 |
-| `/api/roles/{id}` | DELETE | 删除角色 | ✅ 已实现 |
-| `/api/roles/{roleId}/permissions` | POST | 为角色分配权限 | 🟡 部分实现 |
-| `/api/permissions` | GET | 查询权限列表（树形结构） | 🟡 部分实现 |
-| `/api/users/{userId}/roles` | POST | 为用户分配角色 | ❌ 未实现 |
-| `/api/users/{userId}/roles` | GET | 查询用户角色 | ❌ 未实现 |
-
-**总结**：后端核心接口已实现，前端页面待开发。
-
----
-
-### 4.6 数据查询权限管理
-
-**路由路径**：`/home/data-permissions`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/data-permissions` | POST | 创建数据查询权限配置 | 🟡 部分实现 |
-| `/api/data-permissions` | GET | 查询数据查询权限列表（分页） | 🟡 部分实现 |
-| `/api/data-permissions/{id}` | GET | 查询数据查询权限详情 | 🟡 部分实现 |
-| `/api/data-permissions/{id}` | PUT | 更新数据查询权限配置 | 🟡 部分实现 |
-| `/api/data-permissions/{id}` | DELETE | 删除数据查询权限配置 | 🟡 部分实现 |
-
-**总结**：后端接口部分实现，前端页面待开发。
-
----
-
-### 4.7 教师班级关联
-
-**路由路径**：`/home/teacher-classes`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/teachers/{teacherId}/classes` | POST | 为教师分配管理的班级 | 🟡 部分实现 |
-| `/api/teachers/{teacherId}/classes` | GET | 查询教师管理的所有班级 | 🟡 部分实现 |
-| `/api/teacher-classes/{id}` | DELETE | 删除教师与班级的关联关系 | 🟡 部分实现 |
-
-**总结**：后端接口部分实现，前端页面待开发。
-
----
-
-### 4.8 年级管理员关联
-
-**路由路径**：`/home/grade-admin-grades`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/grade-admins/{adminId}/grades` | POST | 为年级管理员分配管理的年级 | 🟡 部分实现 |
-| `/api/grade-admins/{adminId}/grades` | GET | 查询年级管理员管理的所有年级 | 🟡 部分实现 |
-| `/api/grade-admin-grades/{id}` | DELETE | 删除年级管理员与年级的关联关系 | 🟡 部分实现 |
-
-**总结**：后端接口部分实现，前端页面待开发。
-
----
-
-## 五、校园管理
-
-### 5.1 校园公告管理
-
-**路由路径**：`/home/announcements`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/announcements` | POST | 发布公告 | ✅ 已实现 |
-| `/api/announcements` | GET | 查询公告列表（多条件过滤、分页） | ✅ 已实现 |
-| `/api/announcements/{id}` | GET | 查询公告详情（自动增加浏览次数） | ✅ 已实现 |
-| `/api/announcements/{id}` | PUT | 更新公告 | ✅ 已实现 |
-| `/api/announcements/{id}` | DELETE | 删除公告 | ✅ 已实现 |
-| `/api/announcements/{id}/top` | PUT | 置顶/取消置顶 | ✅ 已实现 |
-| `/api/announcements/{id}/withdraw` | PUT | 撤回公告 | ✅ 已实现 |
-
-**总结**：后端接口已实现，前端页面待开发。
-
----
-
-### 5.2 来访登记管理
-
-**路由路径**：`/home/visitors`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/visitors` | POST | 创建来访登记 | ✅ 已实现 |
-| `/api/visitors` | GET | 查询来访登记列表（多条件过滤、分页） | ✅ 已实现 |
-| `/api/visitors/{id}` | GET | 查询来访登记详情 | ✅ 已实现 |
-| `/api/visitors/{id}/approve` | PUT | 审核并批准来访登记 | ✅ 已实现 |
-| `/api/visitors/{id}/reject` | PUT | 拒绝来访登记 | ✅ 已实现 |
-| `/api/visitors/{id}/entry` | PUT | 登记来访人实际进入时间 | ✅ 已实现 |
-| `/api/visitors/{id}/exit` | PUT | 登记来访人实际离开时间 | ✅ 已实现 |
-| `/api/visitors/{id}` | PUT | 更新来访登记 | ✅ 已实现 |
-| `/api/visitors/{id}` | DELETE | 删除来访登记 | ✅ 已实现 |
-| `/api/visitors/export` | GET | 导出来访登记（Excel） | 🟡 部分实现 |
-
-**总结**：后端接口已实现，前端页面待开发。
-
----
-
-## 六、数据管理
-
-### 6.1 批量导入导出
-
-**路由路径**：`/home/batch-operations`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/common/upload` | POST | 批量上传文件（学生、成绩、考勤等） | 🟡 部分实现 |
-| `/api/common/template` | GET | 下载批量导入模板 | 🟡 部分实现 |
-| `/api/common/export` | GET | 批量导出数据（学生、成绩、考勤等） | 🟡 部分实现 |
-
-**总结**：后端接口部分实现，前端页面待开发。
-
----
-
-### 6.2 统计报表
-
-**路由路径**：`/home/statistics`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/statistics/students` | GET | 学生统计（按年级、班级、专业等维度） | ❌ 未实现 |
-| `/api/statistics/scores` | GET | 成绩统计（平均分、及格率等） | ❌ 未实现 |
-| `/api/statistics/visitors` | GET | 来访登记统计 | ❌ 未实现 |
-
-**总结**：前后端均未实现。
-
----
-
-## 七、个人中心
-
-### 7.1 个人信息
-
-**路由路径**：`/home/profile`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 |
-|---------|------|---------|---------|
-| `/api/auth/me` | GET | 获取当前用户信息 | ❌ 未实现 |
-
-**总结**：前后端均未实现。
-
----
-
-### 7.2 修改密码
-
-**路由路径**：`/home/change-password`  
-**组件**：`PlaceholderPage.vue`  
-**前端状态**：❌ 未实现（占位页面）
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 | 前端调用 |
-|---------|------|---------|---------|---------|
-| `/api/auth/password` | PUT | 修改密码 | ✅ 已实现 | ✅ `changePassword`（在 `auth.js` 中） |
-
-**说明**：修改密码接口已实现，但前端页面未实现。密码重置功能在 `ResetPasswordPage.vue` 中已实现。
-
----
-
-## 八、其他页面
-
-### 8.1 密码重置页面
-
-**路由路径**：`/reset-password`  
-**组件**：`ResetPasswordPage.vue`  
-**前端状态**：✅ 已实现
-
-### 接口调用情况
-
-| 接口路径 | 方法 | 功能说明 | 后端状态 | 前端调用 |
-|---------|------|---------|---------|---------|
-| `/api/auth/send-verification-code` | POST | 发送验证码（密码重置） | ✅ 已实现 | ✅ `sendVerificationCode` |
-| `/api/auth/reset-password` | POST | 重置密码 | ✅ 已实现 | ✅ `resetPassword` |
-
-**总结**：前后端均已完整实现。
-
----
-
-## 实现状态统计
-
-### 前端页面实现情况
-
-| 状态 | 数量 | 占比 |
+| 状态 | 数量 | 功能 |
 |------|------|------|
-| ✅ 已实现 | 6 | 26% |
-| ❌ 未实现（占位页面） | 17 | 74% |
-| **总计** | **23** | **100%** |
+| 已完成 | 15 | 学生信息、应急联系人、考勤、科目、考试安排、班级授课科目、班级、角色权限、数据查询权限、教师班级关联、年级管理员关联、校园公告、来访登记、个人信息、修改密码 |
+| 部分完成 | 4 | 首页概览、考试成绩、年级管理、用户管理 |
+| 未开发 | 2 | 批量导入导出、统计报表 |
 
-**已实现的页面**：
-1. 首页（HomeDashboard）
-2. 科目管理（CourseManagementPage）
-3. 考试安排管理（ExamScheduleManagementPage）
-4. 年级管理（GradeManagementPage）
-5. 班级管理（ClassManagementPage）
-6. 班级授课科目管理（ClassCourseManagementPage）
-7. 密码重置页面（ResetPasswordPage）
+主流程完成率：15 / 21（约 71%）。
 
-### 后端接口实现情况
+## 菜单清单
 
-| 状态 | 数量 | 占比 |
-|------|------|------|
-| ✅ 已实现 | 58 | 61% |
-| 🟡 部分实现 | 12 | 13% |
-| ❌ 未实现 | 25 | 26% |
-| **总计** | **95** | **100%** |
+### 首页
 
-### 前后端匹配情况
+| 功能 | 路由 | 页面 | 状态 | 说明 |
+|------|------|------|------|------|
+| 首页概览 | `/home/` | `HomeDashboard.vue` | 部分完成 | 月历可切换。学生总数、课程数、公告数、待办为写死数据。天气在 `src/api/weather.js` 使用本地模拟数据 |
 
-| 匹配情况 | 数量 | 说明 |
-|---------|------|------|
-| ✅ 前后端均已实现 | 5 | 科目管理、考试安排管理、年级管理、班级管理、班级授课科目管理 |
-| 🟡 后端已实现，前端待开发 | 8 | 学生信息管理、考勤管理、考试成绩管理、角色权限管理、校园公告管理、来访登记管理等 |
-| ❌ 前后端均未实现 | 10 | 应急联系人管理、用户管理、统计报表、个人信息等 |
+顶栏搜索框和通知铃铛在 `HomePage.vue` 中没有绑定查询或消息列表。
 
----
+### 学生管理
 
-## 优先级建议
+| 功能 | 路由 | 页面 | 状态 | 已接接口 |
+|------|------|------|------|----------|
+| 学生信息管理 | `/home/students` | `StudentManagementPage.vue` | 已完成 | `src/api/student.js`：列表、详情、创建、更新、删除 |
+| 应急联系人管理 | `/home/emergency-contacts` | `EmergencyContactManagementPage.vue` | 已完成 | `src/api/emergencyContact.js`：增删改查、设主要联系人 |
+| 考勤管理 | `/home/attendance` | `AttendanceManagementPage.vue` | 已完成 | `src/api/attendance.js`：班级每日汇总、学生异常记录 |
 
-### 高优先级（核心功能）
+学生页没有批量导入导出，该能力单独放在「批量导入导出」菜单，目前仍是占位页。
 
-1. **学生信息管理** - 后端已实现，前端待开发
-2. **考勤管理** - 后端已实现，前端待开发
-3. **考试成绩管理** - 后端已实现，前端待开发
-4. **用户管理** - 前后端均未实现，系统基础功能
+### 教学教务
 
-### 中优先级（管理功能）
+| 功能 | 路由 | 页面 | 状态 | 说明 |
+|------|------|------|------|------|
+| 科目管理 | `/home/courses` | `CourseManagementPage.vue` | 已完成 | `src/api/course.js` 增删改查 |
+| 考试安排管理 | `/home/exam-schedules` | `ExamScheduleManagementPage.vue` | 已完成 | 增删改查，并可取消考试 |
+| 考试成绩管理 | `/home/scores` | `ScoreManagementPage.vue` | 部分完成 | 单条成绩增删改查已接 `src/api/score.js`。批量录入、学生成绩统计、导出未做 |
+| 班级授课科目 | `/home/class-courses` | `ClassCourseManagementPage.vue` | 已完成 | 按班级维护，支持批量添加。`batchDeleteClassCourses` 未接到页面 |
 
-1. **角色权限管理** - 后端核心接口已实现，前端待开发
-2. **校园公告管理** - 后端已实现，前端待开发
-3. **来访登记管理** - 后端已实现，前端待开发
+### 组织与权限
 
-### 低优先级（辅助功能）
+| 功能 | 路由 | 页面 | 状态 | 说明 |
+|------|------|------|------|------|
+| 年级管理 | `/home/grades` | `GradeManagementPage.vue` | 部分完成 | 可查询、启停、编辑描述。页面没有独立新增、删除入口，分页已关闭 |
+| 班级管理 | `/home/classes` | `ClassManagementPage.vue` | 已完成 | `src/api/class.js` 增删改查 |
+| 用户管理 | `/home/users` | `UserManagementPage.vue` | 部分完成 | 增删改、启用/禁用已接 `src/api/user.js`。此页不能给用户分配角色 |
+| 角色权限管理 | `/home/roles` | `RoleManagementPage.vue` | 已完成 | 角色增删改查，权限树分配权限 |
+| 数据查询权限 | `/home/data-permissions` | `DataPermissionManagementPage.vue` | 已完成 | `src/api/dataPermission.js` 增删改查 |
+| 教师班级关联 | `/home/teacher-classes` | `TeacherClassManagementPage.vue` | 已完成 | 按教师查询、新增、删除 |
+| 年级管理员关联 | `/home/grade-admin-grades` | `GradeAdminGradeManagementPage.vue` | 已完成 | 按管理员查询、新增、删除 |
 
-1. **统计报表** - 前后端均未实现
-2. **批量导入导出** - 后端部分实现，前端待开发
-3. **数据查询权限管理** - 后端部分实现，前端待开发
+### 校园事务
 
----
+| 功能 | 路由 | 页面 | 状态 | 说明 |
+|------|------|------|------|------|
+| 校园公告管理 | `/home/announcements` | `AnnouncementManagementPage.vue` | 已完成 | 发布、编辑、置顶、撤回、删除 |
+| 来访登记管理 | `/home/visitors` | `VisitorManagementPage.vue` | 已完成 | 登记、审核、拒绝、登记进入与离开 |
 
-## 备注
+### 数据
 
-1. **占位页面**：未实现的页面使用 `PlaceholderPage.vue` 作为占位，显示"功能开发中"提示。
-2. **API 文件**：已实现的页面都有对应的 API 文件（`src/api/*.js`），未实现的页面需要创建对应的 API 文件。
-3. **路由配置**：所有菜单项的路由已在 `src/router/index.js` 中配置。
-4. **菜单配置**：所有菜单项已在 `src/components/SidebarMenu.vue` 中配置。
+| 功能 | 路由 | 页面 | 状态 | 说明 |
+|------|------|------|------|------|
+| 批量导入导出 | `/home/batch-operations` | `PlaceholderPage.vue` | 未开发 | 页面文案为「功能开发中」 |
+| 统计报表 | `/home/statistics` | `PlaceholderPage.vue` | 未开发 | 页面文案为「功能开发中」 |
 
----
+### 个人中心
 
-**文档维护**：请及时更新本文档，确保与实际代码保持一致。
+| 功能 | 路由 | 页面 | 状态 | 说明 |
+|------|------|------|------|------|
+| 个人信息 | `/home/profile` | `ProfilePage.vue` | 已完成 | `GET /api/auth/me`，可更新姓名和头像地址 |
+| 修改密码 | `/home/change-password` | `ChangePasswordPage.vue` | 已完成 | `PUT /api/auth/password` |
+
+## 账号能力（不计入侧边栏 21 项）
+
+| 功能 | 入口 | 状态 | 说明 |
+|------|------|------|------|
+| 学生 / 教工密码登录 | `/login` | 已完成 | `POST /api/auth/login` |
+| 首次登录激活 | `/login` | 已完成 | 校验姓名后设置密码 |
+| 密码重置 | `/reset-password` | 已完成 | 学生凭身份证和应急联系人，教工凭验证码 |
+| 人脸识别登录 | `/login` | 部分完成 | 能打开摄像头并检测人脸。`LoginPage.vue` 中仍标注未调用后端比对 |
+| 家长 / 访客登录 | `/login` | 未开发 | 按钮保留，文案为暂未开放 |
+| 退出登录 | 顶栏 | 部分完成 | 只清除本地 token，未调用 `POST /api/auth/logout` |
+
+## 未提交改动中的调试开关
+
+`src/config/api.js` 里 `SKIP_LOGIN_FOR_DEV = true`（尚未提交）。为 true 时，打开登录页会直接进入首页，并写入测试用 token。上线前应改为 `false`。
+
+## 建议继续做的顺序
+
+1. 批量导入导出、统计报表（目前只有占位页）
+2. 成绩的批量录入与导出
+3. 首页统计、待办、天气改为真实数据
+4. 年级的新增与删除、用户分配角色
+5. 人脸登录接到身份比对接口；家长 / 访客入口按产品决定是否开放

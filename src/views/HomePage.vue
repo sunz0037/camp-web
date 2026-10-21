@@ -1,22 +1,29 @@
 <template>
   <div class="home-page">
-    <!-- 左侧菜单栏 -->
-    <SidebarMenu @collapse-change="handleMenuCollapse" />
-    
-    <!-- 右侧内容区域 -->
-    <div class="content-wrapper" :class="{ 'menu-collapsed': isMenuCollapsed }">
-      <!-- 顶部导航栏 -->
+    <SidebarMenu @logout="handleLogout" />
+
+    <div class="content-wrapper">
+      <!-- 顶部导航栏 - 玻璃拟态 -->
       <header class="header">
         <div class="header-content">
-          <h1 class="logo">校园OA系统</h1>
-          <div class="user-info-header">
-            <span class="welcome-text">欢迎，{{ getUserName() }}</span>
-            <button class="logout-btn" @click="handleLogout">退出登录</button>
+          <div class="header-left">
+            <h2 class="header-title">{{ greeting }}，{{ getUserName() }}</h2>
+            <p class="header-subtitle">这是校园今日动态概览</p>
+          </div>
+          <div class="header-right">
+            <div class="search-wrap">
+              <iconify-icon icon="lucide:search" class="search-icon"></iconify-icon>
+              <input type="text" placeholder="搜索..." class="search-input" v-model="searchKeyword" />
+            </div>
+            <button class="header-btn icon-btn" title="通知">
+              <iconify-icon icon="lucide:bell"></iconify-icon>
+              <span class="notification-dot"></span>
+            </button>
+            <button class="header-btn logout-btn" @click="handleLogout">退出登录</button>
           </div>
         </div>
       </header>
 
-      <!-- 主要内容区域 -->
       <main class="main-content">
         <router-view />
       </main>
@@ -25,19 +32,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import SidebarMenu from '../components/SidebarMenu.vue'
 
 const router = useRouter()
-const isMenuCollapsed = ref(false)
+const searchKeyword = ref('')
 
-// 处理菜单收起状态变化
-const handleMenuCollapse = (collapsed) => {
-  isMenuCollapsed.value = collapsed
-}
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h < 12) return '上午好'
+  if (h < 18) return '下午好'
+  return '晚上好'
+})
 
-// 获取用户名
 const getUserName = () => {
   try {
     const userInfoStr = localStorage.getItem('userInfo')
@@ -51,7 +59,6 @@ const getUserName = () => {
   return '用户'
 }
 
-// 退出登录
 const handleLogout = () => {
   if (confirm('确定要退出登录吗？')) {
     localStorage.removeItem('token')
@@ -64,108 +71,161 @@ const handleLogout = () => {
 <style scoped>
 .home-page {
   min-height: 100vh;
-  background: #ffffff;
+  background: var(--bg-soft);
   display: flex;
 }
 
 .content-wrapper {
   flex: 1;
-  margin-left: 260px;
+  margin-left: 288px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #ffffff;
-  transition: margin-left 0.3s ease;
-}
-
-/* 当菜单收起时，调整内容区域边距 */
-.home-page:has(.sidebar-menu.collapsed) .content-wrapper {
-  margin-left: 64px;
-}
-
-/* 当菜单收起时，调整内容区域边距 */
-.home-page:has(.sidebar-menu.collapsed) .content-wrapper {
-  margin-left: 64px;
 }
 
 .header {
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 1.25rem 2rem;
+  background: rgba(248, 247, 244, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-refined);
+  padding: 1.75rem 3rem;
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .header-content {
-  max-width: 1400px;
+  max-width: 1300px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.logo {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #000000;
-  margin: 0;
-  letter-spacing: -0.01em;
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-charcoal);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.25rem 0;
 }
 
-.user-info-header {
+.header-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin: 0;
+}
+
+.header-right {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.welcome-text {
-  color: #1d1d1f;
-  font-size: 0.9375rem;
-  margin-right: 1rem;
+.search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  font-size: 1.125rem;
+  color: var(--text-slate-400);
+}
+
+.search-input {
+  width: 288px;
+  padding: 0.625rem 1rem 0.625rem 2.75rem;
+  background: white;
+  border: 1px solid var(--border-refined);
+  border-radius: 12px;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  transition: all 0.2s;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.2);
+}
+
+.header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: 1px solid var(--border-refined);
+  border-radius: 50%;
+  color: var(--primary-charcoal);
+  position: relative;
+}
+
+.icon-btn:hover {
+  background: var(--bg-slate-100);
+}
+
+.icon-btn iconify-icon {
+  font-size: 1.25rem;
+}
+
+.notification-dot {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.625rem;
+  width: 6px;
+  height: 6px;
+  background: var(--accent-lavender);
+  border-radius: 50%;
+  border: 2px solid white;
 }
 
 .logout-btn {
-  padding: 0.5rem 1rem;
-  background: #000000;
+  padding: 0.625rem 1.5rem;
+  background: var(--primary-charcoal);
   color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  border-radius: 16px;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: background-color 0.2s ease;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
 }
 
 .logout-btn:hover {
-  background: #333333;
+  opacity: 0.9;
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
-  background: #ffffff;
-  min-height: calc(100vh - 80px);
+  background: transparent;
+  min-height: calc(100vh - 88px);
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .content-wrapper {
     margin-left: 0;
   }
-  
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .header-content {
     flex-direction: column;
     gap: 1rem;
+    align-items: flex-start;
   }
-  
-  .main-content {
-    padding: 1.5rem;
+  .search-input {
+    width: 100%;
   }
 }
 </style>
-
