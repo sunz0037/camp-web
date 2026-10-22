@@ -70,9 +70,10 @@ const handleLogout = () => {
 
 <style scoped>
 .home-page {
-  min-height: 100vh;
+  height: 100vh;
   background: var(--bg-soft);
   display: flex;
+  overflow: hidden;
 }
 
 .content-wrapper {
@@ -80,7 +81,9 @@ const handleLogout = () => {
   margin-left: 288px;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .header {
@@ -88,7 +91,7 @@ const handleLogout = () => {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-refined);
-  padding: 1.75rem 3rem;
+  padding: 1rem 2.5rem;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -212,7 +215,7 @@ const handleLogout = () => {
   flex: 1;
   overflow-y: auto;
   background: transparent;
-  min-height: calc(100vh - 88px);
+  min-height: 0;
 }
 
 @media (max-width: 768px) {

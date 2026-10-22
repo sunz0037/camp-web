@@ -281,8 +281,7 @@ const initWeather = () => {
 
 <style scoped>
 .home-dashboard {
-  padding: 3rem;
-  min-height: calc(100vh - 88px);
+  padding: 1.25rem 2.5rem 1.5rem;
 }
 
 .loading-container {
@@ -310,15 +309,15 @@ const initWeather = () => {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
-  margin-bottom: 3rem;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .stat-card {
   background: white;
   border: 1px solid var(--border-refined);
-  border-radius: 20px;
-  padding: 2rem;
+  border-radius: 16px;
+  padding: 1.15rem 1.25rem;
   box-shadow: var(--card-shadow);
   transition: transform 0.2s ease;
 }
@@ -331,7 +330,7 @@ const initWeather = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .stat-icon {
@@ -368,7 +367,7 @@ const initWeather = () => {
 }
 
 .stat-value {
-  font-size: 1.875rem;
+  font-size: 1.625rem;
   font-weight: 700;
   color: var(--primary-charcoal);
   margin: 0 0 0.25rem 0;
@@ -386,27 +385,28 @@ const initWeather = () => {
 .content-grid {
   display: grid;
   grid-template-columns: 1.6fr 1fr 1fr;
-  gap: 2rem;
+  gap: 1rem;
+  align-items: start;
 }
 
 .card {
   background: white;
   border: 1px solid var(--border-refined);
-  border-radius: 24px;
-  padding: 2rem;
+  border-radius: 18px;
+  padding: 1.15rem 1.25rem;
   box-shadow: var(--card-shadow);
 }
 
 .card.compact {
-  padding: 1.75rem;
+  padding: 1rem 1.15rem;
 }
 
 .card-title {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--primary-charcoal);
-  margin: 0 0 1rem 0;
-  padding-bottom: 0.75rem;
+  margin: 0 0 0.65rem 0;
+  padding-bottom: 0.5rem;
   border-bottom: 1px solid #f1f1ee;
 }
 
@@ -414,8 +414,8 @@ const initWeather = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.55rem;
   border-bottom: 1px solid #f1f1ee;
 }
 
@@ -442,16 +442,16 @@ const initWeather = () => {
 .todo-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.875rem 0.75rem;
+  gap: 0.75rem;
+  padding: 0.45rem 0.35rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .todo-item:hover {
   background: #fafaf9;
-  margin: 0 -0.5rem;
-  padding: 0.875rem 0.75rem;
+  margin: 0 -0.35rem;
+  padding: 0.45rem 0.7rem;
   border-radius: 12px;
 }
 
@@ -497,14 +497,14 @@ const initWeather = () => {
 
 /* 日历紧凑样式 */
 .calendar-card.compact .card-title {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.45rem;
 }
 
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.4rem;
 }
 
 .month-year {
@@ -551,11 +551,11 @@ const initWeather = () => {
 }
 
 .calendar-day {
-  aspect-ratio: 1;
+  height: 1.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 0.75rem;
@@ -586,7 +586,7 @@ const initWeather = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.4rem;
 }
 
 .weather-header .card-title {
@@ -614,8 +614,8 @@ const initWeather = () => {
 .weather-content.compact {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .weather-content.compact .weather-main {
@@ -626,7 +626,7 @@ const initWeather = () => {
 }
 
 .weather-content.compact .weather-emoji {
-  font-size: 2.5rem;
+  font-size: 2rem;
 }
 
 .weather-content.compact .temp-value {
@@ -653,7 +653,7 @@ const initWeather = () => {
 
 .location-btn {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.55rem;
   background: var(--accent-lavender-soft);
   color: var(--accent-lavender);
   border: 1px solid var(--accent-lavender-soft);

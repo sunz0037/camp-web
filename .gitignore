@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Superdesign temporary component HTML
+.superdesign/tmp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
