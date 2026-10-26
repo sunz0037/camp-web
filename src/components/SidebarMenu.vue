@@ -1,6 +1,5 @@
 <template>
-  <aside class="sidebar-menu">
-    <!-- Logo -->
+  <aside class="sidebar-menu" :class="{ open: mobileOpen }">
     <div class="menu-header">
       <div class="logo-wrap">
         <div class="logo-icon">
@@ -13,7 +12,7 @@
     <nav class="menu-nav">
       <p class="nav-label">功能菜单</p>
 
-      <router-link to="/home" class="menu-item" :class="{ active: isDashboard }">
+      <router-link to="/home" class="menu-item" :class="{ active: isDashboard }" title="首页概览">
         <iconify-icon icon="lucide:layout-dashboard" class="menu-icon"></iconify-icon>
         <span class="menu-text">首页概览</span>
       </router-link>
@@ -23,6 +22,7 @@
           type="button"
           class="menu-item menu-group-btn"
           :class="{ active: isGroupActive(group), open: openGroupId === group.id }"
+          :title="group.label"
           @click="toggleGroup(group.id)"
         >
           <iconify-icon :icon="group.icon" class="menu-icon"></iconify-icon>
@@ -66,6 +66,15 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+
+defineProps({
+  mobileOpen: {
+    type: Boolean,
+    default: false
+  }
+})
+
+defineEmits(['logout'])
 
 const route = useRoute()
 const userName = ref('')
@@ -162,7 +171,6 @@ const toggleGroup = (id) => {
 
 const isGroupActive = (group) => group.id === activeGroupId.value
 
-const emit = defineEmits(['logout'])
 
 const getAvatarText = (name) => {
   if (!name) return '用'
@@ -190,14 +198,13 @@ onMounted(() => {
 
 <style scoped>
 .sidebar-menu {
-  width: 288px;
+  width: 220px;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid var(--border-refined);
+  background: #fff;
+  border-right: 1px solid #f4f4f5;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
   position: fixed;
   left: 0;
   top: 0;
@@ -207,10 +214,9 @@ onMounted(() => {
 }
 
 .menu-header {
-  padding: 2rem 1rem 1.5rem;
+  padding: 1.25rem 0.75rem 0.5rem 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
 }
 
 .logo-wrap {
@@ -222,8 +228,8 @@ onMounted(() => {
 .logo-icon {
   width: 36px;
   height: 36px;
-  background: var(--primary-charcoal);
-  border-radius: 8px;
+  background: #18181b;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -249,33 +255,36 @@ onMounted(() => {
 }
 
 .nav-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-slate-400);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.75rem;
-  padding: 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #a1a1aa;
+  margin: 0 0 0.75rem;
+  padding-left: 0.75rem;
 }
 
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.75rem;
   color: var(--text-slate-600);
   text-decoration: none;
   transition: all 0.2s;
   cursor: pointer;
   font-size: 0.9375rem;
   font-weight: 500;
-  border-radius: 16px;
-  margin-bottom: 2px;
+  border-radius: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .menu-item .menu-icon {
   font-size: 1.25rem;
   margin-right: 0.75rem;
   flex-shrink: 0;
+  transition: transform 0.2s ease-out, color 0.2s ease-out;
+}
+
+.menu-item:hover .menu-icon {
+  transform: scale(1.1);
 }
 
 .menu-item .menu-text {
@@ -283,13 +292,17 @@ onMounted(() => {
 }
 
 .menu-item:hover {
-  background: rgba(167, 139, 250, 0.05);
-  color: var(--primary-charcoal);
+  background: #fafafa;
+  color: #18181b;
 }
 
 .menu-item.active {
-  background: var(--accent-lavender-soft);
-  color: var(--primary-charcoal) !important;
+  background: #f4f4f5;
+  color: #18181b !important;
+}
+
+.menu-item:active {
+  transform: scale(0.98);
 }
 
 .menu-group-btn {
@@ -318,9 +331,7 @@ onMounted(() => {
 }
 
 .submenu {
-  margin: 0.15rem 0 0.4rem 1.35rem;
-  padding-left: 0.7rem;
-  border-left: 1px solid var(--border-refined);
+  margin: 0 0 0.75rem 2rem;
 }
 
 .submenu-item {
@@ -330,15 +341,16 @@ onMounted(() => {
 }
 
 .user-card {
-  padding: 1.5rem 1rem;
+  padding: 0.75rem 0.75rem 1.25rem;
   margin-top: auto;
 }
 
 .user-card-inner {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 16px;
-  padding: 1rem;
+  background: #fff;
+  border: 1px solid #f4f4f5;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -347,9 +359,9 @@ onMounted(() => {
 .user-avatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background: rgba(167, 139, 250, 0.1);
-  color: var(--accent-lavender);
+  border-radius: 0.75rem;
+  background: #f4f4f5;
+  color: #18181b;
   font-weight: 700;
   font-size: 0.875rem;
   display: flex;
@@ -406,7 +418,13 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .sidebar-menu {
-    width: 260px;
+    width: min(18rem, 86vw);
+    transform: translateX(-105%);
+    transition: transform 0.25s ease-out;
+  }
+
+  .sidebar-menu.open {
+    transform: translateX(0);
   }
 }
 </style>

@@ -1,6 +1,19 @@
 <template>
   <div class="reset-password-page">
-    <div class="reset-container">
+    <div class="reset-bento">
+      <section class="reset-hero">
+        <h1>找回密码</h1>
+        <p>按身份分开核验。学生走六要素，教工走手机验证码。</p>
+      </section>
+      <article class="reset-chip chip-warm">
+        <strong>学生</strong>
+        <span>学号、姓名和联系人信息需要一起核对。</span>
+      </article>
+      <article class="reset-chip chip-mint">
+        <strong>教工</strong>
+        <span>验证码发出后，再提交重置。</span>
+      </article>
+      <div class="reset-container">
       <div class="reset-header">
         <h1>忘记密码</h1>
         <p>请选择身份类型并填写相应信息</p>
@@ -182,6 +195,11 @@
           <router-link to="/login">返回登录</router-link>
         </div>
       </div>
+    </div>
+    <article class="reset-note">
+      <strong>重置之后</strong>
+      <span>成功后使用新密码登录，并尽快到个人中心修改密码。</span>
+    </article>
     </div>
 
     <!-- 成功提示对话框 -->
@@ -609,7 +627,167 @@ const goToLogin = () => {
 }
 
 .btn-primary:hover {
-  background: #5568d3;
+  background: #27272a;
+}
+
+.reset-password-page {
+  background: #fafafa;
+  padding: 1.5rem;
+}
+
+.reset-bento {
+  width: min(72rem, 100%);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.reset-hero,
+.reset-chip,
+.reset-note,
+.reset-container {
+  border-radius: 1rem;
+  border: 1px solid #f4f4f5;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.25s ease-out, box-shadow 0.25s ease-out;
+}
+
+.reset-hero:hover,
+.reset-chip:hover,
+.reset-note:hover,
+.reset-container:hover {
+  transform: translateY(-0.25rem) scale(1.01);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.reset-hero {
+  grid-column: span 2;
+  min-height: 11rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background: #18181b;
+  border-color: #18181b;
+  color: #fff;
+}
+
+.reset-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.875rem;
+  font-weight: 600;
+}
+
+.reset-hero p {
+  margin: 0;
+  color: #e4e4e7;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  max-width: 36rem;
+}
+
+.reset-chip,
+.reset-note {
+  min-height: 11rem;
+  padding: 1.25rem;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.reset-chip strong,
+.reset-note strong {
+  color: #18181b;
+  font-size: 1.125rem;
+}
+
+.reset-chip span,
+.reset-note span {
+  color: #3f3f46;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.chip-warm { background: #fff7ed; border-color: #ffedd5; }
+.chip-mint { background: #f0fdf4; border-color: #dcfce7; }
+
+.reset-container {
+  grid-column: span 3;
+  background: #fff;
+  width: auto;
+  max-width: none;
+}
+
+.reset-note {
+  grid-column: span 1;
+  align-self: start;
+  min-height: 8rem;
+}
+
+.reset-header {
+  background: transparent;
+  color: #18181b;
+  text-align: left;
+}
+
+.reset-header h1 { color: #18181b; }
+.reset-header p { color: #52525b; }
+
+.identity-btn,
+.submit-btn,
+.form-group input,
+.btn-primary,
+.dialog-content {
+  border-radius: 0.75rem;
+}
+
+.dialog-content { border-radius: 1rem; }
+
+.identity-btn.active,
+.submit-btn,
+.btn-primary {
+  background: #18181b;
+  color: #fff;
+  border-color: #18181b;
+}
+
+.form-group input {
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
+}
+
+.form-group input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  outline: none;
+}
+
+.back-login a { color: #18181b; }
+
+.identity-btn:active,
+.submit-btn:active,
+.btn-primary:active { transform: scale(0.98); }
+
+@media (max-width: 960px) {
+  .reset-bento { grid-template-columns: 1fr 1fr; }
+  .reset-hero,
+  .reset-container,
+  .reset-note { grid-column: 1 / -1; grid-row: auto; }
+}
+
+@media (max-width: 640px) {
+  .reset-bento { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reset-hero:hover,
+  .reset-chip:hover,
+  .reset-note:hover,
+  .reset-container:hover { transform: none; }
 }
 </style>
 

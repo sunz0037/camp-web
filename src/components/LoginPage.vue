@@ -1,6 +1,19 @@
 <template>
   <div class="login-page">
-    <div class="login-container">
+    <div class="login-bento">
+      <section class="login-hero">
+        <h1>校园 OA</h1>
+        <p>学生与教工共用的办公入口。账号密码和人脸识别都在右侧完成。</p>
+      </section>
+      <article class="login-chip chip-warm">
+        <strong>学生</strong>
+        <span>学号登录。第一次使用时需要核验姓名。</span>
+      </article>
+      <article class="login-chip chip-mint">
+        <strong>教工</strong>
+        <span>工号登录后进入今日概览和分组菜单。</span>
+      </article>
+      <div class="login-container">
       <div class="login-header">
         <h1>校园OA系统</h1>
         <p>欢迎登录</p>
@@ -160,6 +173,11 @@
           </div>
         </div>
       </div>
+      </div>
+      <article class="login-note">
+        <strong>家长与访客</strong>
+        <span>这个入口还没开放。来访请使用校园管理里的来访登记。</span>
+      </article>
     </div>
 
     <!-- 激活密码对话框 -->
@@ -1031,6 +1049,231 @@ watch(selectedIdentity, () => {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.login-page {
+  background: #fafafa;
+  padding: 1.5rem;
+  align-items: center;
+}
+
+.login-bento {
+  width: min(72rem, 100%);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.login-hero,
+.login-chip,
+.login-note,
+.login-container {
+  border-radius: 1rem;
+  border: 1px solid #f4f4f5;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.25s ease-out, box-shadow 0.25s ease-out;
+}
+
+.login-hero:hover,
+.login-chip:hover,
+.login-note:hover,
+.login-container:hover {
+  transform: translateY(-0.25rem) scale(1.01);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.login-hero {
+  grid-column: span 2;
+  min-height: 11rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background: #18181b;
+  border-color: #18181b;
+  color: #fff;
+}
+
+.login-hero h1 {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.login-hero p {
+  margin: 0;
+  max-width: 36rem;
+  color: #e4e4e7;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.login-chip,
+.login-note {
+  min-height: 11rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: #fff;
+}
+
+.login-chip strong,
+.login-note strong {
+  font-size: 1.125rem;
+  color: #18181b;
+}
+
+.login-chip span,
+.login-note span {
+  font-size: 0.875rem;
+  color: #3f3f46;
+  line-height: 1.5;
+}
+
+.chip-warm {
+  background: #fff7ed;
+  border-color: #ffedd5;
+}
+
+.chip-mint {
+  background: #f0fdf4;
+  border-color: #dcfce7;
+}
+
+.login-container {
+  grid-column: span 3;
+  max-width: none;
+  width: auto;
+  background: #fff;
+  overflow: auto;
+}
+
+.login-note {
+  grid-column: span 1;
+  align-self: start;
+  min-height: 8rem;
+}
+
+.login-header {
+  background: transparent;
+  color: #18181b;
+  text-align: left;
+  padding: 1.25rem 1.25rem 0;
+}
+
+.login-header h1 {
+  color: #18181b;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.login-header p {
+  color: #52525b;
+}
+
+.identity-selector,
+.login-method-selector {
+  gap: 0.75rem;
+}
+
+.identity-btn,
+.method-btn,
+.login-btn,
+.face-btn,
+.form-group input {
+  border-radius: 0.75rem;
+}
+
+.identity-btn.active,
+.method-btn.active,
+.login-btn,
+.face-btn-verify {
+  background: #18181b;
+  color: #fff;
+  border-color: #18181b;
+}
+
+.identity-btn:hover:not(:disabled),
+.method-btn:hover,
+.form-hint .link {
+  color: #18181b;
+  border-color: #d4d4d8;
+}
+
+.login-btn:hover:not(:disabled),
+.face-btn-verify:hover:not(:disabled) {
+  background: #27272a;
+}
+
+.login-btn:active,
+.identity-btn:active,
+.method-btn:active,
+.face-btn:active {
+  transform: scale(0.98);
+}
+
+.face-btn-stop {
+  background: #b91c1c;
+  color: #fff;
+  border-color: #b91c1c;
+}
+
+.form-group input {
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
+  transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.form-group input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.spinner {
+  border-color: #e4e4e7;
+  border-top-color: #18181b;
+}
+
+.loading-text,
+.face-status {
+  color: #18181b;
+}
+
+@media (max-width: 960px) {
+  .login-bento {
+    grid-template-columns: 1fr 1fr;
+  }
+  .login-hero,
+  .login-container,
+  .login-note {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-bento {
+    grid-template-columns: 1fr;
+  }
+  .login-chip {
+    grid-column: auto;
+    min-height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-hero:hover,
+  .login-chip:hover,
+  .login-note:hover,
+  .login-container:hover {
+    transform: none;
+  }
 }
 </style>
 

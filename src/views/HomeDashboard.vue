@@ -5,141 +5,152 @@
       <p class="loading-hint">如果长时间未显示，请检查是否已登录</p>
     </div>
     <template v-else>
-      <div class="dashboard-inner">
-        <!-- 统计卡片 -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon teal">
-                <iconify-icon icon="lucide:users-round"></iconify-icon>
-              </div>
-              <span class="stat-badge">学生</span>
-            </div>
-            <h3 class="stat-value">2,482</h3>
-            <p class="stat-label">学生总数</p>
+      <div class="bento">
+        <article class="tile tile-feature span-2">
+          <div class="tile-top">
+            <span class="tile-icon icon-orange">
+              <iconify-icon icon="lucide:users-round"></iconify-icon>
+            </span>
           </div>
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon blue">
-                <iconify-icon icon="lucide:book-open"></iconify-icon>
-              </div>
-              <span class="stat-badge">课程</span>
-            </div>
-            <h3 class="stat-value">142</h3>
-            <p class="stat-label">进行中课程</p>
+          <div>
+            <h3 class="tile-value">2,482</h3>
+            <p class="tile-label">学生总数</p>
           </div>
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon amber">
-                <iconify-icon icon="lucide:megaphone"></iconify-icon>
-              </div>
-              <span class="stat-badge">公告</span>
-            </div>
-            <h3 class="stat-value">08</h3>
-            <p class="stat-label">最新公告</p>
-          </div>
-          <div class="stat-card">
-            <div class="stat-header">
-              <div class="stat-icon violet">
-                <iconify-icon icon="lucide:calendar-days"></iconify-icon>
-              </div>
-              <span class="stat-badge">今日</span>
-            </div>
-            <h3 class="stat-value">14</h3>
-            <p class="stat-label">即将安排</p>
-          </div>
-        </div>
+        </article>
 
-        <!-- 主内容：待办 + 日历 + 天气 -->
-        <div class="content-grid">
-          <!-- 个人待办 -->
-          <div class="card todo-card">
-            <div class="card-title-row">
-              <h2 class="card-title">个人待办</h2>
-              <span class="todo-count">{{ todoList.filter(t => !t.done).length }} 项未完成</span>
-            </div>
-            <ul class="todo-list">
-              <li
-                v-for="item in todoList"
-                :key="item.id"
-                class="todo-item"
-                :class="{ done: item.done }"
-                @click="toggleTodo(item)"
-              >
-                <span class="todo-check">
-                  <iconify-icon v-if="item.done" icon="lucide:circle-check" class="icon-done"></iconify-icon>
-                  <iconify-icon v-else icon="lucide:circle" class="icon-pending"></iconify-icon>
-                </span>
-                <span class="todo-text">{{ item.title }}</span>
-                <span class="todo-meta">{{ item.due }}</span>
-              </li>
-            </ul>
+        <article class="tile tile-stat">
+          <div class="tile-top">
+            <span class="tile-icon icon-blue">
+              <iconify-icon icon="lucide:book-open"></iconify-icon>
+            </span>
           </div>
-
-          <!-- 日历卡片（紧凑） -->
-          <div class="card calendar-card compact">
-            <h2 class="card-title">日历</h2>
-            <div class="calendar-header">
-              <button class="nav-btn" @click="prevMonth">
-                <iconify-icon icon="lucide:chevron-left"></iconify-icon>
-              </button>
-              <span class="month-year">{{ currentYear }}年{{ currentMonth + 1 }}月</span>
-              <button class="nav-btn" @click="nextMonth">
-                <iconify-icon icon="lucide:chevron-right"></iconify-icon>
-              </button>
-            </div>
-            <div class="calendar-grid">
-              <div class="weekday" v-for="day in weekdays" :key="day">{{ day }}</div>
-              <div
-                v-for="day in calendarDays"
-                :key="day.fullDate"
-                class="calendar-day"
-                :class="{
-                  'other-month': day.isOtherMonth,
-                  'today': day.isToday,
-                  'selected': day.fullDate === selectedDateStr
-                }"
-                @click="selectDate(day)"
-              >
-                {{ day.day }}
-              </div>
-            </div>
+          <div>
+            <h3 class="tile-value">142</h3>
+            <p class="tile-label">进行中课程</p>
           </div>
+        </article>
 
-          <!-- 天气卡片（紧凑） -->
-          <div class="card weather-card compact">
-            <div class="weather-header">
-              <h2 class="card-title">天气</h2>
-              <span class="weather-location">
-                <iconify-icon icon="lucide:map-pin"></iconify-icon>
-                {{ weather?.location || '北京' }}
+        <article class="tile tile-stat">
+          <div class="tile-top">
+            <span class="tile-icon icon-amber">
+              <iconify-icon icon="lucide:megaphone"></iconify-icon>
+            </span>
+          </div>
+          <div>
+            <h3 class="tile-value">08</h3>
+            <p class="tile-label">最新公告</p>
+          </div>
+        </article>
+
+        <article class="tile tile-panel span-2">
+          <div class="tile-head">
+            <span class="tile-heading">
+              <span class="tile-icon icon-orange">
+                <iconify-icon icon="lucide:list-checks"></iconify-icon>
               </span>
-            </div>
-            <div v-if="weatherLoading" class="weather-loading">加载中...</div>
-            <div v-else-if="weatherError" class="weather-error">{{ weatherError }}</div>
-            <div v-else-if="weather" class="weather-content compact">
-              <div class="weather-main">
-                <span class="weather-emoji">{{ getWeatherEmoji(weather.condition) }}</span>
-                <div class="weather-temp">
-                  <span class="temp-value">{{ weather.temperature }}°</span>
-                  <span class="temp-desc">{{ weather.condition }}</span>
-                </div>
-              </div>
-              <div class="weather-details">
-                <span>湿度 {{ weather.humidity }}%</span>
-                <span>风速 {{ weather.windSpeed }} km/h</span>
-              </div>
-            </div>
-            <button
-              v-if="!locationGranted || weatherError"
-              class="location-btn"
-              @click="requestLocation"
+              <h2 class="tile-title">个人待办</h2>
+            </span>
+            <span class="tile-kicker">{{ todoList.filter(t => !t.done).length }} 项未完成</span>
+          </div>
+          <ul class="todo-list">
+            <li
+              v-for="item in todoList"
+              :key="item.id"
+              class="todo-item"
+              :class="{ done: item.done }"
+              @click="toggleTodo(item)"
             >
-              <iconify-icon icon="lucide:refresh-cw"></iconify-icon>
-              更新位置
+              <span class="todo-check">
+                <iconify-icon v-if="item.done" icon="lucide:circle-check" class="icon-done"></iconify-icon>
+                <iconify-icon v-else icon="lucide:circle" class="icon-pending"></iconify-icon>
+              </span>
+              <span class="todo-text">{{ item.title }}</span>
+              <span class="todo-meta">{{ item.due }}</span>
+            </li>
+          </ul>
+        </article>
+
+        <article class="tile tile-panel span-2">
+          <div class="tile-head">
+            <span class="tile-heading">
+              <span class="tile-icon icon-blue">
+                <iconify-icon icon="lucide:calendar"></iconify-icon>
+              </span>
+              <h2 class="tile-title">日历</h2>
+            </span>
+          </div>
+          <div class="calendar-header">
+            <button type="button" class="nav-btn" @click="prevMonth" aria-label="上个月">
+              <iconify-icon icon="lucide:chevron-left"></iconify-icon>
+            </button>
+            <span class="month-year">{{ currentYear }}年{{ currentMonth + 1 }}月</span>
+            <button type="button" class="nav-btn" @click="nextMonth" aria-label="下个月">
+              <iconify-icon icon="lucide:chevron-right"></iconify-icon>
             </button>
           </div>
-        </div>
+          <div class="calendar-grid">
+            <div class="weekday" v-for="day in weekdays" :key="day">{{ day }}</div>
+            <button
+              v-for="day in calendarDays"
+              :key="day.fullDate"
+              type="button"
+              class="calendar-day"
+              :class="{
+                'other-month': day.isOtherMonth,
+                'today': day.isToday,
+                'selected': day.fullDate === selectedDateStr
+              }"
+              @click="selectDate(day)"
+            >
+              {{ day.day }}
+            </button>
+          </div>
+        </article>
+
+        <article class="tile tile-panel tile-soft span-3">
+          <div class="tile-head">
+            <span class="tile-heading">
+              <span class="tile-icon icon-green">
+                <iconify-icon icon="lucide:cloud-sun"></iconify-icon>
+              </span>
+              <h2 class="tile-title">天气</h2>
+            </span>
+            <span class="weather-location">
+              <iconify-icon icon="lucide:map-pin"></iconify-icon>
+              {{ weather?.location || '北京' }}
+            </span>
+          </div>
+          <div v-if="weatherLoading" class="weather-note">加载中...</div>
+          <div v-else-if="weatherError" class="weather-note">{{ weatherError }}</div>
+          <div v-else-if="weather" class="weather-main">
+            <span class="weather-emoji">{{ getWeatherEmoji(weather.condition) }}</span>
+            <div>
+              <p class="temp-value">{{ weather.temperature }}°</p>
+              <p class="temp-desc">{{ weather.condition }} · 湿度 {{ weather.humidity }}% · 风速 {{ weather.windSpeed }} km/h</p>
+            </div>
+          </div>
+          <button
+            v-if="!locationGranted || weatherError"
+            type="button"
+            class="location-btn"
+            @click="requestLocation"
+          >
+            <iconify-icon icon="lucide:refresh-cw"></iconify-icon>
+            更新位置
+          </button>
+        </article>
+
+        <article class="tile tile-stat tile-flat">
+          <div class="tile-top">
+            <span class="tile-icon icon-green">
+              <iconify-icon icon="lucide:calendar-days"></iconify-icon>
+            </span>
+          </div>
+          <div>
+            <h3 class="tile-value">14</h3>
+            <p class="tile-label">即将安排</p>
+          </div>
+        </article>
       </div>
     </template>
   </div>
@@ -281,7 +292,7 @@ const initWeather = () => {
 
 <style scoped>
 .home-dashboard {
-  padding: 1.25rem 2.5rem 1.5rem;
+  padding: 1rem 1.5rem;
 }
 
 .loading-container {
@@ -289,403 +300,385 @@ const initWeather = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  color: var(--text-slate-600);
-  font-size: 1rem;
+  min-height: 16rem;
+  color: #52525b;
+  font-size: 0.875rem;
   text-align: center;
 }
 
 .loading-hint {
-  font-size: 0.875rem;
-  color: var(--text-slate-500);
-  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #71717a;
+  margin-top: 0.75rem;
 }
 
-.dashboard-inner {
-  max-width: 1300px;
+.bento {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  max-width: 72rem;
   margin: 0 auto;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 1rem;
+.tile {
+  background: #fff;
+  border: 1px solid #f4f4f5;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 1rem 1.25rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: transform 0.25s ease-out, box-shadow 0.25s ease-out;
 }
 
-.stat-card {
-  background: white;
-  border: 1px solid var(--border-refined);
-  border-radius: 16px;
-  padding: 1.15rem 1.25rem;
-  box-shadow: var(--card-shadow);
-  transition: transform 0.2s ease;
+.tile:hover {
+  transform: translateY(-0.25rem) scale(1.01);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
+.tile:active {
+  transform: scale(0.98);
 }
 
-.stat-header {
+.span-2 { grid-column: span 2; }
+.span-3 { grid-column: span 3; }
+
+.tile-stat {
+  aspect-ratio: 2 / 1;
+}
+
+.tile-flat {
+  aspect-ratio: auto;
+  min-height: 8.5rem;
+}
+
+.tile-feature {
+  background: #fff7ed;
+  border-color: #ffedd5;
+}
+
+.tile-soft {
+  background: #f0fdf4;
+  border-color: #dcfce7;
+}
+
+.tile-panel {
+  height: 100%;
+  justify-content: flex-start;
+}
+
+.tile-heading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+.tile-top,
+.tile-head,
+.weather-location,
+.weather-main,
+.todo-item,
+.calendar-header {
   display: flex;
+  align-items: center;
+}
+
+.tile-top,
+.tile-head,
+.calendar-header {
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.tile-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  background: #fafafa;
+  color: #18181b;
+  transition: transform 0.25s ease-out, background-color 0.25s ease-out, color 0.25s ease-out;
 }
 
-.stat-icon iconify-icon {
+.tile-icon iconify-icon {
   font-size: 1.25rem;
-  color: inherit;
 }
 
-.stat-icon.teal,
-.stat-icon.blue,
-.stat-icon.amber,
-.stat-icon.violet {
-  background: var(--bg-neutral);
-  color: var(--primary-charcoal);
+.tile:hover .tile-icon {
+  transform: scale(1.1);
+  background: #18181b;
+  color: #fff;
 }
 
-.stat-badge {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--accent-lavender);
-  background: var(--accent-lavender-soft);
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.icon-orange { background: #ffedd5; color: #c2410c; }
+.icon-blue { background: #eff6ff; color: #1d4ed8; }
+.icon-amber { background: #fff7ed; color: #c2410c; }
+.icon-green { background: #f0fdf4; color: #15803d; }
+
+.tile-kicker,
+.tile-label,
+.todo-meta,
+.weekday {
+  color: #71717a;
+  font-size: 0.75rem;
 }
 
-.stat-value {
-  font-size: 1.625rem;
-  font-weight: 700;
-  color: var(--primary-charcoal);
-  margin: 0 0 0.25rem 0;
+.tile-kicker {
+  font-weight: 600;
+}
+
+.tile-value {
+  margin: 0;
+  font-size: 1.875rem;
+  line-height: 1.1;
+  font-weight: 600;
+  color: #18181b;
   letter-spacing: -0.02em;
 }
 
-.stat-label {
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-  font-weight: 500;
+.tile-label,
+.temp-desc,
+.weather-note {
+  margin: 0.25rem 0 0;
+}
+
+.tile-title {
   margin: 0;
-}
-
-/* 主内容网格：待办(大) + 日历(小) + 天气(小) */
-.content-grid {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
-  gap: 1rem;
-  align-items: start;
-}
-
-.card {
-  background: white;
-  border: 1px solid var(--border-refined);
-  border-radius: 18px;
-  padding: 1.15rem 1.25rem;
-  box-shadow: var(--card-shadow);
-}
-
-.card.compact {
-  padding: 1rem 1.15rem;
-}
-
-.card-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--primary-charcoal);
-  margin: 0 0 0.65rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #f1f1ee;
-}
-
-.card-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.65rem;
-  padding-bottom: 0.55rem;
-  border-bottom: 1px solid #f1f1ee;
-}
-
-.card-title-row .card-title {
-  margin: 0;
-  padding: 0;
-  border: none;
-}
-
-.todo-count {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent-lavender);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #18181b;
 }
 
 .todo-list {
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .todo-item {
-  display: flex;
-  align-items: center;
   gap: 0.75rem;
-  padding: 0.45rem 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s ease-out, transform 0.2s ease-out;
 }
 
 .todo-item:hover {
-  background: #fafaf9;
-  margin: 0 -0.35rem;
-  padding: 0.45rem 0.7rem;
-  border-radius: 12px;
+  background: #fafafa;
+}
+
+.todo-item:hover .todo-check {
+  transform: scale(1.1);
+}
+
+.todo-item:active {
+  transform: scale(0.98);
 }
 
 .todo-item.done {
-  opacity: 0.5;
+  opacity: 0.55;
 }
 
 .todo-item.done .todo-text {
-  color: var(--text-muted);
+  color: #71717a;
   text-decoration: line-through;
 }
 
 .todo-check {
-  flex-shrink: 0;
+  display: inline-flex;
+  transition: transform 0.2s ease-out;
 }
 
-.todo-check .icon-done {
-  font-size: 1.25rem;
-  color: var(--accent-lavender);
-}
-
-.todo-check .icon-pending {
-  font-size: 1.25rem;
-  color: var(--border-refined);
-}
-
-.todo-item:hover .icon-pending {
-  color: var(--accent-lavender);
-}
+.icon-done { color: #15803d; font-size: 1.25rem; }
+.icon-pending { color: #d4d4d8; font-size: 1.25rem; }
+.todo-item:hover .icon-pending { color: #18181b; }
 
 .todo-text {
   flex: 1;
-  font-size: 0.9375rem;
-  color: var(--text-main);
-}
-
-.todo-meta {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-}
-
-/* 日历紧凑样式 */
-.calendar-card.compact .card-title {
-  margin-bottom: 0.45rem;
-}
-
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.4rem;
+  min-width: 0;
+  color: #3f3f46;
+  font-size: 0.875rem;
 }
 
 .month-year {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--primary-charcoal);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.nav-btn,
+.calendar-day,
+.location-btn {
+  border: 1px solid #e4e4e7;
+  background: #fafafa;
+  color: #3f3f46;
+  cursor: pointer;
+  transition: transform 0.2s ease-out, background-color 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
 }
 
 .nav-btn {
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--border-slate-200);
-  background: white;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-slate-600);
-  transition: all 0.2s;
 }
 
-.nav-btn:hover {
-  background: var(--bg-neutral);
-  color: var(--primary-charcoal);
+.nav-btn:hover,
+.calendar-day:hover {
+  background: #fff;
+  border-color: #d4d4d8;
 }
 
-.nav-btn iconify-icon {
-  font-size: 0.875rem;
+.nav-btn:active,
+.calendar-day:active,
+.location-btn:active {
+  transform: scale(0.95);
 }
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
 }
 
-.weekday {
+.weekday,
+.calendar-day {
   text-align: center;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-slate-500);
-  padding: 0.25rem;
-  font-size: 0.6875rem;
 }
 
 .calendar-day {
-  height: 1.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-slate-800);
-}
-
-.calendar-day:hover {
-  background: var(--accent-lavender-soft);
+  height: 1.5rem;
+  border-radius: 0.75rem;
+  color: #18181b;
+  padding: 0;
 }
 
 .calendar-day.other-month {
-  color: var(--border-refined);
+  color: #a1a1aa;
 }
 
 .calendar-day.today,
 .calendar-day.selected {
-  background: var(--primary-charcoal);
-  color: white;
-}
-
-/* 天气紧凑样式 */
-.weather-card.compact {
-  position: relative;
-}
-
-.weather-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.4rem;
-}
-
-.weather-header .card-title {
-  margin: 0;
-  padding: 0;
-  border: none;
+  background: #18181b;
+  border-color: #18181b;
+  color: #fff;
 }
 
 .weather-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #71717a;
   font-size: 0.75rem;
-  color: var(--text-slate-500);
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
-.weather-loading,
-.weather-error {
-  text-align: center;
-  padding: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-slate-500);
-}
-
-.weather-content.compact {
-  display: flex;
-  align-items: center;
+.weather-main {
   gap: 0.75rem;
-  margin-bottom: 0.5rem;
 }
 
-.weather-content.compact .weather-main {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0;
-}
-
-.weather-content.compact .weather-emoji {
+.weather-emoji {
   font-size: 2rem;
+  line-height: 1;
 }
 
-.weather-content.compact .temp-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-charcoal);
-}
-
-.weather-content.compact .temp-desc {
-  font-size: 0.875rem;
-  color: var(--text-muted);
+.temp-value {
   margin: 0;
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: #18181b;
+  letter-spacing: -0.02em;
 }
 
-.weather-details {
-  display: flex;
-  gap: 1rem;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.temp-desc,
+.weather-note {
+  font-size: 0.875rem;
+  color: #71717a;
 }
 
 .location-btn {
   width: 100%;
-  padding: 0.55rem;
-  background: var(--accent-lavender-soft);
-  color: var(--accent-lavender);
-  border: 1px solid var(--accent-lavender-soft);
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  margin-top: auto;
+  border-radius: 0.75rem;
+  color: #18181b;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .location-btn:hover {
-  background: #ebe5ff;
+  background: #fff;
 }
 
-@media (max-width: 1200px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+.tile:focus-within,
+.nav-btn:focus-visible,
+.calendar-day:focus-visible,
+.location-btn:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1100px) {
+  .bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .content-grid {
-    grid-template-columns: 1fr;
+  .span-2,
+  .span-3,
+  .tile-feature {
+    grid-column: span 2;
+  }
+  .tile-stat {
+    aspect-ratio: auto;
+    min-height: 8rem;
   }
 }
 
-@media (max-width: 768px) {
-  .stats-grid {
+@media (max-width: 720px) {
+  .home-dashboard {
+    padding: 1rem;
+  }
+  .bento {
     grid-template-columns: 1fr;
+  }
+  .span-2,
+  .span-3,
+  .tile-feature {
+    grid-column: auto;
+  }
+  .tile-stat {
+    aspect-ratio: auto;
+    min-height: 8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile:hover,
+  .tile:active,
+  .todo-item:active,
+  .nav-btn:active,
+  .calendar-day:active,
+  .location-btn:active,
+  .tile:hover .tile-icon,
+  .todo-item:hover .todo-check {
+    transform: none;
   }
 }
 </style>

@@ -264,5 +264,38 @@ const handleOverlayClick = () => {
   transform: translateY(20px);
   opacity: 0;
 }
+
+.dialog-content {
+  border-radius: 1rem;
+  border: 1px solid #f4f4f5;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.btn,
+.description-input,
+.readonly-field {
+  border-radius: 0.75rem;
+}
+
+.description-input,
+.readonly-field {
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
+}
+
+.description-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary {
+  background: #18181b;
+  color: #fff;
+  border-color: #18181b;
+}
+
+.btn-primary:hover { background: #27272a; }
+.btn:active { transform: scale(0.98); }
 </style>
 

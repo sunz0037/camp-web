@@ -1,13 +1,13 @@
-/* 变体2 Minimal Elegant 色彩体系 */
+/* Bento Grid：锌色表面、16px 圆角、统一 1rem 间隙 */
 :root {
-  --primary-charcoal: #1a1a2e;
-  --accent-lavender: #a78bfa;
-  --accent-lavender-soft: #f3f0ff;
-  --bg-neutral: #f8f7f4;
-  --text-main: #1a1a2e;
+  --primary-charcoal: #18181b;
+  --accent-lavender: #2563eb;
+  --accent-lavender-soft: #eff6ff;
+  --bg-neutral: #fafafa;
+  --text-main: #18181b;
   --text-muted: #71717a;
-  --border-refined: #e8e7e1;
-  --card-shadow: 0 4px 24px -2px rgba(26, 26, 46, 0.03);
+  --border-refined: #f4f4f5;
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
   /* 兼容别名 */
   --primary-teal: var(--accent-lavender);
@@ -32,7 +32,7 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--bg-neutral);
@@ -41,4 +41,15 @@ body {
 
 #app {
   min-height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

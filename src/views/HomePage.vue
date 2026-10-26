@@ -1,14 +1,25 @@
 <template>
   <div class="home-page">
-    <SidebarMenu @logout="handleLogout" />
+    <button
+      v-if="menuOpen"
+      type="button"
+      class="scrim"
+      aria-label="关闭菜单"
+      @click="menuOpen = false"
+    ></button>
+    <SidebarMenu :mobile-open="menuOpen" @logout="handleLogout" />
 
     <div class="content-wrapper">
-      <!-- 顶部导航栏 - 玻璃拟态 -->
       <header class="header">
         <div class="header-content">
           <div class="header-left">
+            <button type="button" class="header-btn menu-toggle" aria-label="打开菜单" @click="menuOpen = true">
+              <iconify-icon icon="lucide:menu"></iconify-icon>
+            </button>
+            <div>
             <h2 class="header-title">{{ greeting }}，{{ getUserName() }}</h2>
-            <p class="header-subtitle">这是校园今日动态概览</p>
+            <p class="header-subtitle">{{ pageSubtitle }}</p>
+            </div>
           </div>
           <div class="header-right">
             <div class="search-wrap">
@@ -32,12 +43,23 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import SidebarMenu from '../components/SidebarMenu.vue'
 
 const router = useRouter()
+const route = useRoute()
 const searchKeyword = ref('')
+const menuOpen = ref(false)
+
+watch(() => route.path, () => {
+  menuOpen.value = false
+})
+
+const pageSubtitle = computed(() => {
+  if (route.name === 'HomeDashboard') return '这是校园今日动态概览'
+  return route.meta.title || '校园办公'
+})
 
 const greeting = computed(() => {
   const h = new Date().getHours()
@@ -78,7 +100,7 @@ const handleLogout = () => {
 
 .content-wrapper {
   flex: 1;
-  margin-left: 288px;
+  margin-left: 220px;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -87,11 +109,9 @@ const handleLogout = () => {
 }
 
 .header {
-  background: rgba(248, 247, 244, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-refined);
-  padding: 1rem 2.5rem;
+  background: #fff;
+  border-bottom: 1px solid #f4f4f5;
+  padding: 1rem 1.5rem;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -105,10 +125,30 @@ const handleLogout = () => {
   align-items: center;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.menu-toggle {
+  display: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
+  color: #18181b;
+}
+
+.scrim {
+  display: none;
+}
+
 .header-title {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-charcoal);
+  font-weight: 600;
+  color: #18181b;
   letter-spacing: -0.02em;
   margin: 0 0 0.25rem 0;
 }
@@ -123,7 +163,7 @@ const handleLogout = () => {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .search-wrap {
@@ -140,23 +180,25 @@ const handleLogout = () => {
 }
 
 .search-input {
-  width: 288px;
-  padding: 0.625rem 1rem 0.625rem 2.75rem;
-  background: white;
-  border: 1px solid var(--border-refined);
-  border-radius: 12px;
+  width: 18rem;
+  padding: 0.5rem 1rem 0.5rem 2.75rem;
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.75rem;
   font-size: 0.875rem;
-  color: var(--text-main);
-  transition: all 0.2s;
+  color: #18181b;
+  transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out;
 }
 
 .search-input::placeholder {
-  color: var(--text-muted);
+  color: #a1a1aa;
 }
 
 .search-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.2);
+  background: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .header-btn {
@@ -169,17 +211,23 @@ const handleLogout = () => {
 }
 
 .icon-btn {
-  width: 40px;
-  height: 40px;
-  background: white;
-  border: 1px solid var(--border-refined);
-  border-radius: 50%;
-  color: var(--primary-charcoal);
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.75rem;
+  color: #18181b;
   position: relative;
 }
 
 .icon-btn:hover {
-  background: var(--bg-slate-100);
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.icon-btn:active,
+.logout-btn:active {
+  transform: scale(0.95);
 }
 
 .icon-btn iconify-icon {
@@ -192,23 +240,22 @@ const handleLogout = () => {
   right: 0.625rem;
   width: 6px;
   height: 6px;
-  background: var(--accent-lavender);
+  background: #ea580c;
   border-radius: 50%;
   border: 2px solid white;
 }
 
 .logout-btn {
-  padding: 0.625rem 1.5rem;
-  background: var(--primary-charcoal);
+  padding: 0.5rem 1.5rem;
+  background: #18181b;
   color: white;
-  border-radius: 16px;
+  border-radius: 0.75rem;
   font-size: 0.875rem;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+  font-weight: 500;
 }
 
 .logout-btn:hover {
-  opacity: 0.9;
+  background: #27272a;
 }
 
 .main-content {
@@ -222,12 +269,36 @@ const handleLogout = () => {
   .content-wrapper {
     margin-left: 0;
   }
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    border: 0;
+    background: rgba(24, 24, 27, 0.4);
+  }
   .header-content {
     flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 0.75rem;
   }
+  .header-title {
+    font-size: 1.25rem;
+  }
+  .logout-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .search-wrap,
   .search-input {
+    width: 100%;
+  }
+  .header-right {
     width: 100%;
   }
 }

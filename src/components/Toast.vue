@@ -126,6 +126,27 @@ onUnmounted(() => {
   opacity: 0;
 }
 
+.toast {
+  border-radius: 1rem;
+  border: 1px solid #f4f4f5;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+.toast-info {
+  background: #18181b;
+  color: #fff;
+}
+
+.toast-success {
+  background: #15803d;
+  color: #fff;
+}
+
+.toast-error {
+  background: #b91c1c;
+  color: #fff;
+}
+
 .toast-leave-to {
   transform: translateX(100%);
   opacity: 0;
