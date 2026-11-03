@@ -916,20 +916,23 @@ td.muted {
   height: 36px;
   padding: 0 10px;
   border-radius: var(--radius-nav);
-  color: var(--c-muted);
+  color: var(--nav-fg);
   text-decoration: none;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--nav-weight);
 }
 
 .nav-link.active {
   background: var(--c-brand-soft);
-  color: var(--c-brand);
+  color: var(--nav-fg-active);
+  font-weight: var(--nav-weight);
   box-shadow: none;
 }
 
 .nav-link svg {
   flex: none;
+  color: currentColor;
+  stroke: currentColor;
 }
 
 .user-card {

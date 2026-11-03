@@ -22,6 +22,10 @@
 
   --c-text: #1E2140;
   --c-muted: #5F6482;
+  /* 侧栏导航：默认 #8B90A5，选中 #5B6CF0，字重 400 */
+  --nav-fg: #8B90A5;
+  --nav-fg-active: #5B6CF0;
+  --nav-weight: 400;
   --c-helper: #9aa0b8;
   --c-focus: #5b6cf0;
   --c-ok: #1f9c7c;
