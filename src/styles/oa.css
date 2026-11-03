@@ -29,12 +29,12 @@
 }
 
 .btn-primary {
-  background: var(--c-brand);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
 }
 
 .btn-primary:hover {
-  background: var(--c-brand-deep);
+  background: color-mix(in srgb, var(--btn-primary-bg) 86%, white);
 }
 
 .btn-warn {
@@ -295,7 +295,7 @@ table.data tbody tr:hover td {
 
 .pill-ok {
   background: #e5f4f1;
-  color: #24756c;
+  color: var(--c-brand);
 }
 
 .pill-warn {
@@ -699,6 +699,7 @@ table.data tbody tr:hover td {
 .nav-link.active {
   background: var(--c-brand-soft);
   color: var(--c-text);
+  box-shadow: inset 3px 0 0 var(--brand-600);
 }
 
 .nav-link svg {

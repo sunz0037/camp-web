@@ -38,7 +38,7 @@
           <label class="field-label" for="password">密码</label>
           <input id="password" v-model="password" class="field" type="password" autocomplete="current-password" placeholder="请输入密码" />
           <div class="login-meta">
-            <span>密码可在个人中心修改</span>
+            <span>演示密码 Demo@123456</span>
             <button type="button" @click="forgot = true">忘记密码？</button>
           </div>
           <p v-if="error" class="error-text">{{ error }}</p>

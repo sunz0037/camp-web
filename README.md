@@ -81,6 +81,8 @@ Axios 请求拦截器规则：
 
 年级编号：`1` 高一，`2` 高二，`3` 高三。班级编号与首期种子数据一致（如 `c13` 为高一(3)班）。
 
+演示账号密码与数据库种子一致，均为 `Demo@123456`。
+
 ### 启动开发服务器
 
 ```bash
@@ -145,7 +147,7 @@ npm run preview
   "identityType": 1,
   "identifier": "20240001",
   "realName": "张三",
-  "password": "123456"
+  "password": "Demo@123456"
 }
 ```
 
@@ -159,7 +161,7 @@ npm run preview
   "identityType": 1,
   "identifier": "20240001",
   "realName": "张三",
-  "password": "123456"
+  "password": "Demo@123456"
 }
 ```
 

@@ -1,0 +1,32 @@
+/* Design tokens v1.2
+   --brand-600 / --c-brand 只用于侧栏选中、竖向强调、品牌标记和图表。
+   登录、保存、新增等实心主按钮用 --btn-primary-bg，不用品牌绿。
+*/
+:root {
+  --brand-600: #24756c;
+  --c-brand: var(--brand-600);
+  --c-brand-deep: #1e5f58;
+  --c-brand-soft: #e7f3f0;
+
+  --btn-primary-bg: #1a2b2e;
+  --btn-primary-fg: #ffffff;
+
+  --c-canvas: #f5f6f4;
+  --c-card: #ffffff;
+  --c-subtle: #eef2f0;
+  --c-border: #dce5e2;
+  --c-text: #1a2b2e;
+  --c-muted: #6b7c82;
+  --c-focus: #3b82f6;
+  --c-warn: #f97316;
+  --c-warn-soft: #fff4eb;
+  --c-info-soft: #e8f1fb;
+
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-panel: 28px;
+  --sidebar-width: 220px;
+  --bento-gap: 16px;
+  --shadow-card: 0 1px 2px rgba(26, 43, 46, 0.04);
+  --font: 'Plus Jakarta Sans', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+}

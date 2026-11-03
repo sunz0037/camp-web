@@ -15,7 +15,7 @@ function defaultAccounts() {
     {
       id: 'u-admin',
       account: 'admin',
-      password: '123456',
+      password: 'Demo@123456',
       name: '系统管理员',
       role: 'ADMIN',
       actor: 'ADMIN',
@@ -35,7 +35,7 @@ function defaultAccounts() {
     {
       id: 'u-academic',
       account: 'A1001',
-      password: '123456',
+      password: 'Demo@123456',
       name: '周教务',
       role: 'ACADEMIC',
       actor: 'ACADEMIC',
@@ -55,7 +55,7 @@ function defaultAccounts() {
     {
       id: 't-wang',
       account: 'T1001',
-      password: '123456',
+      password: 'Demo@123456',
       name: '王老师',
       role: 'TEACHER',
       actor: 'TEACHER',
@@ -75,7 +75,7 @@ function defaultAccounts() {
     {
       id: 'u-zhao',
       account: 'T1002',
-      password: '123456',
+      password: 'Demo@123456',
       name: '赵老师',
       role: 'TEACHER',
       actor: 'TEACHER',
@@ -95,7 +95,7 @@ function defaultAccounts() {
     {
       id: 'u-liming',
       account: '20240101',
-      password: '123456',
+      password: 'Demo@123456',
       name: '李明',
       role: 'STUDENT',
       actor: 'STUDENT',
@@ -115,7 +115,7 @@ function defaultAccounts() {
     {
       id: 'u-parent',
       account: 'P1001',
-      password: '123456',
+      password: 'Demo@123456',
       name: '李建国',
       role: 'STUDENT',
       actor: 'PARENT',
@@ -136,7 +136,7 @@ function defaultAccounts() {
     {
       id: 'u-new',
       account: 'newstu',
-      password: '123456',
+      password: 'Demo@123456',
       name: '周宁',
       role: 'STUDENT',
       actor: 'STUDENT',
@@ -304,7 +304,7 @@ export const useAuthStore = defineStore('auth', {
       const created = {
         id: `u-${Date.now().toString(36)}`,
         account,
-        password: input.password || '123456',
+        password: input.password || 'Demo@123456',
         name: input.name.trim(),
         role,
         actor,

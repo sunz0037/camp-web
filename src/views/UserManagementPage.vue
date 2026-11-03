@@ -64,8 +64,8 @@
             <option value="PARENT">家长</option>
           </select>
           <label class="field-label">初始密码</label>
-          <input v-model="draft.password" class="field" placeholder="默认 123456" />
-          <p class="field-help">初始密码默认 123456，之后可在个人中心修改。</p>
+          <input v-model="draft.password" class="field" placeholder="默认 Demo@123456" />
+          <p class="field-help">初始密码默认 Demo@123456，与数据库种子一致，之后可在个人中心修改。</p>
           <p v-if="formError" class="error-text">{{ formError }}</p>
           <div class="form-actions">
             <button class="btn btn-primary" type="submit">保存</button>
@@ -87,7 +87,7 @@ const ui = useUiStore()
 const keyword = ref('')
 const open = ref(false)
 const formError = ref('')
-const draft = reactive({ account: '', name: '', role: 'TEACHER', password: '123456' })
+const draft = reactive({ account: '', name: '', role: 'TEACHER', password: 'Demo@123456' })
 
 const filtered = computed(() => {
   const query = keyword.value.trim()
