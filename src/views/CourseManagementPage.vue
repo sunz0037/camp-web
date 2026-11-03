@@ -41,7 +41,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in visibleSchedules" :key="item.id">
+            <tr v-for="item in visibleSchedules" :key="item.id" class="row-pick" :class="{ picked: pickedScheduleId === item.id }" @click="pickedScheduleId = item.id">
               <td>
                 {{ item.name }}
                 <small v-if="!item.courseId" class="muted"> · 未关联课程</small>
@@ -71,7 +71,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in courses" :key="item.id">
+            <tr v-for="item in courses" :key="item.id" class="row-pick" :class="{ picked: pickedCourseId === item.id }" @click="pickedCourseId = item.id">
               <td class="num">{{ item.code || item.id }}</td>
               <td>{{ item.name }}</td>
               <td class="num">{{ lessonsOf(item.id) }}</td>
@@ -83,11 +83,18 @@
 
     <section v-if="tab !== 'week'" class="card preview-card">
       <h2>表单预览</h2>
-      <div v-if="preview" class="preview-grid">
+      <div v-if="preview && preview.kind === 'course'" class="preview-grid">
+        <div><span class="k">课程编号</span><span class="v num">{{ preview.code || '—' }}</span></div>
+        <div><span class="k">课程名称</span><span class="v">{{ preview.name || '—' }}</span></div>
+        <div><span class="k">已排课时</span><span class="v num">{{ preview.lessons ?? '—' }}</span></div>
+      </div>
+      <div v-else-if="preview" class="preview-grid">
         <div><span class="k">课程</span><span class="v">{{ preview.name || '—' }}</span></div>
         <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
         <div><span class="k">教师</span><span class="v">{{ preview.teacher || '—' }}</span></div>
+        <div><span class="k">星期</span><span class="v">{{ preview.weekday ? weekdayLabel(preview.weekday) : '—' }}</span></div>
         <div><span class="k">节次</span><span class="v num">{{ preview.periodStart ? `${preview.periodStart}-${preview.periodEnd}` : '—' }}</span></div>
+        <div><span class="k">教室</span><span class="v num">{{ preview.roomNo || '—' }}</span></div>
       </div>
       <p v-else class="sub">选择授课或新增课程后，在这里预览。</p>
     </section>
@@ -193,6 +200,8 @@ const className = ref('')
 const keyword = ref('')
 const courseEditor = ref(null)
 const scheduleEditor = ref(null)
+const pickedScheduleId = ref('')
+const pickedCourseId = ref('')
 const formError = ref('')
 const loadError = ref('')
 
@@ -216,7 +225,23 @@ const visibleSchedules = computed(() => {
   })
 })
 
-const preview = computed(() => scheduleEditor.value || courseEditor.value || visibleSchedules.value[0] || courses.value[0] || null)
+const preview = computed(() => {
+  if (courseEditor.value || tab.value === 'library') {
+    if (courseEditor.value) {
+      return { kind: 'course', code: courseEditor.value.code, name: courseEditor.value.name, lessons: '—' }
+    }
+    const item = courses.value.find((row) => row.id === pickedCourseId.value) || courses.value[0]
+    if (!item) return null
+    return { kind: 'course', code: item.code || item.id, name: item.name, lessons: lessonsOf(item.id) }
+  }
+  if (scheduleEditor.value) {
+    const form = scheduleEditor.value
+    const linked = courses.value.find((row) => String(row.id) === String(form.courseId))
+    return { kind: 'schedule', ...form, name: form.name || linked?.name || '' }
+  }
+  const item = visibleSchedules.value.find((row) => row.id === pickedScheduleId.value) || visibleSchedules.value[0]
+  return item ? { kind: 'schedule', ...item } : null
+})
 const mine = computed(() => {
   if (auth.user?.role === 'TEACHER') return schedules.value.filter((item) => item.teacher === auth.user.name)
   if (auth.user?.className) return schedules.value.filter((item) => item.className === auth.user.className)

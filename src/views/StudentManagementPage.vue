@@ -30,7 +30,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in pageRows" :key="item.id">
+            <tr v-for="item in pageRows" :key="item.id" class="row-pick" :class="{ picked: selectedId === item.id }" @click="selectedId = item.id">
               <td class="num">{{ item.studentNo }}</td>
               <td>{{ item.name }}</td>
               <td>{{ item.className }}</td>
@@ -68,7 +68,9 @@
       <div v-if="preview" class="preview-grid">
         <div><span class="k">学号</span><span class="v num">{{ preview.studentNo || '—' }}</span></div>
         <div><span class="k">姓名</span><span class="v">{{ preview.name || '—' }}</span></div>
+        <div><span class="k">性别</span><span class="v">{{ preview.gender || '—' }}</span></div>
         <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
+        <div><span class="k">手机</span><span class="v num">{{ previewPhone }}</span></div>
         <div><span class="k">学籍</span><span class="v">{{ preview.status || '—' }}</span></div>
       </div>
       <p v-else class="sub">选择一行或点击新增，这里显示表单内容。</p>
@@ -208,6 +210,7 @@ function netHint(message) {
   return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
 }
 const editor = ref(null)
+const selectedId = ref('')
 const detail = ref(null)
 const detailContacts = ref([])
 const formError = ref('')
@@ -221,7 +224,14 @@ const missing = ref(0)
 const scopeText = computed(() => scopeLabel(auth.user, classOptions.value.map((item) => item.name)))
 const allowedClassNames = computed(() => classOptions.value.map((item) => item.name))
 const filtered = computed(() => rows.value)
-const preview = computed(() => editor.value || detail.value || pageRows.value[0] || null)
+const preview = computed(() => {
+  if (editor.value) return editor.value
+  return pageRows.value.find((item) => item.id === selectedId.value) || detail.value || pageRows.value[0] || null
+})
+const previewPhone = computed(() => {
+  if (!preview.value?.phone) return '—'
+  return editor.value ? preview.value.phone : maskPhone(preview.value.phone)
+})
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const pageRows = computed(() => rows.value)
 const pageList = computed(() => Array.from({ length: pageCount.value }, (_, index) => index + 1).filter((n) => {

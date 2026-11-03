@@ -7,7 +7,7 @@
     </section>
 
     <section class="card table-card">
-      <article v-for="item in ordered" :key="item.id" class="news news-row">
+      <article v-for="item in ordered" :key="item.id" class="news news-row row-pick" :class="{ picked: pickedId === item.id }" @click="pickedId = item.id">
         <div class="news-main">
           <strong>
             <span v-if="item.pinned" class="pill pill-pin" style="margin-right: 8px">置顶</span>
@@ -29,8 +29,10 @@
       <h2>表单预览</h2>
       <div v-if="preview" class="preview-grid">
         <div><span class="k">标题</span><span class="v">{{ preview.title || '—' }}</span></div>
-        <div><span class="k">范围</span><span class="v">{{ preview.scope || draft.scope || '—' }}</span></div>
+        <div><span class="k">范围</span><span class="v">{{ preview.scope || '—' }}</span></div>
         <div><span class="k">发布人</span><span class="v">{{ preview.author || auth.user?.name || '—' }}</span></div>
+        <div><span class="k">时间</span><span class="v num">{{ preview.publishedAt || (open ? '待发布' : '—') }}</span></div>
+        <div><span class="k">置顶</span><span class="v">{{ preview.pinned ? '是' : '否' }}</span></div>
         <div><span class="k">正文</span><span class="v">{{ preview.body || '—' }}</span></div>
       </div>
       <p v-else class="sub">选择一条公告，或填写发布表单后在这里预览。</p>
@@ -101,6 +103,7 @@ function netHint(message) {
 }
 const items = ref([])
 const keyword = ref('')
+const pickedId = ref('')
 const draft = reactive({ title: '', body: '', scope: '全校', pinned: false })
 const userId = computed(() => auth.user?.id || '')
 const canPublish = computed(() => auth.can('announcement:publish') && !isMobile.value)
@@ -121,7 +124,19 @@ const ordered = computed(() => {
     .filter((item) => !query || `${item.title}${item.author}`.includes(query))
     .sort((a, b) => Number(b.pinned) - Number(a.pinned) || String(b.publishedAt).localeCompare(String(a.publishedAt)))
 })
-const preview = computed(() => current.value || (draft.title || draft.body ? draft : null) || ordered.value[0] || null)
+const preview = computed(() => {
+  if (open.value) {
+    return {
+      title: draft.title,
+      scope: draft.scope,
+      author: auth.user?.name || '',
+      body: draft.body,
+      pinned: draft.pinned,
+      publishedAt: ''
+    }
+  }
+  return ordered.value.find((item) => item.id === pickedId.value) || current.value || ordered.value[0] || null
+})
 
 async function load() {
   loadError.value = ''

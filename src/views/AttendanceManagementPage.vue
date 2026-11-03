@@ -68,7 +68,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in summaryRows" :key="item.id" @click="className = item.className">
+              <tr v-for="item in summaryRows" :key="item.id" class="row-pick" :class="{ picked: pickedKey === item.id }" @click="pickedKey = item.id; className = item.className">
                 <td class="num">{{ item.date }}</td>
                 <td>{{ item.className }}</td>
                 <td>
@@ -97,7 +97,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in anomalies" :key="item.key">
+              <tr v-for="item in anomalies" :key="item.key" class="row-pick" :class="{ picked: pickedKey === item.key }" @click="pickedKey = item.key">
                 <td class="num">{{ item.date }}</td>
                 <td class="num">{{ item.studentNo }}</td>
                 <td>{{ item.name }}</td>
@@ -116,11 +116,22 @@
 
     <section v-if="!personal" class="card preview-card">
       <h2>表单预览</h2>
-      <div v-if="preview" class="preview-grid">
+      <div v-if="preview && preview.kind === 'anomaly'" class="preview-grid">
+        <div><span class="k">日期</span><span class="v num">{{ preview.date || '—' }}</span></div>
+        <div><span class="k">学号</span><span class="v num">{{ preview.studentNo || '—' }}</span></div>
+        <div><span class="k">姓名</span><span class="v">{{ preview.name || '—' }}</span></div>
+        <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
+        <div><span class="k">课程</span><span class="v">{{ preview.courseName || '—' }}</span></div>
+        <div><span class="k">类型</span><span class="v">{{ ATTENDANCE_LABEL[preview.status] || preview.status || '—' }}</span></div>
+      </div>
+      <div v-else-if="preview" class="preview-grid">
         <div><span class="k">日期</span><span class="v num">{{ preview.date || '—' }}</span></div>
         <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
         <div><span class="k">课程</span><span class="v">{{ preview.courseName || '—' }}</span></div>
-        <div><span class="k">应到 / 实到</span><span class="v num">{{ preview.expected ?? '—' }} / {{ preview.actual ?? '—' }}</span></div>
+        <div><span class="k">应到</span><span class="v num">{{ preview.expected ?? '—' }}</span></div>
+        <div><span class="k">实到</span><span class="v num">{{ preview.actual ?? '—' }}</span></div>
+        <div><span class="k">请假 / 迟到</span><span class="v num">{{ preview.leaveOrLate ?? '—' }}</span></div>
+        <div><span class="k">旷课</span><span class="v num">{{ preview.absent ?? '—' }}</span></div>
       </div>
       <p v-else class="sub">选择一条日报，或登记后在这里预览。</p>
     </section>
@@ -199,6 +210,7 @@ const ui = useUiStore()
 const route = useRoute()
 const { isMobile } = useViewport()
 const tab = ref('summary')
+const pickedKey = ref('')
 const className = ref('')
 const date = ref(todayISO())
 const recorder = ref(null)
@@ -235,16 +247,32 @@ const preview = computed(() => {
       if (counts[row.status] !== undefined) counts[row.status] += 1
     })
     return {
+      kind: 'summary',
       date: recorder.value.date,
       className: recorder.value.className,
-      courseName: courseChoices.value.find((item) => String(item.id) === String(recorder.value.courseKey))?.name || '班级日报',
+      courseName: courseChoices.value.find((item) => String(item.id) === String(recorder.value.courseKey))?.name || '不关联课程',
       expected: recorder.value.rows.length,
-      actual: counts.present
+      actual: counts.present,
+      leaveOrLate: counts.leave + counts.late,
+      absent: counts.absent
     }
   }
-  const row = summaryRows.value[0]
+  if (tab.value === 'anomaly') {
+    const row = anomalies.value.find((item) => item.key === pickedKey.value) || anomalies.value[0]
+    return row ? { kind: 'anomaly', ...row } : null
+  }
+  const row = summaryRows.value.find((item) => item.id === pickedKey.value) || summaryRows.value[0]
   if (!row) return null
-  return { date: row.date, className: row.className, courseName: row.courseName, expected: row.summary.expected, actual: row.summary.actual }
+  return {
+    kind: 'summary',
+    date: row.date,
+    className: row.className,
+    courseName: row.courseName,
+    expected: row.summary.expected,
+    actual: row.summary.actual,
+    leaveOrLate: row.summary.leaveOrLate,
+    absent: row.summary.absent
+  }
 })
 
 function pillOf(status) {
