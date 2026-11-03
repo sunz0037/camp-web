@@ -16,7 +16,7 @@
 }
 
 .btn:hover {
-  background: #e4ebe8;
+  background: #e3e4ee;
 }
 
 .btn:active {
@@ -43,7 +43,7 @@
 }
 
 .btn-warn:hover {
-  background: #ea6a0c;
+  background: color-mix(in srgb, var(--c-warn) 88%, black);
 }
 
 .btn-ghost {
@@ -69,7 +69,7 @@
 .textarea {
   width: 100%;
   border: 1px solid transparent;
-  background: #f3f5f4;
+  background: var(--c-subtle);
   border-radius: var(--radius-control);
   padding: 0 14px;
   height: 44px;
@@ -219,7 +219,7 @@ table.data th {
   font-size: 13px;
   font-weight: 600;
   color: var(--c-muted);
-  background: #f6f8f7;
+  background: var(--c-table-head);
   padding: 12px 16px;
   white-space: nowrap;
 }
@@ -232,7 +232,7 @@ table.data td {
 }
 
 table.data tbody tr:hover td {
-  background: #fbfcfb;
+  background: var(--c-table-head);
 }
 
 .table-foot {
@@ -294,13 +294,13 @@ table.data tbody tr:hover td {
 }
 
 .pill-ok {
-  background: #e5f4f1;
-  color: var(--c-brand);
+  background: var(--c-ok-soft);
+  color: var(--c-ok);
 }
 
 .pill-warn {
-  background: #fff4e5;
-  color: #b86a12;
+  background: var(--c-coral-soft);
+  color: #c26552;
 }
 
 .pill-muted {
@@ -310,19 +310,19 @@ table.data tbody tr:hover td {
 
 .pill-info {
   background: var(--c-info-soft);
-  color: #2563eb;
+  color: var(--c-brand);
 }
 
 .pill-pin {
-  background: #e7f3f0;
-  color: var(--c-brand);
+  background: var(--c-accent-soft);
+  color: #7c5fd4;
 }
 
 .linkish {
   border: 0;
   background: none;
   padding: 0 4px;
-  color: #3d4c50;
+  color: var(--c-brand);
   font-weight: 600;
   font-size: 13px;
 }
@@ -511,7 +511,7 @@ table.data tbody tr:hover td {
   gap: 10px;
   margin-top: 10px;
   padding: 12px 14px;
-  background: #f4f6f5;
+  background: var(--c-subtle);
   border-radius: 12px;
   font-size: 14px;
 }
@@ -668,7 +668,7 @@ table.data tbody tr:hover td {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: var(--c-brand);
+  background: var(--c-logo);
   color: #fff;
   display: grid;
   place-items: center;
@@ -698,8 +698,8 @@ table.data tbody tr:hover td {
 
 .nav-link.active {
   background: var(--c-brand-soft);
-  color: var(--c-text);
-  box-shadow: inset 3px 0 0 var(--brand-600);
+  color: var(--c-brand);
+  box-shadow: none;
 }
 
 .nav-link svg {
@@ -709,7 +709,7 @@ table.data tbody tr:hover td {
 .user-card {
   margin: 12px;
   padding: 12px;
-  background: #f4f6f5;
+  background: var(--c-subtle);
   border-radius: 16px;
 }
 
@@ -723,7 +723,7 @@ table.data tbody tr:hover td {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--c-brand);
+  background: var(--c-logo);
   color: #fff;
   display: grid;
   place-items: center;
@@ -738,7 +738,7 @@ table.data tbody tr:hover td {
 }
 
 .user-row span {
-  color: var(--c-focus);
+  color: var(--c-brand);
   font-size: 12px;
   font-weight: 650;
 }
@@ -807,7 +807,7 @@ table.data tbody tr:hover td {
 .board-cell,
 .board-period {
   min-height: 72px;
-  background: #f6f8f7;
+  background: var(--c-subtle);
   border-radius: 12px;
   padding: 8px;
 }
@@ -862,7 +862,7 @@ table.data tbody tr:hover td {
 .contact-list li {
   list-style: none;
   padding: 10px 12px;
-  background: #f6f8f7;
+  background: var(--c-subtle);
   border-radius: 12px;
   display: flex;
   justify-content: space-between;
@@ -881,7 +881,7 @@ table.data tbody tr:hover td {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
-  background: #f6f8f7;
+  background: var(--c-subtle);
   border-radius: 12px;
 }
 
@@ -944,7 +944,7 @@ table.data tbody tr:hover td {
 }
 
 .brand-panel {
-  background: var(--c-brand-deep);
+  background: var(--c-logo);
   color: #fff;
   border-radius: var(--radius-panel);
   padding: 36px 32px;
@@ -969,7 +969,7 @@ table.data tbody tr:hover td {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #8ee0d4;
+  background: #ffffff;
 }
 
 .brand-panel h1 {
@@ -1007,7 +1007,7 @@ table.data tbody tr:hover td {
   height: 8px;
   margin-top: 6px;
   border-radius: 50%;
-  background: #8ee0d4;
+  background: #ffffff;
   flex: none;
 }
 
@@ -1256,7 +1256,8 @@ table.data tbody tr:hover td {
   }
 
   .tab.active {
-    color: var(--btn-primary-bg);
+    color: var(--c-brand);
+    background: transparent;
   }
 }
 
