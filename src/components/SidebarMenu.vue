@@ -198,7 +198,7 @@ onMounted(() => {
 
 <style scoped>
 .sidebar-menu {
-  width: 220px;
+  width: 264px;
   height: 100vh;
   background: #fff;
   border-right: 1px solid #f4f4f5;

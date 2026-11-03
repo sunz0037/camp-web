@@ -712,6 +712,33 @@ table.data tbody tr:hover td {
   gap: 10px;
 }
 
+.note-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-control);
+  background: #fff;
+  color: var(--c-text);
+  display: grid;
+  place-items: center;
+}
+
+.note-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: var(--c-danger);
+  color: #fff;
+  font-size: 10px;
+  line-height: 14px;
+  font-weight: 700;
+}
+
 .top-user strong,
 .top-user span {
   display: block;

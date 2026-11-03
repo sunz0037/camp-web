@@ -31,6 +31,10 @@
           <span>搜索菜单</span>
         </button>
         <div class="top-user">
+          <button class="note-btn" type="button" aria-label="通知">
+            <AppIcon name="Bell" :size="16" />
+            <span class="note-badge">3</span>
+          </button>
           <div class="avatar">{{ avatar }}</div>
           <div>
             <strong>{{ auth.user?.name }}</strong>
