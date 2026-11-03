@@ -104,7 +104,10 @@ const avatar = computed(() => {
 })
 
 const blocked = computed(() => isMobile.value && route.meta.pcOnly === true)
-const crumb = computed(() => route.meta.title || '工作台')
+const crumb = computed(() => {
+  const item = PHASE_ROUTES.find((entry) => entry.name === route.name)
+  return item ? navLabel(item, auth.user?.role) : (route.meta.title || '工作台')
+})
 
 function logout() {
   auth.logout()

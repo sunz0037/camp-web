@@ -1,14 +1,5 @@
 <template>
   <div class="page">
-    <header class="page-head">
-      <div>
-        <h1>学生信息</h1>
-        <p>所辖班级名册 · 筛选与批量操作</p>
-        <p class="scope-line">数据范围 · {{ scopeText }}</p>
-        <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
-      </div>
-    </header>
-
     <section class="card filters">
       <div class="seg">
         <button type="button" :class="{ active: grade === '全部年级' }" @click="setGrade('全部年级')">全部年级</button>
@@ -19,6 +10,7 @@
       <input v-model="keyword" class="field" placeholder="搜索姓名 / 学号" />
       <button v-if="auth.can('student:import')" class="btn btn-ghost" type="button" @click="openImport = true">导入</button>
       <button class="btn btn-ghost" type="button" @click="exportCsv">导出</button>
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       <button v-if="auth.can('student:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
     </section>
 

@@ -1,14 +1,5 @@
 <template>
   <div class="page stack">
-    <header class="page-head">
-      <div>
-        <h1>课程与排课</h1>
-        <p>课程库与班级授课。节次记为开始节次至结束节次。</p>
-        <p class="scope-line">数据范围 · {{ scopeText }}</p>
-        <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
-      </div>
-    </header>
-
     <div class="seg">
       <button type="button" :class="{ active: tab === 'schedules' }" @click="tab = 'schedules'">班级授课</button>
       <button type="button" :class="{ active: tab === 'library' }" @click="tab = 'library'">课程库</button>
@@ -25,12 +16,15 @@
         <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
       </select>
       <input v-model="keyword" class="field" placeholder="搜索课程 / 教师 / 教室" />
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       <button v-if="auth.can('course:write')" class="btn btn-primary" type="button" @click="openSchedule()">+ 新增</button>
     </section>
 
     <section v-else-if="tab === 'library'" class="card filters">
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       <button v-if="auth.can('course:write')" class="btn btn-primary" type="button" @click="openCourse()">+ 新增</button>
     </section>
+    <p v-else-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
 
     <section v-if="tab === 'schedules'" class="card table-card">
       <div class="table-scroll">

@@ -1,16 +1,8 @@
 <template>
   <div class="page stack">
-    <header class="page-head">
-      <div>
-        <h1>校园公告</h1>
-        <p>{{ isMobile ? '手机端只浏览，发布请用电脑办理。' : '发布、置顶与已读回执。' }}</p>
-        <p class="scope-line">数据范围 · {{ scopeText }}</p>
-        <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
-      </div>
-    </header>
-
     <section class="card filters">
       <input v-model="keyword" class="field" placeholder="搜索标题 / 发布人" />
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       <button v-if="canPublish" class="btn btn-primary" type="button" @click="open = true">发布</button>
     </section>
 

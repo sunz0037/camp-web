@@ -248,12 +248,12 @@ table.data th {
   font-weight: 600;
   color: var(--c-muted);
   background: var(--c-table-head);
-  padding: 14px 24px;
+  padding: 10px 16px;
   white-space: nowrap;
 }
 
 table.data td {
-  padding: 16px 24px;
+  padding: 10px 16px;
   border-top: 1px solid var(--c-border);
   vertical-align: middle;
   white-space: nowrap;
@@ -837,6 +837,12 @@ td.muted {
   margin-left: auto;
 }
 
+.filters .load-hint,
+.filters .error-text {
+  margin: 0;
+  white-space: nowrap;
+}
+
 .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
@@ -846,7 +852,7 @@ td.muted {
   display: flex;
   flex-direction: column;
   z-index: 20;
-  padding: 24px 16px;
+  padding: 16px 12px;
 }
 
 .brand {
@@ -884,9 +890,9 @@ td.muted {
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 40px;
-  padding: 0 12px;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px;
   border-radius: var(--radius-nav);
   color: var(--c-muted);
   text-decoration: none;

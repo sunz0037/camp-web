@@ -1,11 +1,5 @@
 <template>
   <div class="page stack">
-    <header class="page-head">
-      <div>
-        <h1>用户账号</h1>
-        <p>仅管理员可维护。家长与学生使用同一套学生界面。</p>
-      </div>
-    </header>
     <section class="card filters">
       <input v-model="keyword" class="field" placeholder="搜索姓名 / 账号" />
       <button class="btn btn-primary" type="button" @click="open = true">+ 新增</button>

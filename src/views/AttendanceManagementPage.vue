@@ -1,15 +1,7 @@
 <template>
   <div class="page stack">
-    <header class="page-head">
-      <div>
-        <h1>{{ isMobile || auth.user?.role === 'STUDENT' ? '我的考勤' : '考勤管理' }}</h1>
-        <p>{{ isMobile || auth.user?.role === 'STUDENT' ? '只读查看。登记日报请用电脑办理。' : '班级日报汇总与异常明细。课程可以不关联。' }}</p>
-        <p class="scope-line">数据范围 · {{ scopeText }}</p>
-        <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
-      </div>
-    </header>
-
     <template v-if="personal">
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       <section class="card table-card">
         <div class="table-scroll">
           <table class="data">
@@ -57,6 +49,7 @@
           <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
         </select>
         <input v-model="date" class="field" type="date" />
+        <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
         <button v-if="canRecord" class="btn btn-primary" type="button" @click="openRecord()">+ 新增</button>
       </section>
 
