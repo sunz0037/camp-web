@@ -36,7 +36,7 @@
             <strong>{{ auth.user?.name }}</strong>
             <span>{{ auth.user?.title }}</span>
           </div>
-          <button class="btn btn-ghost" type="button" @click="logout">退出</button>
+          <button class="btn btn-danger" type="button" @click="logout">退出登录</button>
         </div>
       </header>
       <PcOnly v-if="blocked" />

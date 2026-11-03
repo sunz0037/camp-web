@@ -7,9 +7,6 @@
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
         <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
-      <div class="head-actions">
-        <button v-if="auth.can('course:write')" class="btn btn-primary" type="button" @click="tab === 'library' ? openCourse() : openSchedule()">+ 新增</button>
-      </div>
     </header>
 
     <div class="seg">
@@ -28,6 +25,11 @@
         <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
       </select>
       <input v-model="keyword" class="field" placeholder="搜索课程 / 教师 / 教室" />
+      <button v-if="auth.can('course:write')" class="btn btn-primary" type="button" @click="openSchedule()">+ 新增</button>
+    </section>
+
+    <section v-else-if="tab === 'library'" class="card filters">
+      <button v-if="auth.can('course:write')" class="btn btn-primary" type="button" @click="openCourse()">+ 新增</button>
     </section>
 
     <section v-if="tab === 'schedules'" class="card table-card">
@@ -87,12 +89,12 @@
 
     <section v-if="tab !== 'week'" class="card preview-card">
       <h2>表单预览</h2>
-      <dl v-if="preview" class="dl">
-        <dt>课程</dt><dd>{{ preview.name || '—' }}</dd>
-        <dt>班级</dt><dd>{{ preview.className || '—' }}</dd>
-        <dt>教师</dt><dd>{{ preview.teacher || '—' }}</dd>
-        <dt>节次</dt><dd class="num">{{ preview.periodStart ? `${preview.periodStart}-${preview.periodEnd}` : '—' }}</dd>
-      </dl>
+      <div v-if="preview" class="preview-grid">
+        <div><span class="k">课程</span><span class="v">{{ preview.name || '—' }}</span></div>
+        <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
+        <div><span class="k">教师</span><span class="v">{{ preview.teacher || '—' }}</span></div>
+        <div><span class="k">节次</span><span class="v num">{{ preview.periodStart ? `${preview.periodStart}-${preview.periodEnd}` : '—' }}</span></div>
+      </div>
       <p v-else class="sub">选择授课或新增课程后，在这里预览。</p>
     </section>
 

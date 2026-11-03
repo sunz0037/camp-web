@@ -7,15 +7,6 @@
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
         <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
-      <div class="head-actions">
-        <button v-if="auth.can('student:import')" class="btn btn-ghost" type="button" @click="openImport = true">
-          <AppIcon name="Upload" :size="16" /> 导入
-        </button>
-        <button class="btn btn-ghost" type="button" @click="exportCsv">
-          <AppIcon name="Download" :size="16" /> 导出
-        </button>
-        <button v-if="auth.can('student:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
-      </div>
     </header>
 
     <section class="card filters">
@@ -26,6 +17,9 @@
         </button>
       </div>
       <input v-model="keyword" class="field" placeholder="搜索姓名 / 学号" />
+      <button v-if="auth.can('student:import')" class="btn btn-ghost" type="button" @click="openImport = true">导入</button>
+      <button class="btn btn-ghost" type="button" @click="exportCsv">导出</button>
+      <button v-if="auth.can('student:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
     </section>
 
     <section class="card table-card">
@@ -79,12 +73,12 @@
 
     <section class="card preview-card">
       <h2>表单预览</h2>
-      <dl v-if="preview" class="dl">
-        <dt>学号</dt><dd class="num">{{ preview.studentNo || '—' }}</dd>
-        <dt>姓名</dt><dd>{{ preview.name || '—' }}</dd>
-        <dt>班级</dt><dd>{{ preview.className || '—' }}</dd>
-        <dt>学籍</dt><dd>{{ preview.status || '—' }}</dd>
-      </dl>
+      <div v-if="preview" class="preview-grid">
+        <div><span class="k">学号</span><span class="v num">{{ preview.studentNo || '—' }}</span></div>
+        <div><span class="k">姓名</span><span class="v">{{ preview.name || '—' }}</span></div>
+        <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
+        <div><span class="k">学籍</span><span class="v">{{ preview.status || '—' }}</span></div>
+      </div>
       <p v-else class="sub">选择一行或点击新增，这里显示表单内容。</p>
     </section>
 

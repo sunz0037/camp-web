@@ -7,11 +7,11 @@
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
         <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
-      <button v-if="canPublish" class="btn btn-primary" type="button" @click="open = true">发布</button>
     </header>
 
     <section class="card filters">
       <input v-model="keyword" class="field" placeholder="搜索标题 / 发布人" />
+      <button v-if="canPublish" class="btn btn-primary" type="button" @click="open = true">发布</button>
     </section>
 
     <section class="card table-card">
@@ -35,12 +35,12 @@
 
     <section class="card preview-card">
       <h2>表单预览</h2>
-      <dl v-if="preview" class="dl">
-        <dt>标题</dt><dd>{{ preview.title || '—' }}</dd>
-        <dt>范围</dt><dd>{{ preview.scope || draft.scope || '—' }}</dd>
-        <dt>发布人</dt><dd>{{ preview.author || auth.user?.name || '—' }}</dd>
-        <dt>正文</dt><dd>{{ preview.body || '—' }}</dd>
-      </dl>
+      <div v-if="preview" class="preview-grid">
+        <div><span class="k">标题</span><span class="v">{{ preview.title || '—' }}</span></div>
+        <div><span class="k">范围</span><span class="v">{{ preview.scope || draft.scope || '—' }}</span></div>
+        <div><span class="k">发布人</span><span class="v">{{ preview.author || auth.user?.name || '—' }}</span></div>
+        <div><span class="k">正文</span><span class="v">{{ preview.body || '—' }}</span></div>
+      </div>
       <p v-else class="sub">选择一条公告，或填写发布表单后在这里预览。</p>
     </section>
 

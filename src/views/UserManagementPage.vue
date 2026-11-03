@@ -5,10 +5,10 @@
         <h1>用户账号</h1>
         <p>仅管理员可维护。家长与学生使用同一套学生界面。</p>
       </div>
-      <button class="btn btn-primary" type="button" @click="open = true">新增账号</button>
     </header>
     <section class="card filters">
       <input v-model="keyword" class="field" placeholder="搜索姓名 / 账号" />
+      <button class="btn btn-primary" type="button" @click="open = true">+ 新增</button>
     </section>
     <section class="card table-card">
       <div class="table-scroll">
@@ -27,11 +27,11 @@
               <td class="num">{{ item.account }}</td>
               <td>{{ item.name }}</td>
               <td>{{ item.actor === 'PARENT' ? '家长' : item.title }}</td>
-              <td><span class="pill" :class="item.status === '启用' ? 'pill-ok' : 'pill-muted'">{{ item.status }}</span></td>
+              <td><span class="pill" :class="item.status === '启用' ? 'pill-on' : 'pill-ok'">{{ item.status === '启用' ? '启用' : '禁用' }}</span></td>
               <td>
                 <button
                   v-if="item.id !== auth.user?.id"
-                  class="linkish"
+                  :class="item.status === '启用' ? 'link-danger' : 'linkish'"
                   type="button"
                   @click="toggle(item)"
                 >
@@ -41,6 +41,15 @@
             </tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <section class="card preview-card">
+      <h2>表单预览</h2>
+      <div class="preview-grid">
+        <div><span class="k">账号</span><span class="v">{{ formPreview.account || '—' }}</span></div>
+        <div><span class="k">姓名</span><span class="v">{{ formPreview.name || '—' }}</span></div>
+        <div><span class="k">身份</span><span class="v">{{ formPreview.roleLabel }}</span></div>
       </div>
     </section>
 
@@ -89,9 +98,24 @@ const open = ref(false)
 const formError = ref('')
 const draft = reactive({ account: '', name: '', role: 'TEACHER', password: 'Demo@123456' })
 
+const roleLabel = { ADMIN: '管理员', ACADEMIC: '教务', TEACHER: '教师', STUDENT: '学生', PARENT: '家长' }
+
 const filtered = computed(() => {
   const query = keyword.value.trim()
   return auth.accounts.filter((item) => !query || `${item.name}${item.account}`.includes(query))
+})
+
+const formPreview = computed(() => {
+  if (open.value) {
+    return { account: draft.account, name: draft.name, roleLabel: roleLabel[draft.role] || draft.role }
+  }
+  const item = filtered.value[0]
+  if (!item) return { account: '', name: '', roleLabel: '—' }
+  return {
+    account: item.account,
+    name: item.name,
+    roleLabel: item.actor === 'PARENT' ? '家长' : item.title
+  }
 })
 
 function toggle(item) {

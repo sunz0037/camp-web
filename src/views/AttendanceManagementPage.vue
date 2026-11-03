@@ -7,7 +7,6 @@
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
         <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
-      <button v-if="canRecord" class="btn btn-primary" type="button" @click="openRecord()">+ 新增</button>
     </header>
 
     <template v-if="personal">
@@ -58,6 +57,7 @@
           <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
         </select>
         <input v-model="date" class="field" type="date" />
+        <button v-if="canRecord" class="btn btn-primary" type="button" @click="openRecord()">+ 新增</button>
       </section>
 
       <section class="card table-card">
@@ -123,12 +123,12 @@
 
     <section v-if="!personal" class="card preview-card">
       <h2>表单预览</h2>
-      <dl v-if="preview" class="dl">
-        <dt>日期</dt><dd class="num">{{ preview.date || '—' }}</dd>
-        <dt>班级</dt><dd>{{ preview.className || '—' }}</dd>
-        <dt>课程</dt><dd>{{ preview.courseName || '—' }}</dd>
-        <dt>应到 / 实到</dt><dd class="num">{{ preview.expected ?? '—' }} / {{ preview.actual ?? '—' }}</dd>
-      </dl>
+      <div v-if="preview" class="preview-grid">
+        <div><span class="k">日期</span><span class="v num">{{ preview.date || '—' }}</span></div>
+        <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
+        <div><span class="k">课程</span><span class="v">{{ preview.courseName || '—' }}</span></div>
+        <div><span class="k">应到 / 实到</span><span class="v num">{{ preview.expected ?? '—' }} / {{ preview.actual ?? '—' }}</span></div>
+      </div>
       <p v-else class="sub">选择一条日报，或登记后在这里预览。</p>
     </section>
 

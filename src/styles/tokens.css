@@ -1,12 +1,12 @@
-/* Token v1.3 — 对齐 Framer /users /roles /classes。废除青绿 v1.2 整站铺色。 */
+/* 对齐 /users 规格。主色靛蓝，废除青绿整站铺色。 */
 :root {
   --canvas: #f7f7fb;
   --c-canvas: var(--canvas);
   --c-card: #ffffff;
   --c-surface: #ffffff;
-  --c-subtle: #ecedf5;
-  --c-table-head: #fafafd;
-  --c-border: #ecedf5;
+  --c-subtle: #f7f7fb;
+  --c-table-head: #FAFAFD;
+  --c-border: #E7E8F2;
 
   --brand-600: #5b6cf0;
   --c-brand: #5b6cf0;
@@ -18,23 +18,28 @@
 
   --btn-primary-bg: #5b6cf0;
   --btn-primary-fg: #ffffff;
+  --c-danger: #E05A5A;
 
-  --c-text: #1c1f33;
-  --c-muted: #6e7390;
+  --c-text: #1E2140;
+  --c-muted: #5F6482;
+  --c-helper: #9aa0b8;
   --c-focus: #5b6cf0;
-  --c-ok: #34c9a3;
+  --c-ok: #1f9c7c;
   --c-ok-soft: rgba(52, 201, 163, 0.12);
+  --c-on: #4a5ae0;
+  --c-tag-purple: #7c5ce0;
   --c-coral: #f59e8b;
   --c-coral-soft: rgba(245, 158, 139, 0.16);
   --c-warn: #f59e8b;
   --c-warn-soft: rgba(245, 158, 139, 0.16);
   --c-info-soft: rgba(91, 108, 240, 0.1);
 
-  --radius-card: 16px;
+  --radius-card: 20px;
   --radius-control: 12px;
-  --radius-panel: 28px;
-  --sidebar-width: 220px;
-  --bento-gap: 16px;
-  --shadow-card: 0 1px 2px rgba(28, 31, 51, 0.04);
-  --font: 'Plus Jakarta Sans', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --radius-nav: 10px;
+  --radius-panel: 20px;
+  --sidebar-width: 264px;
+  --bento-gap: 24px;
+  --shadow-card: none;
+  --font: Inter, 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
 }
