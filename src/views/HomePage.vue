@@ -1,305 +1,109 @@
 <template>
-  <div class="home-page">
-    <button
-      v-if="menuOpen"
-      type="button"
-      class="scrim"
-      aria-label="关闭菜单"
-      @click="menuOpen = false"
-    ></button>
-    <SidebarMenu :mobile-open="menuOpen" @logout="handleLogout" />
-
-    <div class="content-wrapper">
-      <header class="header">
-        <div class="header-content">
-          <div class="header-left">
-            <button type="button" class="header-btn menu-toggle" aria-label="打开菜单" @click="menuOpen = true">
-              <iconify-icon icon="lucide:menu"></iconify-icon>
-            </button>
-            <div>
-            <h2 class="header-title">{{ greeting }}，{{ getUserName() }}</h2>
-            <p class="header-subtitle">{{ pageSubtitle }}</p>
-            </div>
-          </div>
-          <div class="header-right">
-            <div class="search-wrap">
-              <iconify-icon icon="lucide:search" class="search-icon"></iconify-icon>
-              <input type="text" placeholder="搜索..." class="search-input" v-model="searchKeyword" />
-            </div>
-            <button class="header-btn icon-btn" title="通知">
-              <iconify-icon icon="lucide:bell"></iconify-icon>
-              <span class="notification-dot"></span>
-            </button>
-            <button class="header-btn logout-btn" @click="handleLogout">退出登录</button>
+  <div class="shell">
+    <aside class="sidebar">
+      <router-link class="brand" to="/home">
+        <span class="brand-mark"><AppIcon name="GraduationCap" :size="16" /></span>
+        校园OA
+      </router-link>
+      <nav class="side-nav">
+        <router-link
+          v-for="item in sideItems"
+          :key="item.name"
+          class="nav-link"
+          active-class="active"
+          :to="item.to"
+        >
+          <AppIcon :name="item.icon" :size="16" />
+          <span>{{ item.label }}</span>
+        </router-link>
+      </nav>
+      <div class="user-card">
+        <div class="user-row">
+          <div class="avatar">{{ avatar }}</div>
+          <div>
+            <strong>{{ auth.user?.name }}</strong>
+            <span>{{ auth.user?.title }}</span>
           </div>
         </div>
-      </header>
+        <button class="btn" type="button" @click="logout">退出登录</button>
+      </div>
+    </aside>
 
-      <main class="main-content">
-        <router-view />
-      </main>
+    <div class="shell-main">
+      <PcOnly v-if="blocked" />
+      <router-view v-else />
     </div>
+
+    <nav class="tabbar" aria-label="手机端导航">
+      <router-link
+        v-for="item in MOBILE_NAV"
+        :key="item.name"
+        class="tab"
+        active-class="active"
+        :to="item.to"
+      >
+        <AppIcon :name="item.icon" :size="18" />
+        {{ item.label }}
+      </router-link>
+    </nav>
+
+    <CommandPalette />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import SidebarMenu from '../components/SidebarMenu.vue'
+import AppIcon from '../components/AppIcon.vue'
+import PcOnly from '../components/PcOnly.vue'
+import CommandPalette from '../components/CommandPalette.vue'
+import { useAuthStore } from '../stores/auth.js'
+import { useUiStore } from '../stores/ui.js'
+import { resetRouteInstall } from '../router/index.js'
+import { MOBILE_NAV, PHASE_ROUTES, inSidebar, navLabel } from '../nav.js'
+import { useViewport } from '../composables/useViewport.js'
 
-const router = useRouter()
+const auth = useAuthStore()
+const ui = useUiStore()
 const route = useRoute()
-const searchKeyword = ref('')
-const menuOpen = ref(false)
+const router = useRouter()
+const { isMobile } = useViewport()
 
-watch(() => route.path, () => {
-  menuOpen.value = false
+const sideItems = computed(() => {
+  const role = auth.user?.role
+  return PHASE_ROUTES.filter((item) => inSidebar(item, role)).map((item) => ({
+    name: item.name,
+    icon: item.meta.icon,
+    label: navLabel(item, role),
+    to: `/home/${item.path}`
+  }))
 })
 
-const pageSubtitle = computed(() => {
-  if (route.name === 'HomeDashboard') return '这是校园今日动态概览'
-  return route.meta.title || '校园办公'
+const avatar = computed(() => {
+  const title = auth.user?.title || ''
+  if (title === '教师') return '教'
+  if (title === '学生') return '学'
+  if (title === '家长') return '家'
+  if (title === '教务') return '务'
+  return '管'
 })
 
-const greeting = computed(() => {
-  const h = new Date().getHours()
-  if (h < 12) return '上午好'
-  if (h < 18) return '下午好'
-  return '晚上好'
-})
+const blocked = computed(() => isMobile.value && route.meta.pcOnly === true)
 
-const getUserName = () => {
-  try {
-    const userInfoStr = localStorage.getItem('userInfo')
-    if (userInfoStr) {
-      const userInfo = JSON.parse(userInfoStr)
-      return userInfo.realName || '用户'
-    }
-  } catch (e) {
-    console.error('解析用户信息失败:', e)
-  }
-  return '用户'
+function logout() {
+  auth.logout()
+  resetRouteInstall()
+  router.replace('/login')
 }
 
-const handleLogout = () => {
-  if (confirm('确定要退出登录吗？')) {
-    localStorage.removeItem('token')
-    localStorage.removeItem('userInfo')
-    router.push('/login')
+function onKey(event) {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault()
+    if (ui.palette) ui.closePalette()
+    else ui.openPalette()
   }
 }
+
+onMounted(() => window.addEventListener('keydown', onKey))
+onUnmounted(() => window.removeEventListener('keydown', onKey))
 </script>
-
-<style scoped>
-.home-page {
-  height: 100vh;
-  background: var(--bg-soft);
-  display: flex;
-  overflow: hidden;
-}
-
-.content-wrapper {
-  flex: 1;
-  margin-left: 220px;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.header {
-  background: #fff;
-  border-bottom: 1px solid #f4f4f5;
-  padding: 1rem 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.header-content {
-  max-width: 1300px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.menu-toggle {
-  display: none;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-  background: #fafafa;
-  border: 1px solid #e4e4e7;
-  color: #18181b;
-}
-
-.scrim {
-  display: none;
-}
-
-.header-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #18181b;
-  letter-spacing: -0.02em;
-  margin: 0 0 0.25rem 0;
-}
-
-.header-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  margin: 0;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.search-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  font-size: 1.125rem;
-  color: var(--text-slate-400);
-}
-
-.search-input {
-  width: 18rem;
-  padding: 0.5rem 1rem 0.5rem 2.75rem;
-  background: #fafafa;
-  border: 1px solid #e4e4e7;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  color: #18181b;
-  transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out;
-}
-
-.search-input::placeholder {
-  color: #a1a1aa;
-}
-
-.search-input:focus {
-  outline: none;
-  background: #fff;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-.header-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.icon-btn {
-  width: 2.5rem;
-  height: 2.5rem;
-  background: #fafafa;
-  border: 1px solid #e4e4e7;
-  border-radius: 0.75rem;
-  color: #18181b;
-  position: relative;
-}
-
-.icon-btn:hover {
-  background: #fff;
-  transform: translateY(-1px);
-}
-
-.icon-btn:active,
-.logout-btn:active {
-  transform: scale(0.95);
-}
-
-.icon-btn iconify-icon {
-  font-size: 1.25rem;
-}
-
-.notification-dot {
-  position: absolute;
-  top: 0.625rem;
-  right: 0.625rem;
-  width: 6px;
-  height: 6px;
-  background: #ea580c;
-  border-radius: 50%;
-  border: 2px solid white;
-}
-
-.logout-btn {
-  padding: 0.5rem 1.5rem;
-  background: #18181b;
-  color: white;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.logout-btn:hover {
-  background: #27272a;
-}
-
-.main-content {
-  flex: 1;
-  overflow-y: auto;
-  background: transparent;
-  min-height: 0;
-}
-
-@media (max-width: 768px) {
-  .content-wrapper {
-    margin-left: 0;
-  }
-  .menu-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 90;
-    border: 0;
-    background: rgba(24, 24, 27, 0.4);
-  }
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-  .header-title {
-    font-size: 1.25rem;
-  }
-  .logout-btn {
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .search-wrap,
-  .search-input {
-    width: 100%;
-  }
-  .header-right {
-    width: 100%;
-  }
-}
-</style>
