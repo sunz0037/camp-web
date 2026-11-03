@@ -40,6 +40,8 @@
   --radius-panel: 20px;
   --sidebar-width: 200px;
   --bento-gap: 24px;
+  /* 分页脚 .table-foot：上下 12px、左右 16px */
+  --pager-pad: 12px 16px;
   --shadow-card: none;
   --font: Inter, 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
 }

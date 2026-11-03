@@ -290,7 +290,7 @@ table.data tbody tr.row-pick {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: var(--pager-pad);
   color: var(--c-muted);
   font-size: 12px;
 }
