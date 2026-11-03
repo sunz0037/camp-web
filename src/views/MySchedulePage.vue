@@ -4,7 +4,7 @@
       <div>
         <h1>我的课表</h1>
         <p>{{ hint }}</p>
-        <p v-if="loadError" class="error-text">{{ loadError }}</p>
+        <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       </div>
     </header>
     <section class="card block">
@@ -28,6 +28,10 @@ import { periodLabel, weekdayLabel } from '../utils/format.js'
 
 const auth = useAuthStore()
 const loadError = ref('')
+
+function netHint(message) {
+  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+}
 const items = ref([])
 const ordered = computed(() => [...items.value].sort((a, b) => a.weekday - b.weekday || a.periodStart - b.periodStart))
 const hint = computed(() => {

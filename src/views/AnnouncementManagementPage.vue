@@ -5,7 +5,7 @@
         <h1>校园公告</h1>
         <p>{{ isMobile ? '手机端只浏览，发布请用电脑办理。' : '发布、置顶与已读回执。' }}</p>
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
-        <p v-if="loadError" class="error-text">{{ loadError }}</p>
+        <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       </div>
     </header>
 
@@ -103,6 +103,10 @@ const open = ref(false)
 const current = ref(null)
 const formError = ref('')
 const loadError = ref('')
+
+function netHint(message) {
+  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+}
 const items = ref([])
 const keyword = ref('')
 const draft = reactive({ title: '', body: '', scope: '全校', pinned: false })

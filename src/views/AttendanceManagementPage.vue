@@ -5,7 +5,7 @@
         <h1>{{ isMobile || auth.user?.role === 'STUDENT' ? '我的考勤' : '考勤管理' }}</h1>
         <p>{{ isMobile || auth.user?.role === 'STUDENT' ? '只读查看。登记日报请用电脑办理。' : '班级日报汇总与异常明细。课程可以不关联。' }}</p>
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
-        <p v-if="loadError" class="error-text">{{ loadError }}</p>
+        <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       </div>
     </header>
 
@@ -210,6 +210,10 @@ const className = ref('')
 const date = ref(todayISO())
 const recorder = ref(null)
 const loadError = ref('')
+
+function netHint(message) {
+  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+}
 const summaries = ref([])
 const records = ref([])
 const classOptions = ref([])

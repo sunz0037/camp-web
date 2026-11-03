@@ -35,10 +35,12 @@
             <AppIcon name="Bell" :size="16" />
             <span class="note-badge">3</span>
           </button>
-          <div class="avatar">{{ avatar }}</div>
-          <div>
-            <strong>{{ auth.user?.name }}</strong>
-            <span>{{ auth.user?.title }}</span>
+          <div class="user-pill">
+            <div class="avatar">{{ avatar }}</div>
+            <div>
+              <strong>{{ auth.user?.name }}</strong>
+              <span>{{ auth.user?.title }}</span>
+            </div>
           </div>
           <button class="btn btn-danger" type="button" @click="logout">退出登录</button>
         </div>

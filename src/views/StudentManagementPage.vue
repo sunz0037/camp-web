@@ -5,7 +5,7 @@
         <h1>学生信息</h1>
         <p>所辖班级名册 · 筛选与批量操作</p>
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
-        <p v-if="loadError" class="error-text">{{ loadError }}</p>
+        <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       </div>
     </header>
 
@@ -211,6 +211,10 @@ const total = ref(0)
 const rows = ref([])
 const classOptions = ref([])
 const loadError = ref('')
+
+function netHint(message) {
+  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+}
 const editor = ref(null)
 const detail = ref(null)
 const detailContacts = ref([])
