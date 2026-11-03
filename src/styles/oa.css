@@ -129,7 +129,7 @@
 .page-head {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 16px;
 }
 
@@ -212,6 +212,11 @@ table.data {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+}
+
+table.data thead,
+table.data th {
+  background: var(--c-table-head);
 }
 
 table.data th {

@@ -8,15 +8,13 @@
         <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
       <div class="head-actions">
-        <button v-if="auth.can('student:import')" class="btn btn-warn" type="button" @click="openImport = true">
+        <button v-if="auth.can('student:import')" class="btn btn-ghost" type="button" @click="openImport = true">
           <AppIcon name="Upload" :size="16" /> 导入
         </button>
         <button class="btn btn-ghost" type="button" @click="exportCsv">
           <AppIcon name="Download" :size="16" /> 导出
         </button>
-        <button v-if="auth.can('student:write')" class="btn btn-primary" type="button" @click="openCreate">
-          <AppIcon name="Plus" :size="16" /> 新增学生
-        </button>
+        <button v-if="auth.can('student:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
       </div>
     </header>
 

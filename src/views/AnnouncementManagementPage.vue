@@ -7,7 +7,7 @@
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
         <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
-      <button v-if="canPublish" class="btn btn-primary" type="button" @click="open = true">发布公告</button>
+      <button v-if="canPublish" class="btn btn-primary" type="button" @click="open = true">发布</button>
     </header>
 
     <section class="card filters">

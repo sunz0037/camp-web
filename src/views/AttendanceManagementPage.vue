@@ -7,7 +7,7 @@
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
         <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
-      <button v-if="canRecord" class="btn btn-primary" type="button" @click="openRecord()">登记今日考勤</button>
+      <button v-if="canRecord" class="btn btn-primary" type="button" @click="openRecord()">+ 新增</button>
     </header>
 
     <template v-if="personal">

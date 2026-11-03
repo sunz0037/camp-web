@@ -8,8 +8,7 @@
         <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
       <div class="head-actions">
-        <button v-if="auth.can('course:write') && tab === 'library'" class="btn btn-primary" type="button" @click="openCourse()">新增课程</button>
-        <button v-if="auth.can('course:write') && tab === 'schedules'" class="btn btn-primary" type="button" @click="openSchedule()">新增排课</button>
+        <button v-if="auth.can('course:write')" class="btn btn-primary" type="button" @click="tab === 'library' ? openCourse() : openSchedule()">+ 新增</button>
       </div>
     </header>
 
