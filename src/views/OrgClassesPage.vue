@@ -1,15 +1,9 @@
 <template>
   <div class="page stack">
-    <header class="page-head">
-      <div>
-        <h1>年级班级</h1>
-        <p>组织架构。{{ auth.can('org:write') ? '可维护年级与班级。' : '当前身份只读。' }}</p>
-      </div>
-      <div v-if="auth.can('org:write')" class="head-actions">
-        <button class="btn btn-ghost" type="button" @click="gradeOpen = true">新增年级</button>
-        <button class="btn btn-primary" type="button" @click="classOpen = true">新增班级</button>
-      </div>
-    </header>
+    <section v-if="auth.can('org:write')" class="card filters">
+      <button class="btn btn-ghost" type="button" @click="gradeOpen = true">新增年级</button>
+      <button class="btn btn-primary" type="button" @click="classOpen = true">新增班级</button>
+    </section>
 
     <div class="org-grid">
       <section class="card" style="padding: 8px">
