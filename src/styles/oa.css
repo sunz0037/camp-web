@@ -35,7 +35,7 @@
 }
 
 .btn-danger {
-  background: #fff;
+  background: var(--c-control);
   color: var(--c-danger);
   border-color: var(--c-border);
 }
@@ -54,7 +54,7 @@
 }
 
 .btn-ghost {
-  background: #fff;
+  background: var(--c-control);
   border-color: var(--c-border);
 }
 
@@ -96,7 +96,7 @@
 .field:focus,
 .select:focus,
 .textarea:focus {
-  background: #fff;
+  background: var(--c-card);
   border-color: var(--c-focus);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
@@ -190,7 +190,7 @@
 }
 
 .seg button.active {
-  background: #fff;
+  background: var(--c-control);
   color: var(--c-text);
   box-shadow: 0 1px 2px rgba(26, 43, 46, 0.08);
 }
@@ -247,6 +247,15 @@
   line-height: 1.5;
 }
 
+.filters.filters-wrap {
+  flex-wrap: wrap;
+}
+
+.filters.filters-wrap .select {
+  flex: 0 1 150px;
+  min-width: 128px;
+}
+
 .filters .btn {
   padding-top: 0;
   padding-bottom: 0;
@@ -289,7 +298,7 @@ table.data td {
 }
 
 table.data tbody tr:nth-child(even) td {
-  background: #F7F7FB;
+  background: var(--c-stripe);
 }
 
 table.data tbody tr:hover td {
@@ -298,6 +307,42 @@ table.data tbody tr:hover td {
 
 table.data tbody tr.picked td {
   background: var(--c-brand-soft);
+}
+
+table.data th.ops,
+table.data td.ops {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+table.data th.ops {
+  background: var(--c-table-head);
+}
+
+table.data td.ops {
+  background: var(--c-card);
+}
+
+table.data tbody tr:nth-child(even) td.ops {
+  background: var(--c-stripe);
+}
+
+table.data tbody tr:hover td.ops {
+  background: color-mix(in srgb, var(--c-brand) 4%, var(--c-card));
+}
+
+table.data tbody tr:nth-child(even):hover td.ops {
+  background: color-mix(in srgb, var(--c-brand) 4%, var(--c-stripe));
+}
+
+table.data tbody tr.picked td.ops {
+  background: color-mix(in srgb, var(--c-brand) 12%, var(--c-card));
+}
+
+table.data tbody tr:nth-child(even).picked td.ops {
+  background: color-mix(in srgb, var(--c-brand) 12%, var(--c-stripe));
 }
 
 table.data tbody tr.row-pick {
@@ -336,7 +381,7 @@ table.data tbody tr.row-pick {
   padding: 0 8px;
   border-radius: 8px;
   border: 1px solid var(--c-border);
-  background: #fff;
+  background: var(--c-control);
   color: var(--c-text);
   font-size: 13px;
 }
@@ -445,7 +490,7 @@ table.data tbody tr.row-pick {
 .modal-card,
 .drawer-card {
   width: min(520px, 100%);
-  background: #fff;
+  background: var(--c-card);
   border-radius: 20px;
   padding: 22px;
   box-shadow: 0 18px 50px rgba(26, 43, 46, 0.12);
@@ -553,7 +598,8 @@ td.muted {
 .toast {
   min-width: 220px;
   max-width: 360px;
-  background: #fff;
+  background: var(--c-card);
+  color: var(--c-text);
   border: 1px solid var(--c-border);
   border-radius: 12px;
   padding: 12px 14px;
@@ -735,7 +781,7 @@ td.muted {
   padding: 0 8px 0 12px;
   border-radius: 12px;
   border: 1px solid var(--c-border);
-  background: #fff;
+  background: var(--c-control);
   color: var(--c-muted);
 }
 
@@ -808,7 +854,7 @@ td.muted {
   padding: 0 12px 0 4px;
   border: 1px solid var(--c-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--c-control);
 }
 
 .note-btn {
@@ -817,7 +863,7 @@ td.muted {
   height: 36px;
   border: 1px solid var(--c-border);
   border-radius: var(--radius-control);
-  background: #fff;
+  background: var(--c-control);
   color: var(--c-text);
   display: grid;
   place-items: center;
@@ -901,7 +947,7 @@ td.muted {
   position: fixed;
   inset: 0 auto 0 0;
   width: var(--sidebar-width);
-  background: #fff;
+  background: var(--c-sidebar);
   border-right: 1px solid var(--c-border);
   display: flex;
   flex-direction: column;
@@ -1022,7 +1068,7 @@ td.muted {
 .user-card .btn {
   width: 100%;
   margin-top: 10px;
-  background: #fff;
+  background: var(--c-control);
   height: 36px;
 }
 
@@ -1037,7 +1083,8 @@ td.muted {
 
 .palette {
   width: min(560px, 100%);
-  background: #fff;
+  background: var(--c-card);
+  color: var(--c-text);
   border-radius: var(--radius-card);
   overflow: hidden;
   box-shadow: 0 18px 50px rgba(26, 43, 46, 0.16);
@@ -1051,13 +1098,15 @@ td.muted {
   padding: 0 16px;
   font-size: 15px;
   outline: none;
+  background: var(--c-card);
 }
 
 .palette button.hit {
   width: 100%;
   text-align: left;
   border: 0;
-  background: #fff;
+  background: var(--c-card);
+  color: var(--c-text);
   padding: 12px 16px;
   display: flex;
   justify-content: space-between;
@@ -1098,7 +1147,7 @@ td.muted {
 }
 
 .chip {
-  background: #fff;
+  background: var(--c-card);
   border: 1px solid var(--c-border);
   border-radius: 10px;
   padding: 8px;
@@ -1526,7 +1575,7 @@ td.muted {
     right: 0;
     bottom: 0;
     height: 64px;
-    background: #fff;
+    background: var(--c-sidebar);
     border-top: 1px solid var(--c-border);
     box-shadow: 0 -6px 18px rgba(26, 43, 46, 0.05);
     display: grid;

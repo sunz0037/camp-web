@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { api, ApiError } from '../api/http.js'
+import { changePassword as changePasswordApi } from '../api/password.js'
+import { useThemeStore } from './theme.js'
 
 export const ROLE_PERMISSIONS = {
   ADMIN: ['org:write', 'student:import', 'student:write', 'course:write', 'attendance:record', 'announcement:publish', 'announcement:top', 'user:write'],
@@ -261,6 +263,7 @@ export const useAuthStore = defineStore('auth', {
           status: '启用'
         }
         this.applySession(data.accessToken || data.token, data.refreshToken || '', user)
+        await useThemeStore().load()
         return
       } catch (error) {
         if (!(error instanceof ApiError) || !error.network) throw error
@@ -275,9 +278,11 @@ export const useAuthStore = defineStore('auth', {
       if (portal === 'staff' && !staff) throw new ApiError('请从学生入口登录')
       if (portal === 'student' && staff) throw new ApiError('请从教职工入口登录')
       this.applySession(`mock.${found.id}`, `mock-refresh.${found.id}`, publicUser(found))
+      await useThemeStore().load()
     },
     logout() {
       this.clearSession()
+      useThemeStore().apply('default')
     },
     updateProfile({ phone, email }) {
       if (!this.user) return
@@ -289,19 +294,19 @@ export const useAuthStore = defineStore('auth', {
         persistAccounts(this.accounts)
       }
     },
-    changePassword({ oldPassword, nextPassword }) {
+    async changePassword({ oldPassword, nextPassword }) {
+      if (!nextPassword || nextPassword.length < 6) throw new ApiError('新密码至少 6 位')
+      await changePasswordApi({ oldPassword, newPassword: nextPassword })
       const record = this.accounts.find((item) => item.id === this.user?.id)
-      if (record && record.password !== oldPassword) {
-        throw new ApiError('当前密码不正确')
-      }
-      if (nextPassword.length < 6) throw new ApiError('新密码至少 6 位')
       if (record) {
         record.password = nextPassword
         record.mustChangePassword = false
         persistAccounts(this.accounts)
       }
-      this.user = { ...this.user, mustChangePassword: false }
-      localStorage.setItem('userInfo', JSON.stringify(this.user))
+      if (this.user) {
+        this.user = { ...this.user, mustChangePassword: false }
+        localStorage.setItem('userInfo', JSON.stringify(this.user))
+      }
     },
     registerAccount(input) {
       const account = input.account.trim()

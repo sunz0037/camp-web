@@ -1,449 +1,314 @@
 <template>
-  <div class="score-management-page bento-page">
-    <div class="page-header">
-      <h1>考试成绩管理</h1>
-      <button class="btn-primary" @click="handleCreate">新增成绩</button>
-    </div>
+  <div class="page stack">
+    <section class="card filters filters-wrap">
+      <select v-model="examId" class="select" aria-label="考试">
+        <option value="">全部考试</option>
+        <option v-for="item in exams" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
+      </select>
+      <select v-model="classId" class="select" aria-label="班级">
+        <option value="">全部班级</option>
+        <option v-for="item in classes" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
+      </select>
+      <select v-if="canWrite" v-model="studentId" class="select" aria-label="学生">
+        <option value="">全部学生</option>
+        <option v-for="item in students" :key="item.id" :value="String(item.id)">{{ item.studentNo }} {{ item.name }}</option>
+      </select>
+      <input v-model="keyword" class="field" placeholder="搜索学号 / 姓名" @keyup.enter="load" />
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
+      <button v-if="canWrite" class="btn btn-primary" type="button" @click="openCreate">+ 录入</button>
+    </section>
 
-    <!-- 搜索筛选 -->
-    <div class="filter-section">
-      <div class="filter-group">
-        <label>学期：</label>
-        <input type="text" v-model="filters.semester" placeholder="如：2024-2025学年第一学期" @keyup.enter="loadData" />
+    <section class="card table-card">
+      <div class="table-scroll">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>考试</th>
+              <th>科目</th>
+              <th>学号</th>
+              <th>姓名</th>
+              <th>班级</th>
+              <th>分数</th>
+              <th>等级</th>
+              <th>录入人</th>
+              <th>时间</th>
+              <th v-if="canWrite" class="ops">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading">
+              <td :colspan="canWrite ? 10 : 9" class="muted">加载中…</td>
+            </tr>
+            <tr v-else-if="!rows.length">
+              <td :colspan="canWrite ? 10 : 9" class="muted">{{ canWrite ? '没有符合条件的成绩' : '还没有对你公开的成绩' }}</td>
+            </tr>
+            <tr
+              v-for="item in rows"
+              v-else
+              :key="item.id"
+              class="row-pick"
+              :class="{ picked: selectedId === item.id }"
+              @click="selectedId = item.id"
+            >
+              <td>{{ item.examName || '—' }}</td>
+              <td>{{ item.subject || '—' }}</td>
+              <td class="num">{{ item.studentNo || '—' }}</td>
+              <td>{{ item.studentName || '—' }}</td>
+              <td>{{ item.className || '—' }}</td>
+              <td class="num">{{ item.score === null ? '—' : item.score }}</td>
+              <td>{{ item.gradeLevel || '—' }}</td>
+              <td>{{ item.recordedByName || '—' }}</td>
+              <td class="num">{{ formatDateTime(item.recordedAt) }}</td>
+              <td v-if="canWrite" class="ops">
+                <button class="linkish" type="button" @click.stop="openEdit(item)">编辑</button>
+                <button class="link-danger" type="button" @click.stop="removeScore(item)">删除</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div class="filter-group">
-        <label>学年：</label>
-        <input type="text" v-model="filters.academicYear" placeholder="如：2024-2025" @keyup.enter="loadData" />
-      </div>
-      <div class="filter-group">
-        <label>考试类型：</label>
-        <select v-model="filters.examType" @change="loadData">
-          <option value="">全部</option>
-          <option value="月考">月考</option>
-          <option value="期中">期中</option>
-          <option value="期末">期末</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <input 
-          type="text" 
-          v-model="filters.keyword" 
-          placeholder="搜索学号、姓名..."
-          @keyup.enter="loadData"
-        />
-        <button @click="loadData">搜索</button>
-      </div>
-    </div>
-
-    <!-- 数据表格 -->
-    <div class="table-section">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>学号</th>
-            <th>学生姓名</th>
-            <th>科目</th>
-            <th>考试类型</th>
-            <th>分数</th>
-            <th>学分</th>
-            <th>绩点</th>
-            <th>考试日期</th>
-            <th>学期</th>
-            <th>学年</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading">
-            <td colspan="11" class="text-center">加载中...</td>
-          </tr>
-          <tr v-else-if="scoreList.length === 0">
-            <td colspan="11" class="text-center">暂无数据</td>
-          </tr>
-          <tr v-else v-for="score in scoreList" :key="score.id">
-            <td>{{ score.studentNo || '-' }}</td>
-            <td>{{ score.studentName || '-' }}</td>
-            <td>{{ score.courseName || '-' }}</td>
-            <td>{{ score.examType || '-' }}</td>
-            <td>{{ score.score !== null && score.score !== undefined ? score.score : '-' }}</td>
-            <td>{{ score.credit !== null && score.credit !== undefined ? score.credit : '-' }}</td>
-            <td>{{ score.gradePoint !== null && score.gradePoint !== undefined ? score.gradePoint : '-' }}</td>
-            <td>{{ formatDate(score.examDate) }}</td>
-            <td>{{ score.semester || '-' }}</td>
-            <td>{{ score.academicYear || '-' }}</td>
-            <td>
-              <button class="btn-edit" @click="handleEdit(score)">编辑</button>
-              <button class="btn-delete" @click="handleDelete(score)">删除</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- 分页 -->
-      <div class="pagination" v-if="total > 0">
-        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>
-        <span>第 {{ currentPage }} 页，共 {{ totalPages }} 页，共 {{ total }} 条</span>
-        <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>
-      </div>
-    </div>
-
-    <!-- 新增/编辑对话框 -->
-    <div v-if="showDialog" class="dialog-overlay" @click="closeDialog">
-      <div class="dialog-content" @click.stop>
-        <div class="dialog-header">
-          <h2>{{ dialogMode === 'create' ? '新增成绩' : '编辑成绩' }}</h2>
-          <button class="btn-close" @click="closeDialog">×</button>
-        </div>
-        <div class="dialog-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>学生 <span class="required">*</span></label>
-                <select v-model="formData.studentId" required>
-                  <option value="">请选择学生</option>
-                  <option v-for="student in studentOptions" :key="student.id" :value="student.id">
-                    {{ student.studentNo }} - {{ getStudentName(student) }}
-                  </option>
-                </select>
-              </div>
-              <div class="form-group form-group-half">
-                <label>科目 <span class="required">*</span></label>
-                <select v-model="formData.courseId" required>
-                  <option value="">请选择科目</option>
-                  <option v-for="course in courseOptions" :key="course.id" :value="course.id">
-                    {{ course.courseCode }} - {{ course.courseName }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>考试安排</label>
-                <select v-model="formData.examScheduleId">
-                  <option :value="null">请选择（可选）</option>
-                  <option v-for="schedule in examScheduleOptions" :key="schedule.id" :value="schedule.id">
-                    {{ schedule.examName }} ({{ formatDate(schedule.examDate) }})
-                  </option>
-                </select>
-              </div>
-              <div class="form-group form-group-half">
-                <label>考试类型 <span class="required">*</span></label>
-                <select v-model="formData.examType" required>
-                  <option value="">请选择</option>
-                  <option value="月考">月考</option>
-                  <option value="期中">期中</option>
-                  <option value="期末">期末</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>分数</label>
-                <input type="number" v-model.number="formData.score" min="0" max="100" step="0.01" placeholder="如：85.5" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>学分</label>
-                <input type="number" v-model.number="formData.credit" min="0" step="0.1" placeholder="如：3.0" />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>绩点</label>
-                <input type="number" v-model.number="formData.gradePoint" min="0" max="4" step="0.01" placeholder="如：3.5" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>考试日期</label>
-                <input type="date" v-model="formData.examDate" />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>学期</label>
-                <input type="text" v-model="formData.semester" placeholder="如：2024-2025学年第一学期" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>学年</label>
-                <input type="text" v-model="formData.academicYear" placeholder="如：2024-2025" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>备注</label>
-              <textarea v-model="formData.remark" rows="2" placeholder="备注信息"></textarea>
-            </div>
-            <div class="form-group">
-              <label>备注详情</label>
-              <textarea v-model="formData.remarkDetail" rows="3" placeholder="备注详情（如考试缺席原因等）"></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="button" @click="closeDialog">取消</button>
-              <button type="submit" class="btn-primary">保存</button>
-            </div>
-          </form>
+      <div class="table-foot">
+        <span>共 {{ total }} 条成绩 · 显示 {{ rangeText }}</span>
+        <div class="pager">
+          <button type="button" :disabled="page === 1" @click="page -= 1">上一页</button>
+          <template v-for="(n, index) in pageList" :key="n">
+            <span v-if="index > 0 && n - pageList[index - 1] > 1">…</span>
+            <button type="button" :class="{ active: n === page }" @click="page = n">{{ n }}</button>
+          </template>
+          <button type="button" :disabled="page === pageCount" @click="page += 1">下一页</button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Toast 提示 -->
-    <Toast
-      v-model:visible="toastVisible"
-      :message="toastMessage"
-      :type="toastType"
-    />
+    <section class="card preview-card">
+      <h2>表单预览</h2>
+      <div v-if="preview" class="preview-grid">
+        <div><span class="k">考试</span><span class="v">{{ previewExam }}</span></div>
+        <div><span class="k">学生</span><span class="v">{{ previewStudent }}</span></div>
+        <div><span class="k">分数</span><span class="v num">{{ preview.score === null || preview.score === '' ? '—' : preview.score }}</span></div>
+        <div><span class="k">等级</span><span class="v">{{ preview.gradeLevel || '—' }}</span></div>
+        <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
+        <div><span class="k">录入人</span><span class="v">{{ preview.recordedByName || auth.user?.name || '—' }}</span></div>
+      </div>
+      <p v-else class="sub">选择一条成绩，或点击录入后在这里预览。</p>
+    </section>
+
+    <div v-if="editor" class="modal-mask" @click.self="editor = null">
+      <form class="modal-card" @submit.prevent="save">
+        <div class="modal-head">
+          <h3>{{ editor.id ? '编辑成绩' : '录入成绩' }}</h3>
+          <button class="icon-btn" type="button" aria-label="关闭" @click="editor = null"><AppIcon name="X" :size="16" /></button>
+        </div>
+        <div class="form-grid">
+          <label class="field-label">考试</label>
+          <select v-model="editor.examId" class="select" required>
+            <option value="">请选择考试</option>
+            <option v-for="item in exams" :key="item.id" :value="String(item.id)">{{ item.name }} · {{ item.subject }}</option>
+          </select>
+          <label class="field-label">学生</label>
+          <select v-model="editor.studentId" class="select" required>
+            <option value="">请选择学生</option>
+            <option v-for="item in students" :key="item.id" :value="String(item.id)">{{ item.studentNo }} {{ item.name }}</option>
+          </select>
+          <div class="form-row">
+            <div>
+              <label class="field-label">分数</label>
+              <input v-model="editor.score" class="field num" type="number" min="0" max="100" step="0.5" required />
+            </div>
+            <div>
+              <label class="field-label">等级</label>
+              <select v-model="editor.gradeLevel" class="select">
+                <option value="">不填</option>
+                <option v-for="item in levels" :key="item" :value="item">{{ item }}</option>
+              </select>
+            </div>
+          </div>
+          <p v-if="formError" class="error-text">{{ formError }}</p>
+          <div class="form-actions">
+            <button class="btn btn-ghost" type="button" @click="editor = null">取消</button>
+            <button class="btn btn-primary" type="submit">保存</button>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import * as scoreAPI from '../api/score.js'
-import * as studentAPI from '../api/student.js'
-import * as courseAPI from '../api/course.js'
-import examScheduleAPI from '../api/examSchedule.js'
-import Toast from '../components/Toast.vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import AppIcon from '../components/AppIcon.vue'
+import { canWriteScore } from '../access.js'
+import { fetchExamPage } from '../api/exam.js'
+import { createExamScore, deleteExamScore, fetchScorePage, toScorePayload, updateExamScore } from '../api/examScore.js'
+import { fetchClasses, fetchStudentPage } from '../api/student.js'
+import { useAuthStore } from '../stores/auth.js'
+import { useUiStore } from '../stores/ui.js'
+import { formatDateTime } from '../utils/format.js'
 
-const loading = ref(false)
-const scoreList = ref([])
+const auth = useAuthStore()
+const ui = useUiStore()
+const levels = ['A', 'B', 'C', 'D', 'E']
+const examId = ref('')
+const classId = ref('')
+const studentId = ref('')
+const keyword = ref('')
+const page = ref(1)
+const pageSize = 10
 const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
-const showDialog = ref(false)
-const dialogMode = ref('create')
+const rows = ref([])
+const exams = ref([])
+const classes = ref([])
+const students = ref([])
+const loading = ref(false)
+const loadError = ref('')
+const selectedId = ref('')
+const editor = ref(null)
+const formError = ref('')
+const canWrite = computed(() => canWriteScore(auth.user))
 
-// 下拉选项数据
-const studentOptions = ref([])
-const courseOptions = ref([])
-const examScheduleOptions = ref([])
+function netHint(message) {
+  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+}
 
-const formData = ref({
-  studentId: null,
-  courseId: null,
-  examScheduleId: null,
-  examType: '',
-  score: null,
-  credit: null,
-  gradePoint: null,
-  examDate: '',
-  semester: '',
-  academicYear: '',
-  remark: '',
-  remarkDetail: ''
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+const pageList = computed(() => Array.from({ length: pageCount.value }, (_, index) => index + 1).filter((n) => {
+  return n === 1 || n === pageCount.value || Math.abs(n - page.value) <= 1
+}))
+const rangeText = computed(() => {
+  if (!total.value) return '0-0'
+  const from = (page.value - 1) * pageSize + 1
+  const to = Math.min(page.value * pageSize, total.value)
+  return `${from}-${to}`
+})
+const preview = computed(() => {
+  if (editor.value) return editor.value
+  return rows.value.find((item) => item.id === selectedId.value) || rows.value[0] || null
+})
+const previewExam = computed(() => {
+  if (!preview.value) return '—'
+  if (preview.value.examName) return preview.value.examName
+  const found = exams.value.find((item) => String(item.id) === String(preview.value.examId))
+  return found?.name || '—'
+})
+const previewStudent = computed(() => {
+  if (!preview.value) return '—'
+  if (preview.value.studentName || preview.value.studentNo) {
+    return `${preview.value.studentNo || ''} ${preview.value.studentName || ''}`.trim()
+  }
+  const found = students.value.find((item) => String(item.id) === String(preview.value.studentId))
+  return found ? `${found.studentNo} ${found.name}` : '—'
 })
 
-const filters = ref({
-  semester: '',
-  academicYear: '',
-  examType: '',
-  keyword: ''
-})
-
-// Toast 提示
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref('success')
-
-const showToast = (message, type = 'success') => {
-  toastMessage.value = message
-  toastType.value = type
-  toastVisible.value = true
-}
-
-const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
-
-// 获取学生姓名（从用户信息中获取）
-const getStudentName = (student) => {
-  // 如果学生对象有姓名字段，直接返回
-  if (student.realName) {
-    return student.realName
-  }
-  // 否则返回学号
-  return student.studentNo || '-'
-}
-
-// 格式化日期
-const formatDate = (date) => {
-  if (!date) return '-'
-  if (typeof date === 'string') {
-    return date.split('T')[0]
-  }
-  return date
-}
-
-// 加载学生选项
-const loadStudentOptions = async () => {
+async function loadOptions() {
   try {
-    const result = await studentAPI.getStudentList({ page: 1, size: 1000 })
-    if (result.code === 200 && result.data) {
-      studentOptions.value = result.data.records || []
-    }
-  } catch (error) {
-    console.error('加载学生列表失败：', error)
+    const result = await fetchExamPage({ page: 1, pageSize: 100 })
+    exams.value = result.records
+  } catch {
+    exams.value = []
   }
-}
-
-// 加载科目选项
-const loadCourseOptions = async () => {
   try {
-    const result = await courseAPI.getAllEnabledCourses()
-    if (result.code === 200 && result.data) {
-      courseOptions.value = result.data || []
-    }
-  } catch (error) {
-    console.error('加载科目列表失败：', error)
+    classes.value = await fetchClasses()
+  } catch {
+    classes.value = []
   }
-}
-
-// 加载考试安排选项
-const loadExamScheduleOptions = async () => {
+  if (!canWrite.value) return
   try {
-    const result = await examScheduleAPI.list({ page: 1, size: 1000 })
-    if (result.code === 200 && result.data) {
-      examScheduleOptions.value = result.data.records || []
-    }
-  } catch (error) {
-    console.error('加载考试安排列表失败：', error)
+    const result = await fetchStudentPage({ page: 1, size: 100 })
+    students.value = result.records
+  } catch {
+    students.value = []
   }
 }
 
-onMounted(() => {
-  loadStudentOptions()
-  loadCourseOptions()
-  loadExamScheduleOptions()
-  loadData()
-})
-
-const loadData = async () => {
+async function load() {
   loading.value = true
+  loadError.value = ''
   try {
-    const result = await scoreAPI.getScoreList({
-      page: currentPage.value,
-      size: pageSize.value,
-      semester: filters.value.semester || undefined,
-      academicYear: filters.value.academicYear || undefined,
-      examType: filters.value.examType || undefined
+    const result = await fetchScorePage({
+      page: page.value,
+      pageSize,
+      examId: examId.value || undefined,
+      classId: classId.value || undefined,
+      studentId: canWrite.value ? (studentId.value || undefined) : undefined,
+      keyword: keyword.value.trim() || undefined
     })
-    
-    if (result.code === 200 && result.data) {
-      scoreList.value = result.data.records || []
-      total.value = result.data.total || 0
-    }
+    rows.value = result.records
+    total.value = result.total
+    if (!rows.value.some((item) => item.id === selectedId.value)) selectedId.value = rows.value[0]?.id || ''
   } catch (error) {
-    showToast('加载数据失败：' + error.message, 'error')
+    rows.value = []
+    total.value = 0
+    loadError.value = error.message || '成绩加载失败'
   } finally {
     loading.value = false
   }
 }
 
-const changePage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-    loadData()
+onMounted(async () => {
+  await loadOptions()
+  await load()
+})
+watch(page, load)
+watch([examId, classId, studentId, keyword], () => {
+  if (page.value !== 1) page.value = 1
+  else load()
+})
+
+function openCreate() {
+  formError.value = ''
+  editor.value = {
+    id: '',
+    examId: examId.value || (exams.value[0] ? String(exams.value[0].id) : ''),
+    studentId: '',
+    score: '',
+    gradeLevel: ''
   }
 }
 
-const handleCreate = () => {
-  dialogMode.value = 'create'
-  formData.value = {
-    studentId: null,
-    courseId: null,
-    examScheduleId: null,
-    examType: '',
-    score: null,
-    credit: null,
-    gradePoint: null,
-    examDate: '',
-    semester: '',
-    academicYear: '',
-    remark: '',
-    remarkDetail: ''
+function openEdit(item) {
+  formError.value = ''
+  editor.value = {
+    id: item.id,
+    examId: item.examId ? String(item.examId) : '',
+    studentId: item.studentId ? String(item.studentId) : '',
+    score: item.score ?? '',
+    gradeLevel: item.gradeLevel || '',
+    examName: item.examName,
+    studentNo: item.studentNo,
+    studentName: item.studentName,
+    className: item.className,
+    recordedByName: item.recordedByName
   }
-  showDialog.value = true
 }
 
-const handleEdit = async (score) => {
-  dialogMode.value = 'edit'
+async function save() {
+  formError.value = ''
+  const score = Number(editor.value.score)
+  if (Number.isNaN(score) || score < 0 || score > 100) {
+    formError.value = '分数需在 0 到 100 之间'
+    return
+  }
+  const payload = toScorePayload(editor.value)
   try {
-    const result = await scoreAPI.getScoreDetail(score.id)
-    if (result.code === 200 && result.data) {
-      const data = result.data
-      formData.value = {
-        id: data.id,
-        studentId: data.studentId,
-        courseId: data.courseId,
-        examScheduleId: data.examScheduleId,
-        examType: data.examType || '',
-        score: data.score,
-        credit: data.credit,
-        gradePoint: data.gradePoint,
-        examDate: formatDate(data.examDate),
-        semester: data.semester || '',
-        academicYear: data.academicYear || '',
-        remark: data.remark || '',
-        remarkDetail: data.remarkDetail || ''
-      }
-      showDialog.value = true
-    }
+    if (editor.value.id) await updateExamScore(editor.value.id, payload)
+    else await createExamScore(payload)
+    ui.toast('成绩已保存', 'success')
+    editor.value = null
+    await load()
   } catch (error) {
-    showToast('加载成绩详情失败：' + error.message, 'error')
+    formError.value = error.message || '保存失败'
   }
 }
 
-const handleDelete = async (score) => {
-  if (!confirm(`确定要删除这条成绩记录吗？`)) {
-    return
-  }
-  
+async function removeScore(item) {
+  const who = item.studentName || item.studentNo || '该学生'
+  if (!window.confirm(`删除${who}的这条成绩？`)) return
   try {
-    await scoreAPI.deleteScore(score.id)
-    showToast('删除成功', 'success')
-    loadData()
+    await deleteExamScore(item.id)
+    ui.toast('成绩已删除', 'success')
+    await load()
   } catch (error) {
-    showToast('删除失败：' + error.message, 'error')
+    ui.toast(error.message || '删除失败', 'error')
   }
-}
-
-const handleSubmit = async () => {
-  // 验证必填字段
-  if (!formData.value.studentId) {
-    showToast('请选择学生', 'error')
-    return
-  }
-  if (!formData.value.courseId) {
-    showToast('请选择科目', 'error')
-    return
-  }
-  if (!formData.value.examType) {
-    showToast('请选择考试类型', 'error')
-    return
-  }
-  
-  try {
-    const data = { ...formData.value }
-    // 处理空值
-    if (!data.examScheduleId) {
-      data.examScheduleId = null
-    }
-    if (!data.examDate) {
-      data.examDate = null
-    } else {
-      // 确保日期格式正确
-      data.examDate = data.examDate
-    }
-    
-    if (dialogMode.value === 'create') {
-      await scoreAPI.createScore(data)
-      showToast('创建成功', 'success')
-    } else {
-      await scoreAPI.updateScore(data.id, data)
-      showToast('更新成功', 'success')
-    }
-    closeDialog()
-    loadData()
-  } catch (error) {
-    showToast('操作失败：' + (error.message || '未知错误'), 'error')
-  }
-}
-
-const closeDialog = () => {
-  showDialog.value = false
 }
 </script>
-

@@ -1,209 +1,123 @@
-/**
- * 来访登记管理API
- */
-import { API_BASE_URL } from '../config/api.js'
+import { api } from './http.js'
+import { listQuery } from './paging.js'
+import { pageRecords } from './unwrap.js'
+import { toApiDateTime } from '../utils/format.js'
 
 /**
- * 分页查询来访登记列表
+ * 二期契约（计划第 2 节）：
+ * GET/POST /api/v1/visitors
+ * GET/PUT/DELETE /api/v1/visitors/{id}
+ * POST /api/v1/visitors/{id}/approve|reject|check-in|check-out
+ * 状态：PENDING 待审 / APPROVED 已批准 / REJECTED 已拒绝 / CHECKED_IN 已入校 / CHECKED_OUT 已离校
  */
-export async function getVisitorList(params = {}) {
-  const { page = 1, size = 20, visitDate, status, visitTargetUserId, keyword } = params
-  const queryParams = new URLSearchParams()
-  queryParams.append('page', page)
-  queryParams.append('size', size)
-  if (visitDate) queryParams.append('visitDate', visitDate)
-  if (status !== undefined && status !== null) queryParams.append('status', status)
-  if (visitTargetUserId) queryParams.append('visitTargetUserId', visitTargetUserId)
-  if (keyword) queryParams.append('keyword', keyword)
 
-  const response = await fetch(`${API_BASE_URL}/api/visitors?${queryParams}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
-
-  if (!response.ok) {
-    throw new Error('获取来访登记列表失败')
-  }
-
-  const result = await response.json()
-  return result
+const STATUS_LABEL = {
+  PENDING: '待审',
+  APPROVED: '已批准',
+  REJECTED: '已拒绝',
+  CHECKED_IN: '已入校',
+  CHECKED_OUT: '已离校'
 }
 
-/**
- * 查询来访登记详情
- */
-export async function getVisitorDetail(id) {
-  const response = await fetch(`${API_BASE_URL}/api/visitors/${id}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
-
-  if (!response.ok) {
-    throw new Error('获取来访登记详情失败')
-  }
-
-  const result = await response.json()
-  return result
+export function listVisitors(params = {}) {
+  return api('/api/v1/visitors', { params })
 }
 
-/**
- * 创建来访登记
- */
-export async function createVisitor(data) {
-  const response = await fetch(`${API_BASE_URL}/api/visitors`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify(data)
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '创建来访登记失败')
-  }
-
-  const result = await response.json()
-  return result
+export function getVisitor(id) {
+  return api(`/api/v1/visitors/${id}`)
 }
 
-/**
- * 更新来访登记
- */
-export async function updateVisitor(id, data) {
-  const response = await fetch(`${API_BASE_URL}/api/visitors/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify(data)
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '更新来访登记失败')
-  }
-
-  const result = await response.json()
-  return result
+export function createVisitor(data) {
+  return api('/api/v1/visitors', { method: 'POST', body: data })
 }
 
-/**
- * 删除来访登记
- */
-export async function deleteVisitor(id) {
-  const response = await fetch(`${API_BASE_URL}/api/visitors/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '删除来访登记失败')
-  }
-
-  const result = await response.json()
-  return result
+export function updateVisitor(id, data) {
+  return api(`/api/v1/visitors/${id}`, { method: 'PUT', body: data })
 }
 
-/**
- * 审核并批准来访登记
- */
-export async function approveVisitor(id, status, remark) {
-  const queryParams = new URLSearchParams()
-  queryParams.append('status', status)
-  if (remark) queryParams.append('remark', remark)
-
-  const response = await fetch(`${API_BASE_URL}/api/visitors/${id}/approve?${queryParams}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '批准来访登记失败')
-  }
-
-  const result = await response.json()
-  return result
+export function deleteVisitor(id) {
+  return api(`/api/v1/visitors/${id}`, { method: 'DELETE' })
 }
 
-/**
- * 拒绝来访登记
- */
-export async function rejectVisitor(id, remark) {
-  const queryParams = new URLSearchParams()
-  if (remark) queryParams.append('remark', remark)
-
-  const response = await fetch(`${API_BASE_URL}/api/visitors/${id}/reject?${queryParams}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '拒绝来访登记失败')
-  }
-
-  const result = await response.json()
-  return result
+export function approveVisitor(id) {
+  return api(`/api/v1/visitors/${id}/approve`, { method: 'POST', body: {} })
 }
 
-/**
- * 登记来访人实际进入时间
- */
-export async function recordEntry(id, entryTime) {
-  const response = await fetch(`${API_BASE_URL}/api/visitors/${id}/entry?entryTime=${encodeURIComponent(entryTime)}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '登记进入时间失败')
-  }
-
-  const result = await response.json()
-  return result
+export function rejectVisitor(id) {
+  return api(`/api/v1/visitors/${id}/reject`, { method: 'POST', body: {} })
 }
 
-/**
- * 登记来访人实际离开时间
- */
-export async function recordExit(id, exitTime) {
-  const response = await fetch(`${API_BASE_URL}/api/visitors/${id}/exit?exitTime=${encodeURIComponent(exitTime)}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
+export function checkInVisitor(id) {
+  return api(`/api/v1/visitors/${id}/check-in`, { method: 'POST', body: {} })
+}
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '登记离开时间失败')
+export function checkOutVisitor(id) {
+  return api(`/api/v1/visitors/${id}/check-out`, { method: 'POST', body: {} })
+}
+
+export function visitorStatus(value) {
+  const text = String(value ?? '').toUpperCase()
+  const table = {
+    0: 'PENDING',
+    PENDING: 'PENDING',
+    待审: 'PENDING',
+    待审核: 'PENDING',
+    1: 'APPROVED',
+    APPROVED: 'APPROVED',
+    已批准: 'APPROVED',
+    2: 'CHECKED_IN',
+    CHECKED_IN: 'CHECKED_IN',
+    已入校: 'CHECKED_IN',
+    已进入: 'CHECKED_IN',
+    3: 'CHECKED_OUT',
+    CHECKED_OUT: 'CHECKED_OUT',
+    已离校: 'CHECKED_OUT',
+    已离开: 'CHECKED_OUT',
+    4: 'REJECTED',
+    REJECTED: 'REJECTED',
+    已拒绝: 'REJECTED'
   }
+  return table[value] || table[text] || 'PENDING'
+}
 
-  const result = await response.json()
-  return result
+export function visitorStatusLabel(value) {
+  return STATUS_LABEL[visitorStatus(value)] || '待审'
+}
+
+export function toVisitorRow(raw = {}) {
+  return {
+    id: raw.id,
+    visitorName: raw.visitorName || raw.name || '',
+    idNo: raw.idNo || raw.idNumber || raw.certificateNo || raw.visitorIdCard || '',
+    phone: raw.phone || raw.visitorPhone || '',
+    reason: raw.reason || raw.visitPurpose || raw.purpose || '',
+    hostName: raw.hostName || raw.visitTargetName || raw.host || '',
+    hostUserId: raw.hostUserId ?? raw.visitTargetUserId ?? null,
+    appointmentTime: raw.appointmentTime || raw.visitTimeStart || raw.appointedAt || '',
+    arrivalTime: raw.arrivalTime || raw.entryTime || raw.checkInTime || '',
+    leaveTime: raw.leaveTime || raw.exitTime || raw.checkOutTime || '',
+    status: visitorStatus(raw.status),
+    remark: raw.remark || ''
+  }
+}
+
+export function toVisitorPayload(form) {
+  return {
+    visitorName: String(form.visitorName || '').trim(),
+    idNo: String(form.idNo || '').trim(),
+    phone: String(form.phone || '').trim(),
+    reason: String(form.reason || '').trim(),
+    hostName: String(form.hostName || '').trim(),
+    hostUserId: form.hostUserId || null,
+    appointmentTime: toApiDateTime(form.appointmentTime),
+    remark: String(form.remark || '').trim()
+  }
+}
+
+export async function fetchVisitorPage(params) {
+  const page = pageRecords(await listVisitors(listQuery(params.page, params.pageSize, {
+    status: params.status,
+    keyword: params.keyword
+  })))
+  return { ...page, records: page.records.map(toVisitorRow) }
 }

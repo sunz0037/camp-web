@@ -10,6 +10,30 @@ export function maskPhone(phone) {
   return `${value.slice(0, 3)}****${value.slice(-4)}`
 }
 
+export function maskId(value) {
+  const text = String(value || '')
+  if (text.length < 8) return text || '—'
+  return `${text.slice(0, 3)}***********${text.slice(-4)}`
+}
+
+export function formatDateTime(value) {
+  if (!value) return '—'
+  return String(value).replace('T', ' ').slice(0, 16)
+}
+
+export function toInputDateTime(value) {
+  if (!value) return ''
+  return String(value).replace(' ', 'T').slice(0, 16)
+}
+
+export function toApiDateTime(value) {
+  if (!value) return null
+  const text = String(value).trim().replace(' ', 'T')
+  if (!text) return null
+  if (text.length === 16) return `${text}:00`
+  return text
+}
+
 export function weekdayIndex(date = new Date()) {
   const day = date.getDay()
   return day === 0 ? 7 : day

@@ -48,4 +48,9 @@
   --pager-pad: 12px 16px;
   --shadow-card: none;
   --font: Inter, 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+
+  /* 与现有字面量相同，供暗色 / 校园绿覆盖。default 不改色。 */
+  --c-sidebar: #ffffff;
+  --c-control: #ffffff;
+  --c-stripe: #F7F7FB;
 }

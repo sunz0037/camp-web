@@ -22,8 +22,19 @@
         </div>
       </form>
 
+      <section class="card block">
+        <h2>外观</h2>
+        <p class="sub">默认外观与当前版本一致。切换后保存到你的账号。</p>
+        <div class="seg" style="margin-top: 14px" role="group" aria-label="外观">
+          <button type="button" :class="{ active: theme.themeKey === 'default' }" :aria-pressed="theme.themeKey === 'default'" @click="pickTheme('default')">默认</button>
+          <button type="button" :class="{ active: theme.themeKey === 'dark' }" :aria-pressed="theme.themeKey === 'dark'" @click="pickTheme('dark')">暗色</button>
+          <button type="button" :class="{ active: theme.themeKey === 'campus-green' }" :aria-pressed="theme.themeKey === 'campus-green'" @click="pickTheme('campus-green')">校园绿</button>
+        </div>
+      </section>
+
       <form class="card block" @submit.prevent="savePassword">
         <h2>修改密码</h2>
+        <p class="sub">也可以到 <router-link to="/home/change-password">修改密码</router-link>。成功后需要重新登录。</p>
         <div class="form-grid" style="margin-top: 14px">
           <label class="field-label">当前密码</label>
           <input v-model="currentPassword" class="field" type="password" autocomplete="current-password" />
@@ -33,7 +44,7 @@
           <input v-model="confirmPassword" class="field" type="password" autocomplete="new-password" />
           <p v-if="error" class="error-text">{{ error }}</p>
           <div>
-            <button class="btn btn-primary" type="submit">更新密码</button>
+            <button class="btn btn-primary" type="submit" :disabled="passwordLoading">{{ passwordLoading ? '提交中…' : '更新密码' }}</button>
           </div>
         </div>
       </form>
@@ -43,17 +54,23 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
+import { useThemeStore } from '../stores/theme.js'
 import { useUiStore } from '../stores/ui.js'
+import { resetRouteInstall } from '../router/index.js'
 
 const auth = useAuthStore()
+const theme = useThemeStore()
 const ui = useUiStore()
+const router = useRouter()
 const phone = ref(auth.user?.phone || '')
 const email = ref(auth.user?.email || '')
 const currentPassword = ref('')
 const nextPassword = ref('')
 const confirmPassword = ref('')
 const error = ref('')
+const passwordLoading = ref(false)
 
 const avatar = computed(() => {
   const title = auth.user?.title || ''
@@ -69,7 +86,16 @@ function saveProfile() {
   ui.toast('个人档案已保存', 'success')
 }
 
-function savePassword() {
+async function pickTheme(key) {
+  try {
+    await theme.setTheme(key)
+    ui.toast(key === 'default' ? '已恢复默认外观' : '外观已保存', 'success')
+  } catch (err) {
+    ui.toast(err.message || '外观保存失败', 'error')
+  }
+}
+
+async function savePassword() {
   error.value = ''
   if (nextPassword.value.length < 6) {
     error.value = '新密码至少 6 位'
@@ -79,14 +105,23 @@ function savePassword() {
     error.value = '两次输入的新密码不一致'
     return
   }
+  if (currentPassword.value === nextPassword.value) {
+    error.value = '新密码不能与当前密码相同'
+    return
+  }
+  passwordLoading.value = true
   try {
-    auth.changePassword({ oldPassword: currentPassword.value, nextPassword: nextPassword.value })
-    currentPassword.value = ''
-    nextPassword.value = ''
-    confirmPassword.value = ''
-    ui.toast('密码已更新', 'success')
+    await auth.changePassword({ oldPassword: currentPassword.value, nextPassword: nextPassword.value })
+    ui.toast('密码已更新，请重新登录', 'success')
+    setTimeout(() => {
+      auth.logout()
+      resetRouteInstall()
+      router.replace('/login')
+    }, 700)
   } catch (err) {
-    error.value = err.message
+    error.value = err.message || '修改密码失败'
+  } finally {
+    passwordLoading.value = false
   }
 }
 </script>
