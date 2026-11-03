@@ -17,19 +17,28 @@
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
-      <div class="user-card">
-        <div class="user-row">
+    </aside>
+
+    <div class="shell-main">
+      <header class="topbar">
+        <nav class="crumb" aria-label="面包屑">
+          <router-link to="/home/dashboard">校园OA</router-link>
+          <span>/</span>
+          <strong>{{ crumb }}</strong>
+        </nav>
+        <button class="jump" type="button" @click="ui.openPalette()">
+          <AppIcon name="Search" :size="16" />
+          <span>搜索菜单</span>
+        </button>
+        <div class="top-user">
           <div class="avatar">{{ avatar }}</div>
           <div>
             <strong>{{ auth.user?.name }}</strong>
             <span>{{ auth.user?.title }}</span>
           </div>
+          <button class="btn btn-ghost" type="button" @click="logout">退出</button>
         </div>
-        <button class="btn" type="button" @click="logout">退出登录</button>
-      </div>
-    </aside>
-
-    <div class="shell-main">
+      </header>
       <PcOnly v-if="blocked" />
       <router-view v-else />
     </div>
@@ -89,6 +98,7 @@ const avatar = computed(() => {
 })
 
 const blocked = computed(() => isMobile.value && route.meta.pcOnly === true)
+const crumb = computed(() => route.meta.title || '工作台')
 
 function logout() {
   auth.logout()

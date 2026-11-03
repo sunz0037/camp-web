@@ -142,8 +142,8 @@
 }
 
 .bento-page .tab.active {
-  background: #18181b;
-  color: #fff;
+  background: var(--c-brand-soft);
+  color: var(--c-brand);
 }
 
 .bento-page .tab-content,

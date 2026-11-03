@@ -121,6 +121,17 @@
       </section>
     </template>
 
+    <section v-if="!personal" class="card preview-card">
+      <h2>表单预览</h2>
+      <dl v-if="preview" class="dl">
+        <dt>日期</dt><dd class="num">{{ preview.date || '—' }}</dd>
+        <dt>班级</dt><dd>{{ preview.className || '—' }}</dd>
+        <dt>课程</dt><dd>{{ preview.courseName || '—' }}</dd>
+        <dt>应到 / 实到</dt><dd class="num">{{ preview.expected ?? '—' }} / {{ preview.actual ?? '—' }}</dd>
+      </dl>
+      <p v-else class="sub">选择一条日报，或登记后在这里预览。</p>
+    </section>
+
     <div v-if="recorder" class="modal-mask" @click.self="recorder = null">
       <form class="modal-card" style="width: min(720px, 100%)" @submit.prevent="saveRecord">
         <div class="modal-head">
@@ -220,6 +231,24 @@ const anomalies = computed(() => records.value.filter((item) => {
   return classOk && dateOk && item.status !== 'present'
 }))
 const personalRows = computed(() => records.value)
+const preview = computed(() => {
+  if (recorder.value) {
+    const counts = { present: 0, leave: 0, late: 0, absent: 0 }
+    recorder.value.rows.forEach((row) => {
+      if (counts[row.status] !== undefined) counts[row.status] += 1
+    })
+    return {
+      date: recorder.value.date,
+      className: recorder.value.className,
+      courseName: courseChoices.value.find((item) => String(item.id) === String(recorder.value.courseKey))?.name || '班级日报',
+      expected: recorder.value.rows.length,
+      actual: counts.present
+    }
+  }
+  const row = summaryRows.value[0]
+  if (!row) return null
+  return { date: row.date, className: row.className, courseName: row.courseName, expected: row.summary.expected, actual: row.summary.actual }
+})
 
 function pillOf(status) {
   if (status === 'present') return 'pill-ok'

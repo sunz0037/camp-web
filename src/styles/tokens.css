@@ -1,33 +1,40 @@
-/* Design tokens v1.2
-   --brand-600 / --c-brand 只用于侧栏选中、竖向强调、品牌标记和图表。
-   登录、保存、新增等实心主按钮用 --btn-primary-bg，不用品牌绿。
-*/
+/* Token v1.3 — 对齐 Framer /users /roles /classes。废除青绿 v1.2 整站铺色。 */
 :root {
-  --brand-600: #24756c;
-  --c-brand: var(--brand-600);
-  --c-brand-deep: #1e5f58;
-  --c-brand-soft: #e7f3f0;
+  --canvas: #f7f7fb;
+  --c-canvas: var(--canvas);
+  --c-card: #ffffff;
+  --c-surface: #ffffff;
+  --c-subtle: #ecedf5;
+  --c-table-head: #fafafd;
+  --c-border: #ecedf5;
 
-  --btn-primary-bg: #1a2b2e;
+  --brand-600: #5b6cf0;
+  --c-brand: #5b6cf0;
+  --c-brand-deep: #4455d6;
+  --c-brand-soft: rgba(91, 108, 240, 0.1);
+  --c-accent: #a78bfa;
+  --c-accent-soft: rgba(167, 139, 250, 0.14);
+  --c-logo: linear-gradient(135deg, #5b6cf0 0%, #a78bfa 100%);
+
+  --btn-primary-bg: #5b6cf0;
   --btn-primary-fg: #ffffff;
 
-  --c-canvas: #f5f6f4;
-  --c-card: #ffffff;
-  --c-subtle: #eef2f0;
-  --c-table-head: #f7f8f9;
-  --c-border: #dce5e2;
-  --c-text: #1a2b2e;
-  --c-muted: #6b7c82;
-  --c-focus: #3b82f6;
-  --c-warn: #f97316;
-  --c-warn-soft: #fff4eb;
-  --c-info-soft: #e8f1fb;
+  --c-text: #1c1f33;
+  --c-muted: #6e7390;
+  --c-focus: #5b6cf0;
+  --c-ok: #34c9a3;
+  --c-ok-soft: rgba(52, 201, 163, 0.12);
+  --c-coral: #f59e8b;
+  --c-coral-soft: rgba(245, 158, 139, 0.16);
+  --c-warn: #f59e8b;
+  --c-warn-soft: rgba(245, 158, 139, 0.16);
+  --c-info-soft: rgba(91, 108, 240, 0.1);
 
   --radius-card: 16px;
   --radius-control: 12px;
   --radius-panel: 28px;
   --sidebar-width: 220px;
   --bento-gap: 16px;
-  --shadow-card: 0 1px 2px rgba(26, 43, 46, 0.04);
+  --shadow-card: 0 1px 2px rgba(28, 31, 51, 0.04);
   --font: 'Plus Jakarta Sans', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
 }

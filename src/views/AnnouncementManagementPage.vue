@@ -10,6 +10,10 @@
       <button v-if="canPublish" class="btn btn-primary" type="button" @click="open = true">发布公告</button>
     </header>
 
+    <section class="card filters">
+      <input v-model="keyword" class="field" placeholder="搜索标题 / 发布人" />
+    </section>
+
     <section class="card table-card">
       <article v-for="item in ordered" :key="item.id" class="news news-row">
         <div class="news-main">
@@ -27,6 +31,17 @@
         </div>
       </article>
       <p v-if="!ordered.length" class="empty">还没有公告</p>
+    </section>
+
+    <section class="card preview-card">
+      <h2>表单预览</h2>
+      <dl v-if="preview" class="dl">
+        <dt>标题</dt><dd>{{ preview.title || '—' }}</dd>
+        <dt>范围</dt><dd>{{ preview.scope || draft.scope || '—' }}</dd>
+        <dt>发布人</dt><dd>{{ preview.author || auth.user?.name || '—' }}</dd>
+        <dt>正文</dt><dd>{{ preview.body || '—' }}</dd>
+      </dl>
+      <p v-else class="sub">选择一条公告，或填写发布表单后在这里预览。</p>
     </section>
 
     <div v-if="current" class="modal-mask" @click.self="current = null">
@@ -89,6 +104,7 @@ const current = ref(null)
 const formError = ref('')
 const loadError = ref('')
 const items = ref([])
+const keyword = ref('')
 const draft = reactive({ title: '', body: '', scope: '全校', pinned: false })
 const userId = computed(() => auth.user?.id || '')
 const canPublish = computed(() => auth.can('announcement:publish') && !isMobile.value)
@@ -104,8 +120,12 @@ const scopes = computed(() => {
 })
 
 const ordered = computed(() => {
-  return [...items.value].sort((a, b) => Number(b.pinned) - Number(a.pinned) || String(b.publishedAt).localeCompare(String(a.publishedAt)))
+  const query = keyword.value.trim()
+  return [...items.value]
+    .filter((item) => !query || `${item.title}${item.author}`.includes(query))
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || String(b.publishedAt).localeCompare(String(a.publishedAt)))
 })
+const preview = computed(() => current.value || (draft.title || draft.body ? draft : null) || ordered.value[0] || null)
 
 async function load() {
   loadError.value = ''

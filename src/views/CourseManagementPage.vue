@@ -86,6 +86,17 @@
       </div>
     </section>
 
+    <section v-if="tab !== 'week'" class="card preview-card">
+      <h2>表单预览</h2>
+      <dl v-if="preview" class="dl">
+        <dt>课程</dt><dd>{{ preview.name || '—' }}</dd>
+        <dt>班级</dt><dd>{{ preview.className || '—' }}</dd>
+        <dt>教师</dt><dd>{{ preview.teacher || '—' }}</dd>
+        <dt>节次</dt><dd class="num">{{ preview.periodStart ? `${preview.periodStart}-${preview.periodEnd}` : '—' }}</dd>
+      </dl>
+      <p v-else class="sub">选择授课或新增课程后，在这里预览。</p>
+    </section>
+
     <section v-else class="card block">
       <h2 style="margin-bottom: 12px">我的课表</h2>
       <ScheduleBoard :items="mine" />
@@ -206,6 +217,7 @@ const visibleSchedules = computed(() => {
   })
 })
 
+const preview = computed(() => scheduleEditor.value || courseEditor.value || visibleSchedules.value[0] || courses.value[0] || null)
 const mine = computed(() => {
   if (auth.user?.role === 'TEACHER') return schedules.value.filter((item) => item.teacher === auth.user.name)
   if (auth.user?.className) return schedules.value.filter((item) => item.className === auth.user.className)

@@ -79,6 +79,17 @@
       </div>
     </section>
 
+    <section class="card preview-card">
+      <h2>表单预览</h2>
+      <dl v-if="preview" class="dl">
+        <dt>学号</dt><dd class="num">{{ preview.studentNo || '—' }}</dd>
+        <dt>姓名</dt><dd>{{ preview.name || '—' }}</dd>
+        <dt>班级</dt><dd>{{ preview.className || '—' }}</dd>
+        <dt>学籍</dt><dd>{{ preview.status || '—' }}</dd>
+      </dl>
+      <p v-else class="sub">选择一行或点击新增，这里显示表单内容。</p>
+    </section>
+
     <div v-if="editor" class="modal-mask" @click.self="editor = null">
       <form class="modal-card" @submit.prevent="saveStudent">
         <div class="modal-head">
@@ -222,6 +233,7 @@ const missing = ref(0)
 const scopeText = computed(() => scopeLabel(auth.user, classOptions.value.map((item) => item.name)))
 const allowedClassNames = computed(() => classOptions.value.map((item) => item.name))
 const filtered = computed(() => rows.value)
+const preview = computed(() => editor.value || detail.value || pageRows.value[0] || null)
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const pageRows = computed(() => rows.value)
 const pageList = computed(() => Array.from({ length: pageCount.value }, (_, index) => index + 1).filter((n) => {
