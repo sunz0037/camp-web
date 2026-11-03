@@ -1,5 +1,5 @@
 import { api } from './http.js'
-import { pageRecords } from './unwrap.js'
+import { pageRecords, unwrapData } from './unwrap.js'
 
 /** GET /api/v1/announcements */
 export function listAnnouncements(params = {}) {
@@ -14,6 +14,15 @@ export function getAnnouncement(id) {
 /** POST /api/v1/announcements */
 export function createAnnouncement(data) {
   return api('/api/v1/announcements', { method: 'POST', body: data })
+}
+
+/** POST /api/v1/announcements/{id}/read */
+export function markAnnouncementRead(id) {
+  return api(`/api/v1/announcements/${id}/read`, { method: 'POST', body: {} })
+}
+
+export async function fetchAnnouncement(id) {
+  return toAnnouncementRow(unwrapData(await getAnnouncement(id)))
 }
 
 export function toAnnouncementRow(raw) {

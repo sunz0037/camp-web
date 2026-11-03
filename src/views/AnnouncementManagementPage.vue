@@ -74,7 +74,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from '../components/AppIcon.vue'
-import { createAnnouncement, fetchAnnouncements } from '../api/announcement.js'
+import { createAnnouncement, fetchAnnouncement, fetchAnnouncements, markAnnouncementRead } from '../api/announcement.js'
 import { useViewport } from '../composables/useViewport.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
@@ -119,9 +119,17 @@ async function load() {
 
 onMounted(load)
 
-function openDetail(item) {
+async function openDetail(item) {
   current.value = item
-  item.read = true
+  try {
+    await markAnnouncementRead(item.id)
+    item.read = true
+    const detail = await fetchAnnouncement(item.id)
+    Object.assign(item, detail, { read: true })
+    current.value = item
+  } catch (error) {
+    ui.toast(error.message || '标记已读失败', 'error')
+  }
 }
 
 function mark() {
