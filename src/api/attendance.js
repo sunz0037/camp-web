@@ -11,9 +11,9 @@ export function listAttendanceClasses(params = {}) {
   return api('/api/v1/attendances/classes', { params })
 }
 
-/** GET /api/v1/attendances */
+/** GET /api/v1/attendances/records */
 export function listAttendanceRecords(params = {}) {
-  return api('/api/v1/attendances', { params })
+  return api('/api/v1/attendances/records', { params })
 }
 
 /** POST /api/v1/attendances/summaries */
@@ -46,19 +46,28 @@ export function toSummaryRow(raw) {
   }
 }
 
+const EXCEPTION_STATUS = {
+  ABSENT: 'absent',
+  LATE: 'late',
+  PERSONAL_LEAVE: 'leave',
+  SICK_LEAVE: 'leave',
+  EARLY_LEAVE: 'leave'
+}
+
 export function toRecordRow(raw) {
-  const status = RECORD_STATUS[raw.status] || raw.status || 'absent'
+  const status = EXCEPTION_STATUS[raw.exceptionType] || RECORD_STATUS[raw.status] || 'absent'
+  const studentId = raw.studentId
   return {
-    key: raw.id,
+    key: raw.id ?? `${studentId}-${raw.attendanceDate || ''}`,
     id: raw.id,
     date: raw.attendanceDate || raw.date || '',
-    className: raw.className || '',
-    courseName: raw.courseName || raw.course || '—',
+    className: raw.className || (raw.classId != null ? `班级#${raw.classId}` : '—'),
+    courseName: raw.courseName || raw.course || (raw.courseId != null ? `课程#${raw.courseId}` : '—'),
     courseId: raw.courseId ?? null,
-    studentId: raw.studentId,
-    studentNo: raw.studentNo || '',
-    name: raw.studentName || raw.realName || raw.name || '',
-    status: status === 'early' ? 'leave' : status
+    studentId,
+    studentNo: raw.studentNo || (studentId != null ? String(studentId) : '—'),
+    name: raw.studentName || raw.realName || raw.name || (studentId != null ? `学生#${studentId}` : '—'),
+    status
   }
 }
 

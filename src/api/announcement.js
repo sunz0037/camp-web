@@ -16,11 +16,6 @@ export function createAnnouncement(data) {
   return api('/api/v1/announcements', { method: 'POST', body: data })
 }
 
-/** POST /api/v1/announcements/{id}/read */
-export function markAnnouncementRead(id) {
-  return api(`/api/v1/announcements/${id}/read`, { method: 'POST', body: {} })
-}
-
 export function toAnnouncementRow(raw) {
   const publishedAt = raw.publishTime || raw.publishedAt || raw.createdAt || ''
   return {

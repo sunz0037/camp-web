@@ -173,7 +173,7 @@
 import { computed, onMounted, ref } from 'vue'
 import AppIcon from '../components/AppIcon.vue'
 import ScheduleBoard from '../components/ScheduleBoard.vue'
-import { createCourse, createSchedule, fetchCourses, fetchSchedules, toSchedulePayload, updateSchedule } from '../api/course.js'
+import { createClassCourse, createCourse, fetchClassCourses, fetchCourses, toClassCoursePayload, updateClassCourse } from '../api/course.js'
 import { fetchClasses } from '../api/student.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
@@ -228,10 +228,10 @@ async function load() {
     errors.push(error.message || '课程加载失败')
   }
   try {
-    schedules.value = await fetchSchedules()
+    schedules.value = await fetchClassCourses()
   } catch (error) {
     schedules.value = []
-    errors.push(error.message || '课表加载失败')
+    errors.push(error.message || '班级授课加载失败')
   }
   try {
     classOptions.value = await fetchClasses()
@@ -289,9 +289,13 @@ async function saveSchedule() {
     return
   }
   try {
-    const payload = toSchedulePayload(scheduleEditor.value)
-    if (scheduleEditor.value.id) await updateSchedule(scheduleEditor.value.id, payload)
-    else await createSchedule(payload)
+    const form = scheduleEditor.value
+    const cls = classOptions.value.find((item) => item.name === form.className)
+    form.classId = cls?.id || form.classId
+    const siblings = form.id ? schedules.value.filter((row) => row.id === form.id) : []
+    const payload = toClassCoursePayload(form, siblings)
+    if (form.id) await updateClassCourse(form.id, payload)
+    else await createClassCourse(payload)
     ui.toast('排课已保存', 'success')
     scheduleEditor.value = null
     await load()

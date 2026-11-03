@@ -16,19 +16,24 @@ export function updateCourse(id, data) {
   return api(`/api/v1/courses/${id}`, { method: 'PUT', body: data })
 }
 
-/** GET /api/v1/schedules — 星期、开始节次、结束节次、教室 */
-export function listSchedules(params = {}) {
-  return api('/api/v1/schedules', { params })
+/** GET /api/v1/class-courses */
+export function listClassCourses(params = {}) {
+  return api('/api/v1/class-courses', { params })
 }
 
-/** POST /api/v1/schedules */
-export function createSchedule(data) {
-  return api('/api/v1/schedules', { method: 'POST', body: data })
+/** GET /api/v1/class-courses/my-timetable */
+export function getMyTimetable() {
+  return api('/api/v1/class-courses/my-timetable')
 }
 
-/** PUT /api/v1/schedules/{id} */
-export function updateSchedule(id, data) {
-  return api(`/api/v1/schedules/${id}`, { method: 'PUT', body: data })
+/** POST /api/v1/class-courses */
+export function createClassCourse(data) {
+  return api('/api/v1/class-courses', { method: 'POST', body: data })
+}
+
+/** PUT /api/v1/class-courses/{id} */
+export function updateClassCourse(id, data) {
+  return api(`/api/v1/class-courses/${id}`, { method: 'PUT', body: data })
 }
 
 export function toCourseRow(raw) {
@@ -41,14 +46,8 @@ export function toCourseRow(raw) {
   }
 }
 
-export function toScheduleRow(raw) {
+function slotOf(raw) {
   return {
-    id: raw.id,
-    courseId: raw.courseId ?? null,
-    name: raw.courseName || raw.name || '',
-    className: raw.className || '',
-    grade: raw.grade || raw.gradeName || '',
-    teacher: raw.teacherName || raw.teacher || '',
     weekday: Number(raw.weekday || raw.weekDay || 0),
     periodStart: Number(raw.periodStart || 0),
     periodEnd: Number(raw.periodEnd || raw.periodStart || 0),
@@ -56,16 +55,53 @@ export function toScheduleRow(raw) {
   }
 }
 
-export function toSchedulePayload(form) {
+export function flattenClassCourses(records) {
+  const rows = []
+  records.forEach((raw) => {
+    const sessions = Array.isArray(raw.sessions) && raw.sessions.length ? raw.sessions : [null]
+    sessions.forEach((slot, index) => {
+      const time = slot ? slotOf(slot) : { weekday: 1, periodStart: 1, periodEnd: 2, roomNo: '' }
+      rows.push({
+        id: raw.id,
+        sessionIndex: index,
+        courseId: raw.courseId ?? null,
+        name: raw.courseName || raw.name || '',
+        classId: raw.classId ?? null,
+        className: raw.className || '',
+        grade: raw.gradeName || raw.grade || '',
+        teacher: raw.teacherName || raw.teacher || '',
+        ...time
+      })
+    })
+  })
+  return rows
+}
+
+export function toTimetableRow(raw) {
+  const time = slotOf(raw)
   return {
+    id: raw.classCourseId ? `${raw.classCourseId}-${time.weekday}-${time.periodStart}` : raw.id,
+    courseId: raw.courseId ?? null,
+    name: raw.courseName || raw.name || '',
+    classId: raw.classId ?? null,
+    className: raw.className || '',
+    teacher: raw.teacherName || raw.teacher || '',
+    ...time
+  }
+}
+
+export function toClassCoursePayload(form, siblings = []) {
+  const current = slotOf(form)
+  const sessions = siblings.length
+    ? siblings.map((row) => (row.sessionIndex === form.sessionIndex ? current : slotOf(row)))
+    : [current]
+  return {
+    classId: form.classId || undefined,
+    className: form.className,
     courseId: form.courseId || null,
     courseName: form.name || '',
-    className: form.className,
-    teacherName: form.teacher,
-    weekday: Number(form.weekday),
-    periodStart: Number(form.periodStart),
-    periodEnd: Number(form.periodEnd),
-    roomNo: form.roomNo
+    teacherName: form.teacher || '',
+    sessions
   }
 }
 
@@ -74,7 +110,13 @@ export async function fetchCourses(params = {}) {
   return page.records.map(toCourseRow)
 }
 
-export async function fetchSchedules(params = {}) {
-  const page = pageRecords(await listSchedules({ page: 1, size: 200, ...params }))
-  return page.records.map(toScheduleRow)
+export async function fetchClassCourses(params = {}) {
+  const page = pageRecords(await listClassCourses({ page: 1, size: 200, ...params }))
+  return flattenClassCourses(page.records)
+}
+
+export async function fetchMyTimetable() {
+  const data = pageRecords(await getMyTimetable())
+  const list = data.records.length ? data.records : []
+  return list.map(toTimetableRow)
 }

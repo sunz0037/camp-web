@@ -74,7 +74,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from '../components/AppIcon.vue'
-import { createAnnouncement, fetchAnnouncements, markAnnouncementRead } from '../api/announcement.js'
+import { createAnnouncement, fetchAnnouncements } from '../api/announcement.js'
 import { useViewport } from '../composables/useViewport.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
@@ -119,14 +119,9 @@ async function load() {
 
 onMounted(load)
 
-async function openDetail(item) {
+function openDetail(item) {
   current.value = item
   item.read = true
-  try {
-    await markAnnouncementRead(item.id)
-  } catch {
-    // 已读回执接口未接通时仍可查看正文
-  }
 }
 
 function mark() {
