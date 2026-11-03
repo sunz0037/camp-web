@@ -42,13 +42,51 @@ export const PHASE_ROUTES = [
     path: 'org-classes',
     name: 'OrgClasses',
     component: () => import('./views/OrgClassesPage.vue'),
-    meta: { title: '年级班级', roles: STAFF, pcOnly: true, icon: 'Network', sidebar: 'staff' }
+    meta: {
+      title: '年级班级',
+      note: '合并',
+      noteTitle: '年级与班级仍合并在本页，待产品确认后再拆为 /grades 与 /classes',
+      roles: STAFF,
+      pcOnly: true,
+      icon: 'Network',
+      sidebar: 'staff'
+    }
   },
   {
     path: 'users',
     name: 'Users',
     component: () => import('./views/UserManagementPage.vue'),
     meta: { title: '用户账号', roles: ['ADMIN'], pcOnly: true, icon: 'UserCog', sidebar: 'admin' }
+  },
+  {
+    path: 'class-courses',
+    name: 'ClassCourses',
+    component: () => import('./views/ClassCourseManagementPage.vue'),
+    meta: { title: '班级授课科目', roles: STAFF, pcOnly: true, icon: 'BookMarked', sidebar: 'staff' }
+  },
+  {
+    path: 'teacher-classes',
+    name: 'TeacherClasses',
+    component: () => import('./views/TeacherClassManagementPage.vue'),
+    meta: { title: '教师班级关联', roles: STAFF, pcOnly: true, icon: 'Contact', sidebar: 'staff' }
+  },
+  {
+    path: 'grade-admin-grades',
+    name: 'GradeAdminGrades',
+    component: () => import('./views/GradeAdminGradeManagementPage.vue'),
+    meta: { title: '年级管理员关联', roles: ['ADMIN', 'ACADEMIC'], pcOnly: true, icon: 'Link2', sidebar: 'staff' }
+  },
+  {
+    path: 'roles',
+    name: 'Roles',
+    component: () => import('./views/RoleManagementPage.vue'),
+    meta: { title: '角色权限管理', roles: ['ADMIN'], pcOnly: true, icon: 'Shield', sidebar: 'admin' }
+  },
+  {
+    path: 'data-permissions',
+    name: 'DataPermissions',
+    component: () => import('./views/DataPermissionManagementPage.vue'),
+    meta: { title: '数据查询权限', roles: ['ADMIN'], pcOnly: true, icon: 'ShieldCheck', sidebar: 'admin' }
   },
   {
     path: 'profile',

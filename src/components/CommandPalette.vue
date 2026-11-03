@@ -12,7 +12,7 @@
         @click="go(item)"
       >
         <span>{{ item.label }}</span>
-        <small class="muted">{{ item.path }}</small>
+        <small class="muted">{{ item.path }}{{ item.note ? ` · ${item.note}` : '' }}</small>
       </button>
       <p v-if="!results.length" class="empty" style="padding: 24px">没有匹配的菜单</p>
     </div>
@@ -41,6 +41,7 @@ const results = computed(() => {
     .map((route) => ({
       name: route.name,
       label: navLabel(route, role),
+      note: route.meta.noteTitle || '',
       path: `/home/${route.path}`
     }))
     .filter((item) => !query || item.label.includes(query))

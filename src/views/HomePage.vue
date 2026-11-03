@@ -14,7 +14,8 @@
           :to="item.to"
         >
           <AppIcon :name="item.icon" :size="16" />
-          <span>{{ item.label }}</span>
+          <span class="nav-text">{{ item.label }}</span>
+          <small v-if="item.note" class="nav-note" :title="item.noteTitle">{{ item.note }}</small>
         </router-link>
       </nav>
     </aside>
@@ -90,6 +91,8 @@ const sideItems = computed(() => {
     name: item.name,
     icon: item.meta.icon,
     label: navLabel(item, role),
+    note: item.meta.note || '',
+    noteTitle: item.meta.noteTitle || '',
     to: `/home/${item.path}`
   }))
 })

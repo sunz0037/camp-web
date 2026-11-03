@@ -935,6 +935,21 @@ td.muted {
   stroke: currentColor;
 }
 
+.nav-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-note {
+  margin-left: auto;
+  flex: none;
+  font-size: 11px;
+  font-weight: var(--nav-weight);
+  color: inherit;
+}
+
 .user-card {
   margin: 12px;
   padding: 12px;
