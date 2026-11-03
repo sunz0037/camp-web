@@ -9,7 +9,7 @@
       <button v-if="canPublish" class="btn btn-primary" type="button" @click="open = true">发布公告</button>
     </header>
 
-    <section class="card">
+    <section class="card table-card">
       <article v-for="item in ordered" :key="item.id" class="news news-row">
         <div class="news-main">
           <strong>

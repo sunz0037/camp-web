@@ -51,14 +51,15 @@
         <article class="card stat"><p class="label">旷课</p><p class="figure num" :class="{ warn: activeSummary.absent }">{{ activeSummary.absent }}</p></article>
       </section>
 
+      <section class="card filters">
+        <select v-model="className" class="select">
+          <option value="">全部班级</option>
+          <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
+        </select>
+        <input v-model="date" class="field" type="date" />
+      </section>
+
       <section class="card table-card">
-        <div class="filters">
-          <select v-model="className" class="select">
-            <option value="">全部班级</option>
-            <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
-          </select>
-          <input v-model="date" class="field" type="date" />
-        </div>
         <div class="table-scroll">
           <table v-if="tab === 'summary'" class="data">
             <thead>

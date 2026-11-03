@@ -18,18 +18,19 @@
       <button type="button" :class="{ active: tab === 'week' }" @click="tab = 'week'">周课表</button>
     </div>
 
+    <section v-if="tab === 'schedules'" class="card filters">
+      <select v-model="grade" class="select">
+        <option value="">全部年级</option>
+        <option v-for="item in campus.grades" :key="item">{{ item }}</option>
+      </select>
+      <select v-model="className" class="select">
+        <option value="">全部班级</option>
+        <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
+      </select>
+      <input v-model="keyword" class="field" placeholder="搜索课程 / 教师 / 教室" />
+    </section>
+
     <section v-if="tab === 'schedules'" class="card table-card">
-      <div class="filters">
-        <select v-model="grade" class="select">
-          <option value="">全部年级</option>
-          <option v-for="item in campus.grades" :key="item">{{ item }}</option>
-        </select>
-        <select v-model="className" class="select">
-          <option value="">全部班级</option>
-          <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
-        </select>
-        <input v-model="keyword" class="field" placeholder="搜索课程 / 教师 / 教室" />
-      </div>
       <div class="table-scroll">
         <table class="data">
           <thead>
