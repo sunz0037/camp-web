@@ -45,13 +45,41 @@ camp-web/
 npm install
 ```
 
-### 配置API地址
+### 配置 API 地址
 
-创建 `.env` 文件（参考 `.env.example`）：
+本地联调 camp-app 时，把 `VITE_API_BASE_URL` 留空。`npm run dev` 会把 `/api` 代理到 `http://localhost:8080`，浏览器不跨域。
+
+只有后端已开 CORS、需要浏览器直连时，再在 `.env` 里写：
 
 ```bash
 VITE_API_BASE_URL=http://localhost:8080
 ```
+
+### 与 camp-app 联调（profile=dev）
+
+下面这些请求头**只给后端 `profile=dev` 使用**。生产环境的后端不会按它们认人。`npm run dev` 会自动带上。生产构建默认不带；如果要用生产包去打 dev 后端，构建时加 `VITE_API_PROFILE=dev`。
+
+Axios 请求拦截器规则：
+
+- 还没有真实访问令牌时，默认 `Authorization: Bearer dev-TEACHER`。
+- 用种子账号切换身份后，改为 `Bearer dev-<ROLE>`。`ROLE` 只取 `ADMIN`、`ACADEMIC`、`TEACHER`、`STUDENT`。家长账号的角色是 `STUDENT`，因此发送 `Bearer dev-STUDENT`。
+- 同时带上当前种子用户的 `X-Dev-User-Id`、`X-Dev-Class-Ids`（逗号分隔）、`X-Dev-Grade-Ids`（逗号分隔）。没有班级或年级时省略对应头。
+- **不发送 `X-Dev-Role`。** 身份以 `Authorization: Bearer dev-<ROLE>` 为准；如果两者同时出现，也只保留 Bearer。
+- 本地已经有真实访问令牌（不是 `mock.` / `mock-` 前缀，也不是 `dev-ROLE`）时，只发送 `Authorization: Bearer <token>`，并去掉全部 `X-Dev-*`。
+
+种子用户与开发头对照：
+
+| 账号 | Bearer | X-Dev-User-Id | X-Dev-Class-Ids | X-Dev-Grade-Ids |
+| --- | --- | --- | --- | --- |
+| 未登录 | `dev-TEACHER` | 不发送 | 不发送 | 不发送 |
+| `admin` | `dev-ADMIN` | `u-admin` | 不发送 | 不发送 |
+| `A1001` | `dev-ACADEMIC` | `u-academic` | 不发送 | 不发送 |
+| `T1001` 王老师 | `dev-TEACHER` | `t-wang` | `c12,c13,c21` | `1,2` |
+| `T1002` 赵老师 | `dev-TEACHER` | `u-zhao` | `c11` | `1` |
+| `20240101` 李明 | `dev-STUDENT` | `u-liming` | `c13` | `1` |
+| `P1001` 家长 | `dev-STUDENT` | `u-parent` | `c13` | `1` |
+
+年级编号：`1` 高一，`2` 高二，`3` 高三。班级编号与首期种子数据一致（如 `c13` 为高一(3)班）。
 
 ### 启动开发服务器
 

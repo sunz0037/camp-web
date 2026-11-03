@@ -1,3 +1,6 @@
+import axios from 'axios'
+import { applyManagedHeaders, buildRequestHeaders } from './devHeaders.js'
+
 const BASE = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 export class ApiError extends Error {
@@ -9,27 +12,50 @@ export class ApiError extends Error {
   }
 }
 
-async function parseBody(response) {
-  const text = await response.text()
-  if (!text) return {}
+function devProfileEnabled() {
+  return import.meta.env.DEV || import.meta.env.VITE_API_PROFILE === 'dev'
+}
+
+function readUser() {
+  if (typeof localStorage === 'undefined') return null
   try {
-    return JSON.parse(text)
+    const raw = localStorage.getItem('userInfo')
+    return raw ? JSON.parse(raw) : null
   } catch {
-    throw new ApiError('服务暂不可用', { network: true, code: response.status })
+    return null
   }
 }
 
-/** 首期占位：只有真实接口发了 refreshToken 才尝试一次，失败则沿用原错误。 */
+export const http = axios.create({
+  baseURL: `${BASE}/api/v1`,
+  headers: { Accept: 'application/json' }
+})
+
+http.interceptors.request.use((config) => {
+  const token = typeof localStorage === 'undefined' ? '' : localStorage.getItem('token') || ''
+  const headers = buildRequestHeaders({
+    token,
+    user: readUser(),
+    devProfile: devProfileEnabled()
+  })
+  config.headers = config.headers || {}
+  applyManagedHeaders(config.headers, headers)
+  return config
+})
+
+function envelopeError(data, status) {
+  if (!data || typeof data !== 'object' || Array.isArray(data) || data.code === undefined) {
+    return new ApiError('服务暂不可用', { network: true, code: status })
+  }
+  return new ApiError(data.message || '请求失败', { code: data.code })
+}
+
+/** 首期占位：只有真实 refreshToken 才尝试一次。 */
 async function tryRefresh() {
-  const refreshToken = localStorage.getItem('refreshToken')
-  if (!refreshToken || refreshToken.startsWith('mock-')) return false
+  const refreshToken = typeof localStorage === 'undefined' ? '' : localStorage.getItem('refreshToken')
+  if (!refreshToken || refreshToken.startsWith('mock-') || refreshToken.startsWith('mock.')) return false
   try {
-    const json = await api('/auth/refresh', {
-      method: 'POST',
-      auth: false,
-      body: { refreshToken },
-      _retry: true
-    })
+    const json = await http.post('/auth/refresh', { refreshToken }, { _retry: true })
     const data = json.data || {}
     if (!data.accessToken) return false
     localStorage.setItem('token', data.accessToken)
@@ -40,42 +66,42 @@ async function tryRefresh() {
   }
 }
 
+http.interceptors.response.use(
+  (response) => {
+    const data = response.data ?? {}
+    if (data && typeof data === 'object' && data.code !== undefined && data.code !== 0 && data.code !== 200) {
+      return Promise.reject(new ApiError(data.message || '请求失败', { code: data.code }))
+    }
+    return data
+  },
+  async (error) => {
+    if (!error.response) {
+      return Promise.reject(new ApiError('网络不可用', { network: true }))
+    }
+    const status = error.response.status
+    const data = error.response.data
+    const config = error.config || {}
+    if (!config._retry && (status === 401 || data?.code === 401)) {
+      const refreshed = await tryRefresh()
+      if (refreshed) {
+        config._retry = true
+        return http.request(config)
+      }
+    }
+    return Promise.reject(envelopeError(data, status))
+  }
+)
+
 /**
  * 统一请求 /api/v1，响应信封 { code, message, data, timestamp }。
- * code 为 0 或 200 视为成功。网络失败时抛出 ApiError.network。
+ * 开发态请求头由拦截器写入，见 devHeaders.js。
  */
 export async function api(path, options = {}) {
-  const { method = 'GET', body, auth = true, _retry = false } = options
-  const headers = { Accept: 'application/json' }
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
-  if (auth) {
-    const token = localStorage.getItem('token')
-    if (token) headers.Authorization = `Bearer ${token}`
-  }
-
-  let response
-  try {
-    response = await fetch(`${BASE}/api/v1${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body)
-    })
-  } catch {
-    throw new ApiError('网络不可用', { network: true })
-  }
-
-  const json = await parseBody(response)
-  const code = json.code
-  const ok = response.ok && (code === undefined || code === 0 || code === 200)
-  if (!ok && !_retry && auth && (code === 401 || response.status === 401)) {
-    const refreshed = await tryRefresh()
-    if (refreshed) return api(path, { ...options, _retry: true })
-  }
-  if (!ok) {
-    if (code === undefined) {
-      throw new ApiError('服务暂不可用', { network: true, code: response.status })
-    }
-    throw new ApiError(json.message || '请求失败', { code })
-  }
-  return json
+  const { method = 'GET', body, _retry = false } = options
+  return http.request({
+    url: path,
+    method,
+    data: body,
+    _retry
+  })
 }
