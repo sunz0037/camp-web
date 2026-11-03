@@ -1,7 +1,6 @@
 import axios from 'axios'
+import { API_BASE } from '../config/api.js'
 import { applyManagedHeaders, buildRequestHeaders } from './devHeaders.js'
-
-const BASE = String(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
 export class ApiError extends Error {
   constructor(message, extra = {}) {
@@ -27,7 +26,7 @@ function readUser() {
 }
 
 export const http = axios.create({
-  baseURL: `${BASE}/api/v1`,
+  baseURL: API_BASE,
   headers: { Accept: 'application/json' }
 })
 

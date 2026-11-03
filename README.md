@@ -39,21 +39,34 @@ camp-web/
 
 ## 开发
 
-### 安装依赖
+### 启动
 
 ```bash
 npm install
+npm run dev
 ```
 
-### 配置 API 地址
-
-本地联调 camp-app 时，把 `VITE_API_BASE_URL` 留空。`npm run dev` 会把 `/api` 代理到 `http://localhost:8080`，浏览器不跨域。
-
-只有后端已开 CORS、需要浏览器直连时，再在 `.env` 里写：
+浏览器打开 http://localhost:3000。Vite 在开发模式读取 `.env.development`：
 
 ```bash
-VITE_API_BASE_URL=http://localhost:8080
+VITE_API_BASE=http://localhost:8080/api/v1
 ```
+
+Axios 的 `baseURL` 就是 `VITE_API_BASE`，不再在代码里另拼 `/api/v1`。请先启动 camp-app（`profile=dev`，端口 8080），并允许来源 `http://localhost:3000`。
+
+### 演示账号
+
+密码与数据库种子一致，均为 `Demo@123456`。
+
+| 账号 | 身份 | 开发态 Authorization |
+| --- | --- | --- |
+| `admin` | 管理员 | `Bearer dev-ADMIN` |
+| `A1001` | 教务 | `Bearer dev-ACADEMIC` |
+| `T1001` | 教师王老师 | `Bearer dev-TEACHER` |
+| `20240101` | 学生李明 | `Bearer dev-STUDENT` |
+| `P1001` | 家长，界面与学生相同 | `Bearer dev-STUDENT` |
+
+未登录时的默认头是 `Authorization: Bearer dev-TEACHER`。角色只取 `dev-ADMIN`、`dev-ACADEMIC`、`dev-TEACHER`、`dev-STUDENT`。
 
 ### 与 camp-app 联调（profile=dev）
 

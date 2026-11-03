@@ -1,7 +1,10 @@
 /**
- * 首期接口前缀为 /api/v1，客户端见 src/api/http.js。
- * 不提供跳过登录开关。
+ * Axios 的 baseURL 使用 VITE_API_BASE，开发环境见 .env.development。
+ * 未配置时回退到同源 /api/v1。
  */
+export const API_BASE = String(import.meta.env.VITE_API_BASE || '/api/v1').replace(/\/$/, '')
+
+/** 旧模块仍把这个值当作主机根地址，再自行拼接 /api/... */
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 export const API_PREFIX = '/api/v1'
