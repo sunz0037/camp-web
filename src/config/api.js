@@ -1,36 +1,18 @@
 /**
- * API配置文件
+ * Axios 的 baseURL 使用 VITE_API_BASE，开发环境见 .env.development。
+ * 未配置时回退到同源 /api/v1。
  */
+export const API_BASE = String(import.meta.env.VITE_API_BASE || '/api/v1').replace(/\/$/, '')
 
-/** 测试阶段跳过登录，直接进入内部页面调试（上线前请改为 false） */
-export const SKIP_LOGIN_FOR_DEV = true
+/** 旧模块仍把这个值当作主机根地址，再自行拼接 /api/... */
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
-const MOCK_USER_INFO = {
-  id: 1,
-  username: 'admin',
-  realName: '测试管理员',
-  userType: 3
-}
-
-export function ensureDevAuth() {
-  if (!SKIP_LOGIN_FOR_DEV) return
-  if (!localStorage.getItem('token')) {
-    localStorage.setItem('token', 'dev-mock-token')
-  }
-  if (!localStorage.getItem('userInfo')) {
-    localStorage.setItem('userInfo', JSON.stringify(MOCK_USER_INFO))
-  }
-}
-
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+export const API_PREFIX = '/api/v1'
 
 export const API_ENDPOINTS = {
-  // 认证相关
-  LOGIN: '/api/auth/login',
-  ACTIVATE: '/api/auth/activate',
-  LOGOUT: '/api/auth/logout',
-  CHANGE_PASSWORD: '/api/auth/password',
-  REFRESH_TOKEN: '/api/auth/refresh',
-  GET_CURRENT_USER: '/api/auth/me'
+  LOGIN: '/api/v1/auth/login',
+  REFRESH_TOKEN: '/api/v1/auth/refresh',
+  LOGOUT: '/api/v1/auth/logout',
+  CHANGE_PASSWORD: '/api/v1/auth/password',
+  GET_CURRENT_USER: '/api/v1/auth/me'
 }
-

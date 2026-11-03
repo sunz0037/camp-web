@@ -1,148 +1,82 @@
-/**
- * 考勤管理API
- */
-import { API_BASE_URL } from '../config/api.js'
+import { api } from './http.js'
+import { pageRecords } from './unwrap.js'
 
-/**
- * 分页查询班级每日考勤汇总列表
- */
-export async function getClassDailyList(params = {}) {
-  const { page = 1, size = 20, grade, className, attendanceDate } = params
-  const queryParams = new URLSearchParams()
-  queryParams.append('page', page)
-  queryParams.append('size', size)
-  if (grade) queryParams.append('grade', grade)
-  if (className) queryParams.append('className', className)
-  if (attendanceDate) queryParams.append('attendanceDate', attendanceDate)
-
-  const response = await fetch(`${API_BASE_URL}/api/attendance/classes?${queryParams}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
-
-  if (!response.ok) {
-    throw new Error('获取班级考勤汇总列表失败')
-  }
-
-  const result = await response.json()
-  return result
+/** GET /api/v1/attendances/summaries */
+export function listSummaries(params = {}) {
+  return api('/api/v1/attendances/summaries', { params })
 }
 
-/**
- * 创建或更新班级每日考勤汇总
- */
-export async function upsertClassDaily(data) {
-  const response = await fetch(`${API_BASE_URL}/api/attendance/classes`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify(data)
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '保存班级考勤汇总失败')
-  }
-
-  const result = await response.json()
-  return result
+/** GET /api/v1/attendances/classes */
+export function listAttendanceClasses(params = {}) {
+  return api('/api/v1/attendances/classes', { params })
 }
 
-/**
- * 分页查询学生异常考勤记录列表
- */
-export async function getStudentAttendanceList(params = {}) {
-  const { page = 1, size = 20, grade, className, attendanceDate, status } = params
-  const queryParams = new URLSearchParams()
-  queryParams.append('page', page)
-  queryParams.append('size', size)
-  if (grade) queryParams.append('grade', grade)
-  if (className) queryParams.append('className', className)
-  if (attendanceDate) queryParams.append('attendanceDate', attendanceDate)
-  if (status !== undefined && status !== null) queryParams.append('status', status)
-
-  const response = await fetch(`${API_BASE_URL}/api/attendance/students?${queryParams}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
-
-  if (!response.ok) {
-    throw new Error('获取学生考勤记录列表失败')
-  }
-
-  const result = await response.json()
-  return result
+/** GET /api/v1/attendances/records */
+export function listAttendanceRecords(params = {}) {
+  return api('/api/v1/attendances/records', { params })
 }
 
-/**
- * 创建学生异常考勤记录
- */
-export async function createStudentAttendance(data) {
-  const response = await fetch(`${API_BASE_URL}/api/attendance/students`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify(data)
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '创建学生考勤记录失败')
-  }
-
-  const result = await response.json()
-  return result
+/** POST /api/v1/attendances/summaries */
+export function createSummary(data) {
+  return api('/api/v1/attendances/summaries', { method: 'POST', body: data })
 }
 
-/**
- * 更新学生异常考勤记录
- */
-export async function updateStudentAttendance(id, data) {
-  const response = await fetch(`${API_BASE_URL}/api/attendance/students/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify(data)
-  })
+const RECORD_STATUS = { 1: 'absent', 2: 'late', 3: 'leave', 4: 'early' }
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '更新学生考勤记录失败')
+export function toSummaryRow(raw) {
+  const leave = Number(raw.leaveCount ?? raw.leave ?? 0)
+  const late = Number(raw.lateCount ?? raw.late ?? 0)
+  const absent = Number(raw.absentCount ?? raw.absent ?? 0)
+  const present = Number(raw.presentCount ?? raw.actual ?? raw.present ?? 0)
+  return {
+    id: raw.id,
+    date: raw.attendanceDate || raw.date || '',
+    className: raw.className || '',
+    grade: raw.grade || '',
+    courseId: raw.courseId ?? null,
+    courseName: raw.courseName || raw.course || '班级日报',
+    summary: {
+      expected: Number(raw.expectedCount ?? raw.expected ?? 0),
+      actual: present,
+      leave,
+      late,
+      absent,
+      leaveOrLate: leave + late
+    }
   }
-
-  const result = await response.json()
-  return result
 }
 
-/**
- * 删除学生异常考勤记录
- */
-export async function deleteStudentAttendance(id) {
-  const response = await fetch(`${API_BASE_URL}/api/attendance/students/${id}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  })
+const EXCEPTION_STATUS = {
+  ABSENT: 'absent',
+  LATE: 'late',
+  PERSONAL_LEAVE: 'leave',
+  SICK_LEAVE: 'leave',
+  EARLY_LEAVE: 'leave'
+}
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || '删除学生考勤记录失败')
+export function toRecordRow(raw) {
+  const status = EXCEPTION_STATUS[raw.exceptionType] || RECORD_STATUS[raw.status] || 'absent'
+  const studentId = raw.studentId
+  return {
+    key: raw.id ?? `${studentId}-${raw.attendanceDate || ''}`,
+    id: raw.id,
+    date: raw.attendanceDate || raw.date || '',
+    className: raw.className || (raw.classId != null ? `班级#${raw.classId}` : '—'),
+    courseName: raw.courseName || raw.course || (raw.courseId != null ? `课程#${raw.courseId}` : '—'),
+    courseId: raw.courseId ?? null,
+    studentId,
+    studentNo: raw.studentNo || (studentId != null ? String(studentId) : '—'),
+    name: raw.studentName || raw.realName || raw.name || (studentId != null ? `学生#${studentId}` : '—'),
+    status
   }
+}
 
-  const result = await response.json()
-  return result
+export async function fetchSummaries(params = {}) {
+  const page = pageRecords(await listSummaries({ page: 1, size: 200, ...params }))
+  return page.records.map(toSummaryRow)
+}
+
+export async function fetchRecords(params = {}) {
+  const page = pageRecords(await listAttendanceRecords({ page: 1, size: 200, ...params }))
+  return page.records.map(toRecordRow)
 }

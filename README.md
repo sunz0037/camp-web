@@ -39,19 +39,60 @@ camp-web/
 
 ## 开发
 
-### 安装依赖
+### 启动
 
 ```bash
 npm install
+npm run dev
 ```
 
-### 配置API地址
-
-创建 `.env` 文件（参考 `.env.example`）：
+浏览器打开 http://localhost:5173。Vite 默认端口是 5173，与 camp-app 的 CORS 一致（3000 也可）。开发模式读取 `.env.development`：
 
 ```bash
-VITE_API_BASE_URL=http://localhost:8080
+VITE_API_BASE=http://localhost:8080/api/v1
 ```
+
+Axios 的 `baseURL` 就是 `VITE_API_BASE`（已含 `/api/v1`）。学生、课程、课表、考勤、公告页面请求这个地址，不再使用本地种子数据。请先启动 camp-app（`profile=dev`，端口 8080），并允许来源 `http://localhost:5173`。
+
+### 演示账号
+
+密码与数据库种子一致，均为 `Demo@123456`。
+
+| 账号 | 身份 | 开发态 Authorization |
+| --- | --- | --- |
+| `admin` | 管理员 | `Bearer dev-ADMIN` |
+| `academic01` | 教务 | `Bearer dev-ACADEMIC` |
+| `teacher01` | 教师 | `Bearer dev-TEACHER` |
+| `student01` | 学生 | `Bearer dev-STUDENT` |
+
+未登录时的默认头是 `Authorization: Bearer dev-TEACHER`。角色只取 `dev-ADMIN`、`dev-ACADEMIC`、`dev-TEACHER`、`dev-STUDENT`。
+
+### 与 camp-app 联调（profile=dev）
+
+下面这些请求头**只给后端 `profile=dev` 使用**。生产环境的后端不会按它们认人。`npm run dev` 会自动带上。生产构建默认不带；如果要用生产包去打 dev 后端，构建时加 `VITE_API_PROFILE=dev`。
+
+Axios 请求拦截器规则：
+
+- 还没有真实访问令牌时，默认 `Authorization: Bearer dev-TEACHER`。
+- 用种子账号切换身份后，改为 `Bearer dev-<ROLE>`。`ROLE` 只取 `ADMIN`、`ACADEMIC`、`TEACHER`、`STUDENT`。家长账号的角色是 `STUDENT`，因此发送 `Bearer dev-STUDENT`。
+- 同时带上当前种子用户的 `X-Dev-User-Id`、`X-Dev-Class-Ids`（逗号分隔）、`X-Dev-Grade-Ids`（逗号分隔）。没有班级或年级时省略对应头。
+- **不发送 `X-Dev-Role`。** 身份以 `Authorization: Bearer dev-<ROLE>` 为准；如果两者同时出现，也只保留 Bearer。
+- 本地已经有真实访问令牌（不是 `mock.` / `mock-` 前缀，也不是 `dev-ROLE`）时，只发送 `Authorization: Bearer <token>`，并去掉全部 `X-Dev-*`。
+
+种子用户与开发头对照：
+
+| 账号 | Bearer | X-Dev-User-Id | X-Dev-Class-Ids | X-Dev-Grade-Ids |
+| --- | --- | --- | --- | --- |
+| 未登录 | `dev-TEACHER` | 不发送 | 不发送 | 不发送 |
+| `admin` | `dev-ADMIN` | `u-admin` | 不发送 | 不发送 |
+| `academic01` | `dev-ACADEMIC` | `u-academic` | 不发送 | 不发送 |
+| `teacher01` | `dev-TEACHER` | `t-wang` | `c12,c13,c21` | `1,2` |
+| `student01` | `dev-STUDENT` | `u-liming` | `c13` | `1` |
+| `P1001` 家长 | `dev-STUDENT` | `u-parent` | `c13` | `1` |
+
+年级编号：`1` 高一，`2` 高二，`3` 高三。班级编号与首期种子数据一致（如 `c13` 为高一(3)班）。
+
+演示账号密码与数据库种子一致，均为 `Demo@123456`。
 
 ### 启动开发服务器
 
@@ -59,7 +100,7 @@ VITE_API_BASE_URL=http://localhost:8080
 npm run dev
 ```
 
-访问 http://localhost:3000
+访问 http://localhost:5173
 
 ### 构建生产版本
 
@@ -117,7 +158,7 @@ npm run preview
   "identityType": 1,
   "identifier": "20240001",
   "realName": "张三",
-  "password": "123456"
+  "password": "Demo@123456"
 }
 ```
 
@@ -131,7 +172,7 @@ npm run preview
   "identityType": 1,
   "identifier": "20240001",
   "realName": "张三",
-  "password": "123456"
+  "password": "Demo@123456"
 }
 ```
 
@@ -152,7 +193,7 @@ npm run preview
    ```
 
 3. **访问登录页面**
-   - 打开浏览器访问 http://localhost:3000
+   - 打开浏览器访问 http://localhost:5173
    - 选择身份类型（学生/教工）
    - 输入学号/工号进行登录
 

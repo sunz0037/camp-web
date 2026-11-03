@@ -1,541 +1,416 @@
 <template>
-  <div class="student-management-page bento-page">
-    <div class="page-header">
-      <h1>学生信息管理</h1>
-      <button class="btn-primary" @click="handleCreate">新增学生</button>
-    </div>
+  <div class="page">
+    <section class="card filters">
+      <div class="seg">
+        <button type="button" :class="{ active: grade === '全部年级' }" @click="setGrade('全部年级')">全部年级</button>
+        <button v-for="item in ['高一', '高二', '高三']" :key="item" type="button" :class="{ active: grade === item }" @click="setGrade(item)">
+          {{ item }}
+        </button>
+      </div>
+      <input v-model="keyword" class="field" placeholder="搜索姓名 / 学号" />
+      <button v-if="auth.can('student:import')" class="btn btn-ghost" type="button" @click="openImport = true">导入</button>
+      <button class="btn btn-ghost" type="button" @click="exportCsv">导出</button>
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
+      <button v-if="auth.can('student:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
+    </section>
 
-    <!-- 搜索筛选 -->
-    <div class="filter-section">
-      <div class="filter-group">
-        <label>年级：</label>
-        <input 
-          type="text" 
-          v-model="filters.grade" 
-          placeholder="如：高中一年级"
-          @keyup.enter="loadData"
-        />
+    <section class="card table-card">
+      <p v-if="missing" class="sub" style="padding: 14px 16px 0">有 {{ missing }} 名学生尚未登记应急联系人。</p>
+      <div class="table-scroll">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>学号</th>
+              <th>姓名</th>
+              <th>班级</th>
+              <th>性别</th>
+              <th>手机</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in pageRows" :key="item.id" class="row-pick" :class="{ picked: selectedId === item.id }" @click="selectedId = item.id">
+              <td class="num">{{ item.studentNo }}</td>
+              <td>{{ item.name }}</td>
+              <td>{{ item.className }}</td>
+              <td>{{ item.gender }}</td>
+              <td class="num">{{ maskPhone(item.phone) }}</td>
+              <td>
+                <span class="pill" :class="item.status === '在读' ? 'pill-ok' : 'pill-warn'">{{ item.status }}</span>
+              </td>
+              <td>
+                <button class="linkish" type="button" @click="openDetail(item)">详情</button>
+                <button v-if="auth.can('student:write')" class="linkish" type="button" @click="openEdit(item)">编辑</button>
+              </td>
+            </tr>
+            <tr v-if="!pageRows.length">
+              <td colspan="7" class="muted">没有符合条件的学生</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div class="filter-group">
-        <label>班级：</label>
-        <input 
-          type="text" 
-          v-model="filters.className" 
-          placeholder="如：高中一年级1班"
-          @keyup.enter="loadData"
-        />
-      </div>
-      <div class="filter-group">
-        <label>专业：</label>
-        <input 
-          type="text" 
-          v-model="filters.major" 
-          placeholder="如：计算机科学"
-          @keyup.enter="loadData"
-        />
-      </div>
-      <div class="filter-group">
-        <label>状态：</label>
-        <select v-model="filters.status" @change="loadData">
-          <option :value="null">全部</option>
-          <option :value="0">休学</option>
-          <option :value="1">在读</option>
-          <option :value="2">毕业</option>
-          <option :value="3">退学</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <input 
-          type="text" 
-          v-model="filters.keyword" 
-          placeholder="搜索学号、姓名..."
-          @keyup.enter="loadData"
-        />
-        <button @click="loadData">搜索</button>
-      </div>
-    </div>
-
-    <!-- 数据表格 -->
-    <div class="table-section">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>学号</th>
-            <th>姓名</th>
-            <th>年级</th>
-            <th>班级</th>
-            <th>专业</th>
-            <th>性别</th>
-            <th>出生日期</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading">
-            <td colspan="9" class="text-center">加载中...</td>
-          </tr>
-          <tr v-else-if="studentList.length === 0">
-            <td colspan="9" class="text-center">暂无数据</td>
-          </tr>
-          <tr v-else v-for="student in studentList" :key="student.id">
-            <td>{{ student.studentNo }}</td>
-            <td>{{ getStudentName(student) }}</td>
-            <td>{{ student.grade || '-' }}</td>
-            <td>{{ student.className || '-' }}</td>
-            <td>{{ student.major || '-' }}</td>
-            <td>{{ getGenderText(student.gender) }}</td>
-            <td>{{ formatDate(student.birthDate) }}</td>
-            <td>
-              <span :class="getStatusClass(student.status)">
-                {{ getStatusText(student.status) }}
-              </span>
-            </td>
-            <td>
-              <button class="btn-edit" @click="handleEdit(student)">编辑</button>
-              <button class="btn-delete" @click="handleDelete(student)">删除</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- 分页 -->
-      <div class="pagination" v-if="total > 0">
-        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>
-        <span>第 {{ currentPage }} 页，共 {{ totalPages }} 页，共 {{ total }} 条</span>
-        <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>
-      </div>
-    </div>
-
-    <!-- 新增/编辑对话框 -->
-    <div v-if="showDialog" class="dialog-overlay" @click="closeDialog">
-      <div class="dialog-content" @click.stop>
-        <div class="dialog-header">
-          <h2>{{ dialogMode === 'create' ? '新增学生' : '编辑学生' }}</h2>
-          <button class="btn-close" @click="closeDialog">×</button>
-        </div>
-        <div class="dialog-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>学号 <span class="required">*</span></label>
-                <input 
-                  type="text" 
-                  v-model="formData.studentNo" 
-                  required 
-                  placeholder="如：2024001"
-                  :readonly="dialogMode === 'edit'"
-                  :class="{ 'readonly-field': dialogMode === 'edit' }"
-                />
-              </div>
-              <div class="form-group form-group-half">
-                <label>姓名</label>
-                <input 
-                  type="text" 
-                  v-model="formData.realName" 
-                  placeholder="学生姓名（创建用户时使用）"
-                />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>年级</label>
-                <input 
-                  type="text" 
-                  v-model="formData.grade" 
-                  placeholder="如：高中一年级"
-                />
-              </div>
-              <div class="form-group form-group-half">
-                <label>班级</label>
-                <input 
-                  type="text" 
-                  v-model="formData.className" 
-                  placeholder="如：高中一年级1班"
-                />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>专业</label>
-                <input 
-                  type="text" 
-                  v-model="formData.major" 
-                  placeholder="如：计算机科学"
-                />
-              </div>
-              <div class="form-group form-group-half">
-                <label>用户ID</label>
-                <input 
-                  type="number" 
-                  v-model.number="formData.userId" 
-                  placeholder="关联的用户ID（可选，不填则自动创建）"
-                />
-                <small class="field-hint">如果不填写，系统将自动创建用户账号</small>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>院系</label>
-                <input 
-                  type="text" 
-                  v-model="formData.department" 
-                  placeholder="如：计算机学院"
-                />
-              </div>
-              <div class="form-group form-group-half">
-                <label>性别</label>
-                <select v-model="formData.gender">
-                  <option :value="null">请选择</option>
-                  <option :value="0">女</option>
-                  <option :value="1">男</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>出生日期</label>
-                <input 
-                  type="date" 
-                  v-model="formData.birthDate"
-                />
-              </div>
-              <div class="form-group form-group-half">
-                <label>入学日期</label>
-                <input 
-                  type="date" 
-                  v-model="formData.enrollmentDate"
-                />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>毕业日期</label>
-                <input 
-                  type="date" 
-                  v-model="formData.graduationDate"
-                />
-              </div>
-              <div class="form-group form-group-half">
-                <label>状态 <span class="required">*</span></label>
-                <select v-model="formData.status" required>
-                  <option :value="0">休学</option>
-                  <option :value="1">在读</option>
-                  <option :value="2">毕业</option>
-                  <option :value="3">退学</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>宿舍</label>
-                <input 
-                  type="text" 
-                  v-model="formData.dormitory" 
-                  placeholder="如：1号楼201"
-                />
-              </div>
-              <div class="form-group form-group-half">
-                <label>政治面貌</label>
-                <select v-model="formData.politicalStatus">
-                  <option value="">请选择</option>
-                  <option value="群众">群众</option>
-                  <option value="团员">团员</option>
-                  <option value="党员">党员</option>
-                  <option value="预备党员">预备党员</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>国籍</label>
-                <input 
-                  type="text" 
-                  v-model="formData.nationality" 
-                  placeholder="默认：中国"
-                />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>地址</label>
-              <textarea 
-                v-model="formData.address" 
-                rows="2" 
-                placeholder="家庭地址"
-              ></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="button" @click="closeDialog">取消</button>
-              <button type="submit" class="btn-primary">保存</button>
-            </div>
-          </form>
+      <div class="table-foot">
+        <span>共 {{ filtered.length }} 名学生 · 显示 {{ rangeText }}</span>
+        <div class="pager">
+          <button type="button" :disabled="page === 1" @click="page -= 1">上一页</button>
+          <template v-for="(n, index) in pageList" :key="n">
+            <span v-if="index > 0 && n - pageList[index - 1] > 1">…</span>
+            <button type="button" :class="{ active: n === page }" @click="page = n">{{ n }}</button>
+          </template>
+          <button type="button" :disabled="page === pageCount" @click="page += 1">下一页</button>
         </div>
       </div>
+    </section>
+
+    <section class="card preview-card">
+      <h2>表单预览</h2>
+      <div v-if="preview" class="preview-grid">
+        <div><span class="k">学号</span><span class="v num">{{ preview.studentNo || '—' }}</span></div>
+        <div><span class="k">姓名</span><span class="v">{{ preview.name || '—' }}</span></div>
+        <div><span class="k">性别</span><span class="v">{{ preview.gender || '—' }}</span></div>
+        <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
+        <div><span class="k">手机</span><span class="v num">{{ previewPhone }}</span></div>
+        <div><span class="k">学籍</span><span class="v">{{ preview.status || '—' }}</span></div>
+      </div>
+      <p v-else class="sub">选择一行或点击新增，这里显示表单内容。</p>
+    </section>
+
+    <div v-if="editor" class="modal-mask" @click.self="editor = null">
+      <form class="modal-card" @submit.prevent="saveStudent">
+        <div class="modal-head">
+          <h3>{{ editor.id ? '编辑学生' : '新增学生' }}</h3>
+          <button class="icon-btn" type="button" aria-label="关闭" @click="editor = null"><AppIcon name="X" :size="16" /></button>
+        </div>
+        <div class="form-grid">
+          <label class="field-label">学号</label>
+          <input v-model="editor.studentNo" class="field num" :readonly="Boolean(editor.id)" required />
+          <label class="field-label">姓名</label>
+          <input v-model="editor.name" class="field" required />
+          <div class="form-row">
+            <div>
+              <label class="field-label">性别</label>
+              <select v-model="editor.gender" class="select">
+                <option>男</option>
+                <option>女</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">学籍</label>
+              <select v-model="editor.status" class="select">
+                <option>在读</option>
+                <option>休学</option>
+              </select>
+            </div>
+          </div>
+          <label class="field-label">班级</label>
+          <select v-model="editor.className" class="select" required>
+            <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
+          </select>
+          <label class="field-label">手机</label>
+          <input v-model="editor.phone" class="field num" inputmode="numeric" />
+          <p v-if="formError" class="error-text">{{ formError }}</p>
+          <div class="form-actions">
+            <button class="btn btn-ghost" type="button" @click="editor = null">取消</button>
+            <button class="btn btn-primary" type="submit">保存</button>
+          </div>
+        </div>
+      </form>
     </div>
 
-    <!-- Toast 提示 -->
-    <Toast
-      v-model:visible="toastVisible"
-      :message="toastMessage"
-      :type="toastType"
-    />
+    <div v-if="detail" class="drawer-mask" @click.self="detail = null">
+      <aside class="drawer-card">
+        <div class="drawer-head">
+          <h3>{{ detail.name }}</h3>
+          <button class="icon-btn" type="button" aria-label="关闭" @click="detail = null"><AppIcon name="X" :size="16" /></button>
+        </div>
+        <dl class="dl">
+          <dt>学号</dt><dd class="num">{{ detail.studentNo }}</dd>
+          <dt>班级</dt><dd>{{ detail.className }}</dd>
+          <dt>性别</dt><dd>{{ detail.gender }}</dd>
+          <dt>学籍</dt><dd>{{ detail.status }}</dd>
+          <dt>手机</dt><dd class="num">{{ maskPhone(detail.phone) }}</dd>
+        </dl>
+        <h3 style="margin: 18px 0 8px; font-size: 16px">应急联系人</h3>
+        <ul v-if="detailContacts.length" class="contact-list">
+          <li v-for="item in detailContacts" :key="item.id">
+            <span>{{ item.name }} · {{ item.relation }} · <span class="num">{{ maskPhone(item.phone) }}</span></span>
+            <span v-if="item.primary" class="pill pill-ok">主要</span>
+          </li>
+        </ul>
+        <p v-else class="sub">尚未登记应急联系人</p>
+        <button v-if="auth.can('student:write')" class="btn btn-ghost" style="margin-top: 12px" type="button" @click="contactOpen = true">添加联系人</button>
+      </aside>
+    </div>
+
+    <div v-if="contactOpen" class="modal-mask" @click.self="contactOpen = false">
+      <form class="modal-card" @submit.prevent="saveContact">
+        <div class="modal-head">
+          <h3>添加应急联系人</h3>
+          <button class="icon-btn" type="button" aria-label="关闭" @click="contactOpen = false"><AppIcon name="X" :size="16" /></button>
+        </div>
+        <div class="form-grid">
+          <label class="field-label">姓名</label>
+          <input v-model="contact.name" class="field" required />
+          <label class="field-label">关系</label>
+          <select v-model="contact.relation" class="select">
+            <option>父亲</option>
+            <option>母亲</option>
+            <option>监护人</option>
+            <option>其他</option>
+          </select>
+          <label class="field-label">手机</label>
+          <input v-model="contact.phone" class="field num" required />
+          <label class="check"><input v-model="contact.primary" type="checkbox" /> 设为主要联系人</label>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">保存</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div v-if="openImport" class="modal-mask" @click.self="openImport = false">
+      <form class="modal-card" @submit.prevent="doImport">
+        <div class="modal-head">
+          <h3>导入学生</h3>
+          <button class="icon-btn" type="button" aria-label="关闭" @click="openImport = false"><AppIcon name="X" :size="16" /></button>
+        </div>
+        <p class="sub" style="margin-top: 0">CSV 表头：学号,姓名,性别,班级,手机,学籍。仅可导入数据范围内的班级。</p>
+        <input class="field" type="file" accept=".csv,text/csv" @change="onFile" />
+        <p v-if="importError" class="error-text" style="margin-top: 8px">{{ importError }}</p>
+        <div class="form-actions">
+          <button class="btn btn-ghost" type="button" @click="downloadTemplate">下载模板</button>
+          <button class="btn btn-warn" type="submit">开始导入</button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import * as studentAPI from '../api/student.js'
-import Toast from '../components/Toast.vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import AppIcon from '../components/AppIcon.vue'
+import { createEmergencyContact, createStudent, fetchClasses, fetchContacts, fetchStudentPage, toStudentPayload, updateStudent } from '../api/student.js'
+import { useAuthStore } from '../stores/auth.js'
+import { useUiStore } from '../stores/ui.js'
+import { downloadText, maskPhone, scopeLabel } from '../utils/format.js'
 
-const loading = ref(false)
-const studentList = ref([])
+const auth = useAuthStore()
+const ui = useUiStore()
+const grade = ref('全部年级')
+const keyword = ref('')
+const page = ref(1)
+const pageSize = 20
 const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
-const showDialog = ref(false)
-const dialogMode = ref('create')
+const rows = ref([])
+const classOptions = ref([])
+const loadError = ref('')
 
-// Toast 提示
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref('success')
-
-const showToast = (message, type = 'success') => {
-  toastMessage.value = message
-  toastType.value = type
-  toastVisible.value = true
+function netHint(message) {
+  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
 }
+const editor = ref(null)
+const selectedId = ref('')
+const detail = ref(null)
+const detailContacts = ref([])
+const formError = ref('')
+const openImport = ref(false)
+const importRows = ref([])
+const importError = ref('')
+const contactOpen = ref(false)
+const contact = reactive({ name: '', relation: '父亲', phone: '', primary: true })
+const missing = ref(0)
 
-const formData = ref({
-  studentNo: '',
-  realName: '',
-  userId: null,
-  grade: '',
-  className: '',
-  major: '',
-  department: '',
-  enrollmentDate: '',
-  graduationDate: '',
-  dormitory: '',
-  address: '',
-  politicalStatus: '',
-  nationality: '中国',
-  gender: null,
-  birthDate: '',
-  status: 1
+const scopeText = computed(() => scopeLabel(auth.user, classOptions.value.map((item) => item.name)))
+const allowedClassNames = computed(() => classOptions.value.map((item) => item.name))
+const filtered = computed(() => rows.value)
+const preview = computed(() => {
+  if (editor.value) return editor.value
+  return pageRows.value.find((item) => item.id === selectedId.value) || detail.value || pageRows.value[0] || null
+})
+const previewPhone = computed(() => {
+  if (!preview.value?.phone) return '—'
+  return editor.value ? preview.value.phone : maskPhone(preview.value.phone)
+})
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+const pageRows = computed(() => rows.value)
+const pageList = computed(() => Array.from({ length: pageCount.value }, (_, index) => index + 1).filter((n) => {
+  return n === 1 || n === pageCount.value || Math.abs(n - page.value) <= 1
+}))
+const rangeText = computed(() => {
+  if (!total.value) return '0-0'
+  const from = (page.value - 1) * pageSize + 1
+  const to = Math.min(page.value * pageSize, total.value)
+  return `${from}-${to}`
 })
 
-const filters = ref({
-  grade: '',
-  className: '',
-  major: '',
-  status: null,
-  keyword: ''
-})
-
-const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
-
-// 获取学生姓名（从用户信息中获取）
-const getStudentName = (student) => {
-  // 优先使用后端返回的 realName
-  if (student.realName) {
-    return student.realName
-  }
-  // 如果没有姓名，使用学号作为备选
-  return student.studentNo || '-'
-}
-
-// 获取性别文本
-const getGenderText = (gender) => {
-  if (gender === null || gender === undefined) return '-'
-  return gender === 1 ? '男' : '女'
-}
-
-// 获取状态文本
-const getStatusText = (status) => {
-  const statusMap = {
-    0: '休学',
-    1: '在读',
-    2: '毕业',
-    3: '退学'
-  }
-  return statusMap[status] || '未知'
-}
-
-// 获取状态样式类
-const getStatusClass = (status) => {
-  const classMap = {
-    0: 'status-disabled',
-    1: 'status-enabled',
-    2: 'status-graduated',
-    3: 'status-disabled'
-  }
-  return classMap[status] || 'status-disabled'
-}
-
-// 格式化日期
-const formatDate = (date) => {
-  if (!date) return '-'
-  if (typeof date === 'string') {
-    return date.split('T')[0]
-  }
-  return date
-}
-
-onMounted(() => {
-  loadData()
-})
-
-const loadData = async () => {
-  loading.value = true
+async function loadStudents() {
+  loadError.value = ''
   try {
-    const result = await studentAPI.getStudentList({
-      page: currentPage.value,
-      size: pageSize.value,
-      grade: filters.value.grade || undefined,
-      className: filters.value.className || undefined,
-      major: filters.value.major || undefined,
-      keyword: filters.value.keyword || undefined
+    const result = await fetchStudentPage({
+      page: page.value,
+      size: pageSize,
+      grade: grade.value === '全部年级' ? undefined : grade.value,
+      keyword: keyword.value.trim() || undefined
     })
-    
-    if (result.code === 200 && result.data) {
-      studentList.value = result.data.records || []
-      total.value = result.data.total || 0
-    }
+    rows.value = result.records
+    total.value = result.total
   } catch (error) {
-    showToast('加载数据失败：' + error.message, 'error')
-  } finally {
-    loading.value = false
+    rows.value = []
+    total.value = 0
+    loadError.value = error.message || '学生列表加载失败'
   }
 }
 
-const changePage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-    loadData()
+onMounted(async () => {
+  try {
+    classOptions.value = await fetchClasses()
+  } catch {
+    classOptions.value = []
   }
+  await loadStudents()
+})
+
+watch([page, grade], () => {
+  loadStudents()
+})
+watch(keyword, () => {
+  page.value = 1
+  loadStudents()
+})
+
+function setGrade(value) {
+  grade.value = value
+  page.value = 1
 }
 
-const handleCreate = () => {
-  dialogMode.value = 'create'
-  formData.value = {
+function openCreate() {
+  formError.value = ''
+  editor.value = {
+    id: '',
     studentNo: '',
-    realName: '',
-    userId: null,
-    grade: '',
-    className: '',
-    major: '',
-    department: '',
-    enrollmentDate: '',
-    graduationDate: '',
-    dormitory: '',
-    address: '',
-    politicalStatus: '',
-    nationality: '中国',
-    gender: null,
-    birthDate: '',
-    status: 1
+    name: '',
+    gender: '男',
+    status: '在读',
+    className: classOptions.value[0]?.name || '',
+    phone: ''
   }
-  showDialog.value = true
 }
 
-const handleEdit = async (student) => {
-  dialogMode.value = 'edit'
+function openEdit(item) {
+  formError.value = ''
+  editor.value = { ...item }
+}
+
+async function saveStudent() {
+  formError.value = ''
   try {
-    const result = await studentAPI.getStudentDetail(student.id)
-    if (result.code === 200 && result.data) {
-      const data = result.data
-      formData.value = {
-        id: data.id,
-        studentNo: data.studentNo || '',
-        realName: data.realName || '',
-        userId: data.userId,
-        grade: data.grade || '',
-        className: data.className || '',
-        major: data.major || '',
-        department: data.department || '',
-        enrollmentDate: data.enrollmentDate ? formatDate(data.enrollmentDate) : '',
-        graduationDate: data.graduationDate ? formatDate(data.graduationDate) : '',
-        dormitory: data.dormitory || '',
-        address: data.address || '',
-        politicalStatus: data.politicalStatus || '',
-        nationality: data.nationality || '中国',
-        gender: data.gender,
-        birthDate: data.birthDate ? formatDate(data.birthDate) : '',
-        status: data.status !== undefined ? data.status : 1
-      }
-      showDialog.value = true
+    if (allowedClassNames.value.length && !allowedClassNames.value.includes(editor.value.className)) {
+      throw new Error('班级不在数据范围内')
     }
+    const payload = toStudentPayload(editor.value)
+    if (editor.value.id) await updateStudent(editor.value.id, payload)
+    else await createStudent(payload)
+    ui.toast('学生信息已保存', 'success')
+    editor.value = null
+    await loadStudents()
   } catch (error) {
-    showToast('获取学生详情失败：' + error.message, 'error')
+    formError.value = error.message
   }
 }
 
-const handleDelete = async (student) => {
-  if (!confirm(`确定要删除学号为"${student.studentNo}"的学生信息吗？`)) {
+async function openDetail(item) {
+  detail.value = item
+  detailContacts.value = []
+  try {
+    detailContacts.value = await fetchContacts(item.id)
+  } catch (error) {
+    ui.toast(error.message || '应急联系人加载失败', 'error')
+  }
+}
+
+async function saveContact() {
+  try {
+    await createEmergencyContact({
+      studentId: detail.value.id,
+      contactName: contact.name,
+      relationship: contact.relation,
+      phone: contact.phone,
+      isPrimary: contact.primary ? 1 : 0
+    })
+    contact.name = ''
+    contact.phone = ''
+    contactOpen.value = false
+    detailContacts.value = await fetchContacts(detail.value.id)
+    ui.toast('已添加应急联系人', 'success')
+  } catch (error) {
+    ui.toast(error.message || '保存联系人失败', 'error')
+  }
+}
+
+function exportCsv() {
+  const header = '学号,姓名,性别,班级,手机,学籍'
+  const lines = filtered.value.map((item) => [item.studentNo, item.name, item.gender, item.className, item.phone, item.status].join(','))
+  downloadText('学生名册.csv', [header, ...lines].join('\n'))
+  ui.toast('已导出当前筛选结果', 'success')
+}
+
+function downloadTemplate() {
+  downloadText('学生导入模板.csv', '学号,姓名,性别,班级,手机,学籍\n20241111,测试,男,高一(3)班,13800001111,在读\n')
+}
+
+function onFile(event) {
+  const file = event.target.files?.[0]
+  importRows.value = []
+  importError.value = ''
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    const text = String(reader.result || '')
+    const lines = text.replace(/^\ufeff/, '').trim().split(/\r?\n/).filter(Boolean)
+    if (lines.length < 2) {
+      importError.value = '文件里没有数据行'
+      return
+    }
+    const header = lines[0].split(',').map((item) => item.trim())
+    importRows.value = lines.slice(1).map((line) => {
+      const cols = line.split(',').map((item) => item.trim())
+      return Object.fromEntries(header.map((key, index) => [key, cols[index] || '']))
+    })
+  }
+  reader.readAsText(file)
+}
+
+async function doImport() {
+  if (!importRows.value.length) {
+    importError.value = '请先选择 CSV 文件'
     return
   }
-  
-  try {
-    await studentAPI.deleteStudent(student.id)
-    showToast('删除成功', 'success')
-    loadData()
-  } catch (error) {
-    showToast('删除失败：' + error.message, 'error')
+  const errors = []
+  let success = 0
+  for (const [index, row] of importRows.value.entries()) {
+    const className = row['班级'] || ''
+    if (allowedClassNames.value.length && !allowedClassNames.value.includes(className)) {
+      errors.push(`第 ${index + 2} 行：班级不在数据范围内`)
+      continue
+    }
+    try {
+      await createStudent(toStudentPayload({
+        studentNo: row['学号'],
+        name: row['姓名'],
+        gender: row['性别'] || '男',
+        className,
+        phone: row['手机'] || '',
+        status: row['学籍'] || '在读'
+      }))
+      success += 1
+    } catch (error) {
+      errors.push(`第 ${index + 2} 行：${error.message}`)
+    }
   }
-}
-
-const handleSubmit = async () => {
-  // 验证必填字段
-  if (!formData.value.studentNo) {
-    showToast('请输入学号', 'error')
-    return
-  }
-  
-  try {
-    const data = { ...formData.value }
-    // 处理日期格式
-    if (data.enrollmentDate && !data.enrollmentDate.includes('T')) {
-      data.enrollmentDate = data.enrollmentDate + 'T00:00:00'
-    }
-    if (data.graduationDate && !data.graduationDate.includes('T')) {
-      data.graduationDate = data.graduationDate + 'T00:00:00'
-    }
-    if (data.birthDate && !data.birthDate.includes('T')) {
-      data.birthDate = data.birthDate + 'T00:00:00'
-    }
-    
-    // 处理空值
-    if (!data.grade) data.grade = null
-    if (!data.className) data.className = null
-    if (!data.major) data.major = null
-    if (!data.department) data.department = null
-    if (!data.dormitory) data.dormitory = null
-    if (!data.address) data.address = null
-    if (!data.politicalStatus) data.politicalStatus = null
-    if (!data.nationality) data.nationality = '中国'
-    if (!data.enrollmentDate) data.enrollmentDate = null
-    if (!data.graduationDate) data.graduationDate = null
-    if (!data.birthDate) data.birthDate = null
-    if (!data.userId) data.userId = null
-    if (!data.realName) data.realName = null
-    
-    if (dialogMode.value === 'create') {
-      await studentAPI.createStudent(data)
-      showToast('创建成功', 'success')
-    } else {
-      await studentAPI.updateStudent(data.id, data)
-      showToast('更新成功', 'success')
-    }
-    closeDialog()
-    loadData()
-  } catch (error) {
-    showToast('操作失败：' + (error.message || '未知错误'), 'error')
-  }
-}
-
-const closeDialog = () => {
-  showDialog.value = false
+  ui.toast(`成功导入 ${success} 名学生`, 'success')
+  importError.value = errors.slice(0, 3).join('；')
+  await loadStudents()
+  if (!errors.length) openImport.value = false
 }
 </script>
-

@@ -1,341 +1,342 @@
 <template>
-  <div class="course-management-page bento-page">
-    <div class="page-header">
-      <h1>科目管理</h1>
-      <button class="btn-primary" @click="handleCreate">新增科目</button>
+  <div class="page stack">
+    <div class="seg">
+      <button type="button" :class="{ active: tab === 'schedules' }" @click="tab = 'schedules'">班级授课</button>
+      <button type="button" :class="{ active: tab === 'library' }" @click="tab = 'library'">课程库</button>
+      <button type="button" :class="{ active: tab === 'week' }" @click="tab = 'week'">周课表</button>
     </div>
 
-    <!-- 搜索筛选 -->
-    <div class="filter-section">
-      <div class="filter-group">
-        <label>学期：</label>
-        <input type="text" v-model="filters.semester" placeholder="如：2024-2025学年第一学期" @keyup.enter="loadData" />
-      </div>
-      <div class="filter-group">
-        <label>学年：</label>
-        <input type="text" v-model="filters.academicYear" placeholder="如：2024-2025" @keyup.enter="loadData" />
-      </div>
-      <div class="filter-group">
-        <label>状态：</label>
-        <select v-model="filters.status" @change="loadData">
-          <option :value="null">全部</option>
-          <option :value="1">已启用</option>
-          <option :value="0">未启用</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <input 
-          type="text" 
-          v-model="filters.keyword" 
-          placeholder="搜索科目名称或代码..."
-          @keyup.enter="loadData"
-        />
-        <button @click="loadData">搜索</button>
-      </div>
-    </div>
+    <section v-if="tab === 'schedules'" class="card filters">
+      <select v-model="grade" class="select">
+        <option value="">全部年级</option>
+        <option v-for="item in gradeOptions" :key="item">{{ item }}</option>
+      </select>
+      <select v-model="className" class="select">
+        <option value="">全部班级</option>
+        <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
+      </select>
+      <input v-model="keyword" class="field" placeholder="搜索课程 / 教师 / 教室" />
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
+      <button v-if="auth.can('course:write')" class="btn btn-primary" type="button" @click="openSchedule()">+ 新增</button>
+    </section>
 
-    <!-- 数据表格 -->
-    <div class="table-section">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>科目代码</th>
-            <th>科目名称</th>
-            <th>学分</th>
-            <th>科目类型</th>
-            <th>开课院系</th>
-            <th>授课教师</th>
-            <th>学期</th>
-            <th>学年</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading">
-            <td colspan="10" class="text-center">加载中...</td>
-          </tr>
-          <tr v-else-if="courseList.length === 0">
-            <td colspan="10" class="text-center">暂无数据</td>
-          </tr>
-          <tr v-else v-for="course in courseList" :key="course.id">
-            <td>{{ course.courseCode }}</td>
-            <td>{{ course.courseName }}</td>
-            <td>{{ course.credit }}</td>
-            <td>{{ course.courseType || '-' }}</td>
-            <td>{{ course.department || '-' }}</td>
-            <td>{{ course.teacherName || '-' }}</td>
-            <td>{{ course.semester || '-' }}</td>
-            <td>{{ course.academicYear || '-' }}</td>
-            <td>
-              <span :class="course.status === 1 ? 'status-enabled' : 'status-disabled'">
-                {{ course.status === 1 ? '已启用' : '未启用' }}
-              </span>
-            </td>
-            <td>
-              <button class="btn-edit" @click="handleEdit(course)">编辑</button>
-              <button class="btn-delete" @click="handleDelete(course)">删除</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <section v-else-if="tab === 'library'" class="card filters">
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
+      <button v-if="auth.can('course:write')" class="btn btn-primary" type="button" @click="openCourse()">+ 新增</button>
+    </section>
+    <p v-else-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
 
-      <!-- 分页 -->
-      <div class="pagination" v-if="total > 0">
-        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>
-        <span>第 {{ currentPage }} 页，共 {{ totalPages }} 页，共 {{ total }} 条</span>
-        <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>
+    <section v-if="tab === 'schedules'" class="card table-card">
+      <div class="table-scroll">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>课程</th>
+              <th>班级</th>
+              <th>教师</th>
+              <th>星期</th>
+              <th>节次</th>
+              <th>教室</th>
+              <th v-if="auth.can('course:write')">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in visibleSchedules" :key="item.id" class="row-pick" :class="{ picked: pickedScheduleId === item.id }" @click="pickedScheduleId = item.id">
+              <td>
+                {{ item.name }}
+                <small v-if="!item.courseId" class="muted"> · 未关联课程</small>
+              </td>
+              <td>{{ item.className }}</td>
+              <td>{{ item.teacher }}</td>
+              <td>{{ weekdayLabel(item.weekday) }}</td>
+              <td class="num">{{ periodLabel(item.periodStart, item.periodEnd) }}</td>
+              <td class="num">{{ item.roomNo }}</td>
+              <td v-if="auth.can('course:write')">
+                <button class="linkish" type="button" @click="openSchedule(item)">编辑</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    </div>
+    </section>
 
-    <!-- 新增/编辑对话框 -->
-    <div v-if="showDialog" class="dialog-overlay" @click="closeDialog">
-      <div class="dialog-content" @click.stop>
-        <div class="dialog-header">
-          <h2>{{ dialogMode === 'create' ? '新增科目' : '编辑科目' }}</h2>
-          <button class="btn-close" @click="closeDialog">×</button>
+    <section v-else-if="tab === 'library'" class="card table-card">
+      <div class="table-scroll">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>课程编号</th>
+              <th>课程名称</th>
+              <th>已排课时</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in courses" :key="item.id" class="row-pick" :class="{ picked: pickedCourseId === item.id }" @click="pickedCourseId = item.id">
+              <td class="num">{{ item.code || item.id }}</td>
+              <td>{{ item.name }}</td>
+              <td class="num">{{ lessonsOf(item.id) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section v-if="tab !== 'week'" class="card preview-card">
+      <h2>表单预览</h2>
+      <div v-if="preview && preview.kind === 'course'" class="preview-grid">
+        <div><span class="k">课程编号</span><span class="v num">{{ preview.code || '—' }}</span></div>
+        <div><span class="k">课程名称</span><span class="v">{{ preview.name || '—' }}</span></div>
+        <div><span class="k">已排课时</span><span class="v num">{{ preview.lessons ?? '—' }}</span></div>
+      </div>
+      <div v-else-if="preview" class="preview-grid">
+        <div><span class="k">课程</span><span class="v">{{ preview.name || '—' }}</span></div>
+        <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
+        <div><span class="k">教师</span><span class="v">{{ preview.teacher || '—' }}</span></div>
+        <div><span class="k">星期</span><span class="v">{{ preview.weekday ? weekdayLabel(preview.weekday) : '—' }}</span></div>
+        <div><span class="k">节次</span><span class="v num">{{ preview.periodStart ? `${preview.periodStart}-${preview.periodEnd}` : '—' }}</span></div>
+        <div><span class="k">教室</span><span class="v num">{{ preview.roomNo || '—' }}</span></div>
+      </div>
+      <p v-else class="sub">选择授课或新增课程后，在这里预览。</p>
+    </section>
+
+    <section v-else class="card block">
+      <h2 style="margin-bottom: 12px">我的课表</h2>
+      <ScheduleBoard :items="mine" />
+    </section>
+
+    <div v-if="courseEditor" class="modal-mask" @click.self="courseEditor = null">
+      <form class="modal-card" @submit.prevent="saveCourse">
+        <div class="modal-head">
+          <h3>新增课程</h3>
+          <button class="icon-btn" type="button" aria-label="关闭" @click="courseEditor = null"><AppIcon name="X" :size="16" /></button>
         </div>
-        <div class="dialog-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>科目代码 <span class="required">*</span></label>
-                <input type="text" v-model="formData.courseCode" required placeholder="如：MATH001" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>科目名称 <span class="required">*</span></label>
-                <input type="text" v-model="formData.courseName" required placeholder="如：数学" />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>学分 <span class="required">*</span></label>
-                <input type="number" v-model.number="formData.credit" required min="0" step="0.1" placeholder="如：3.0" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>科目类型</label>
-                <select v-model="formData.courseType">
-                  <option value="">请选择</option>
-                  <option value="必修">必修</option>
-                  <option value="选修">选修</option>
-                  <option value="公共课">公共课</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>开课院系</label>
-                <input type="text" v-model="formData.department" placeholder="如：数学系" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>授课教师ID</label>
-                <input type="number" v-model.number="formData.teacherId" placeholder="教师ID（可选）" />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>学期</label>
-                <input type="text" v-model="formData.semester" placeholder="如：2024-2025学年第一学期" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>学年</label>
-                <input type="text" v-model="formData.academicYear" placeholder="如：2024-2025" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>科目描述</label>
-              <textarea v-model="formData.description" rows="3" placeholder="科目描述"></textarea>
-            </div>
-            <div class="form-group">
-              <label>状态 <span class="required">*</span></label>
-              <select v-model="formData.status" required>
-                <option :value="1">已启用</option>
-                <option :value="0">未启用</option>
+        <div class="form-grid">
+          <label class="field-label">课程编号</label>
+          <input v-model="courseEditor.code" class="field" placeholder="例如 CHEM-01" required />
+          <label class="field-label">课程名称</label>
+          <input v-model="courseEditor.name" class="field" required />
+          <p v-if="formError" class="error-text">{{ formError }}</p>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">保存</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div v-if="scheduleEditor" class="modal-mask" @click.self="scheduleEditor = null">
+      <form class="modal-card" @submit.prevent="saveSchedule">
+        <div class="modal-head">
+          <h3>{{ scheduleEditor.id ? '编辑排课' : '新增排课' }}</h3>
+          <button class="icon-btn" type="button" aria-label="关闭" @click="scheduleEditor = null"><AppIcon name="X" :size="16" /></button>
+        </div>
+        <div class="form-grid">
+          <label class="field-label">课程</label>
+          <select v-model="scheduleEditor.courseId" class="select">
+            <option value="">不关联课程</option>
+            <option v-for="item in courses" :key="item.id" :value="item.id">{{ item.name }}</option>
+          </select>
+          <label v-if="!scheduleEditor.courseId" class="field-label">名称</label>
+          <input v-if="!scheduleEditor.courseId" v-model="scheduleEditor.name" class="field" placeholder="例如班会" />
+          <div class="form-row">
+            <div>
+              <label class="field-label">班级</label>
+              <select v-model="scheduleEditor.className" class="select">
+                <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
               </select>
             </div>
-            <div class="form-actions">
-              <button type="button" @click="closeDialog">取消</button>
-              <button type="submit" class="btn-primary">保存</button>
+            <div>
+              <label class="field-label">教师</label>
+              <input v-model="scheduleEditor.teacher" class="field" :readonly="auth.user?.role === 'TEACHER'" />
             </div>
-          </form>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="field-label">星期</label>
+              <select v-model="scheduleEditor.weekday" class="select">
+                <option v-for="day in 7" :key="day" :value="day">{{ weekdayLabel(day) }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label">教室</label>
+              <input v-model="scheduleEditor.roomNo" class="field" required />
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="field-label">开始节次</label>
+              <input v-model.number="scheduleEditor.periodStart" class="field num" type="number" min="1" max="8" required />
+            </div>
+            <div>
+              <label class="field-label">结束节次</label>
+              <input v-model.number="scheduleEditor.periodEnd" class="field num" type="number" min="1" max="8" required />
+            </div>
+          </div>
+          <p v-if="formError" class="error-text">{{ formError }}</p>
+          <div class="form-actions">
+            <button class="btn btn-ghost" type="button" @click="scheduleEditor = null">取消</button>
+            <button class="btn btn-primary" type="submit">保存</button>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
-
-    <!-- Toast 提示 -->
-    <Toast
-      v-model:visible="toastVisible"
-      :message="toastMessage"
-      :type="toastType"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import * as courseAPI from '../api/course.js'
-import Toast from '../components/Toast.vue'
+import { computed, onMounted, ref } from 'vue'
+import AppIcon from '../components/AppIcon.vue'
+import ScheduleBoard from '../components/ScheduleBoard.vue'
+import { createClassCourse, createCourse, fetchClassCourses, fetchCourses, toClassCoursePayload, updateClassCourse } from '../api/course.js'
+import { fetchClasses } from '../api/student.js'
+import { useAuthStore } from '../stores/auth.js'
+import { useUiStore } from '../stores/ui.js'
+import { periodLabel, scopeLabel, weekdayLabel } from '../utils/format.js'
 
-const loading = ref(false)
-const courseList = ref([])
-const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
-const showDialog = ref(false)
-const dialogMode = ref('create')
-const formData = ref({
-  courseCode: '',
-  courseName: '',
-  credit: 0,
-  courseType: '',
-  department: '',
-  teacherId: null,
-  semester: '',
-  academicYear: '',
-  description: '',
-  status: 1
+const auth = useAuthStore()
+const ui = useUiStore()
+const tab = ref('schedules')
+const grade = ref('')
+const className = ref('')
+const keyword = ref('')
+const courseEditor = ref(null)
+const scheduleEditor = ref(null)
+const pickedScheduleId = ref('')
+const pickedCourseId = ref('')
+const formError = ref('')
+const loadError = ref('')
+
+function netHint(message) {
+  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+}
+const courses = ref([])
+const schedules = ref([])
+const classOptions = ref([])
+
+const gradeOptions = computed(() => [...new Set(classOptions.value.map((item) => item.grade).filter(Boolean))])
+const scopeText = computed(() => scopeLabel(auth.user, classOptions.value.map((item) => item.name)))
+
+const visibleSchedules = computed(() => {
+  const query = keyword.value.trim()
+  return schedules.value.filter((item) => {
+    if (grade.value && item.grade && item.grade !== grade.value && !String(item.className).startsWith(grade.value)) return false
+    if (className.value && item.className !== className.value) return false
+    const text = `${item.name}${item.teacher}${item.roomNo}`
+    return !query || text.includes(query)
+  })
 })
 
-const filters = ref({
-  semester: '',
-  academicYear: '',
-  status: null,
-  keyword: ''
+const preview = computed(() => {
+  if (courseEditor.value || tab.value === 'library') {
+    if (courseEditor.value) {
+      return { kind: 'course', code: courseEditor.value.code, name: courseEditor.value.name, lessons: '—' }
+    }
+    const item = courses.value.find((row) => row.id === pickedCourseId.value) || courses.value[0]
+    if (!item) return null
+    return { kind: 'course', code: item.code || item.id, name: item.name, lessons: lessonsOf(item.id) }
+  }
+  if (scheduleEditor.value) {
+    const form = scheduleEditor.value
+    const linked = courses.value.find((row) => String(row.id) === String(form.courseId))
+    return { kind: 'schedule', ...form, name: form.name || linked?.name || '' }
+  }
+  const item = visibleSchedules.value.find((row) => row.id === pickedScheduleId.value) || visibleSchedules.value[0]
+  return item ? { kind: 'schedule', ...item } : null
+})
+const mine = computed(() => {
+  if (auth.user?.role === 'TEACHER') return schedules.value.filter((item) => item.teacher === auth.user.name)
+  if (auth.user?.className) return schedules.value.filter((item) => item.className === auth.user.className)
+  return schedules.value
 })
 
-// Toast 提示
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref('success')
-
-const showToast = (message, type = 'success') => {
-  toastMessage.value = message
-  toastType.value = type
-  toastVisible.value = true
+function lessonsOf(courseId) {
+  return schedules.value
+    .filter((item) => String(item.courseId) === String(courseId))
+    .reduce((sum, item) => sum + Math.max(0, item.periodEnd - item.periodStart + 1), 0)
 }
 
-const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
-
-onMounted(() => {
-  loadData()
-})
-
-const loadData = async () => {
-  loading.value = true
+async function load() {
+  loadError.value = ''
+  const errors = []
   try {
-    const result = await courseAPI.getCourseList({
-      page: currentPage.value,
-      size: pageSize.value,
-      semester: filters.value.semester || undefined,
-      academicYear: filters.value.academicYear || undefined,
-      status: filters.value.status,
-      keyword: filters.value.keyword || undefined
+    courses.value = await fetchCourses()
+  } catch (error) {
+    courses.value = []
+    errors.push(error.message || '课程加载失败')
+  }
+  try {
+    schedules.value = await fetchClassCourses()
+  } catch (error) {
+    schedules.value = []
+    errors.push(error.message || '班级授课加载失败')
+  }
+  try {
+    classOptions.value = await fetchClasses()
+  } catch {
+    classOptions.value = []
+  }
+  loadError.value = errors.join('；')
+}
+
+onMounted(load)
+
+function openCourse() {
+  formError.value = ''
+  courseEditor.value = { code: '', name: '' }
+}
+
+function openSchedule(item) {
+  formError.value = ''
+  scheduleEditor.value = item
+    ? { ...item, courseId: item.courseId || '' }
+    : {
+        courseId: courses.value[0]?.id || '',
+        name: '',
+        className: classOptions.value[0]?.name || '',
+        teacher: auth.user?.name || '',
+        weekday: 1,
+        periodStart: 1,
+        periodEnd: 2,
+        roomNo: ''
+      }
+}
+
+async function saveCourse() {
+  formError.value = ''
+  try {
+    await createCourse({
+      courseCode: courseEditor.value.code.trim(),
+      courseName: courseEditor.value.name.trim(),
+      status: 1
     })
-    
-    if (result.code === 200 && result.data) {
-      courseList.value = result.data.records || []
-      total.value = result.data.total || 0
-    }
+    ui.toast('课程已保存', 'success')
+    courseEditor.value = null
+    await load()
   } catch (error) {
-    showToast('加载数据失败：' + error.message, 'error')
-  } finally {
-    loading.value = false
+    formError.value = error.message
   }
 }
 
-const changePage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-    loadData()
-  }
-}
-
-const handleCreate = () => {
-  dialogMode.value = 'create'
-  formData.value = {
-    courseCode: '',
-    courseName: '',
-    credit: 0,
-    courseType: '',
-    department: '',
-    teacherId: null,
-    semester: '',
-    academicYear: '',
-    description: '',
-    status: 1
-  }
-  showDialog.value = true
-}
-
-const handleEdit = (course) => {
-  dialogMode.value = 'edit'
-  formData.value = {
-    id: course.id,
-    courseCode: course.courseCode,
-    courseName: course.courseName,
-    credit: course.credit,
-    courseType: course.courseType || '',
-    department: course.department || '',
-    teacherId: course.teacherId,
-    semester: course.semester || '',
-    academicYear: course.academicYear || '',
-    description: course.description || '',
-    status: course.status
-  }
-  showDialog.value = true
-}
-
-const handleDelete = async (course) => {
-  if (!confirm(`确定要删除科目"${course.courseName}"吗？`)) {
+async function saveSchedule() {
+  formError.value = ''
+  const periodStart = Number(scheduleEditor.value.periodStart)
+  const periodEnd = Number(scheduleEditor.value.periodEnd)
+  if (!periodStart || !periodEnd || periodEnd < periodStart) {
+    formError.value = '结束节次不能早于开始节次'
     return
   }
-  
   try {
-    await courseAPI.deleteCourse(course.id)
-    showToast('删除成功', 'success')
-    loadData()
+    const form = scheduleEditor.value
+    const cls = classOptions.value.find((item) => item.name === form.className)
+    form.classId = cls?.id || form.classId
+    const siblings = form.id ? schedules.value.filter((row) => row.id === form.id) : []
+    const payload = toClassCoursePayload(form, siblings)
+    if (form.id) await updateClassCourse(form.id, payload)
+    else await createClassCourse(payload)
+    ui.toast('排课已保存', 'success')
+    scheduleEditor.value = null
+    await load()
   } catch (error) {
-    showToast('删除失败：' + error.message, 'error')
+    formError.value = error.message
   }
-}
-
-const handleSubmit = async () => {
-  // 验证必填字段
-  if (!formData.value.courseCode) {
-    showToast('请输入科目代码', 'error')
-    return
-  }
-  if (!formData.value.courseName) {
-    showToast('请输入科目名称', 'error')
-    return
-  }
-  if (!formData.value.credit || formData.value.credit <= 0) {
-    showToast('请输入有效的学分', 'error')
-    return
-  }
-  
-  try {
-    const data = { ...formData.value }
-    if (!data.teacherId) {
-      data.teacherId = null
-    }
-    
-    if (dialogMode.value === 'create') {
-      await courseAPI.createCourse(data)
-      showToast('创建成功', 'success')
-    } else {
-      await courseAPI.updateCourse(data.id, data)
-      showToast('更新成功', 'success')
-    }
-    closeDialog()
-    loadData()
-  } catch (error) {
-    showToast('操作失败：' + (error.message || '未知错误'), 'error')
-  }
-}
-
-const closeDialog = () => {
-  showDialog.value = false
 }
 </script>
-

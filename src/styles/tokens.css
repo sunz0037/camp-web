@@ -1,0 +1,51 @@
+/* 对齐 /users 规格。主色靛蓝，废除青绿整站铺色。 */
+:root {
+  --canvas: #f7f7fb;
+  --c-canvas: var(--canvas);
+  --c-card: #ffffff;
+  --c-surface: #ffffff;
+  --c-subtle: #f7f7fb;
+  --c-table-head: #FAFAFD;
+  --c-border: #E7E8F2;
+
+  --brand-600: #5b6cf0;
+  --c-brand: #5b6cf0;
+  --c-brand-deep: #4455d6;
+  --c-brand-soft: rgba(91, 108, 240, 0.1);
+  --c-accent: #a78bfa;
+  --c-accent-soft: rgba(167, 139, 250, 0.14);
+  --c-logo: linear-gradient(135deg, #5b6cf0 0%, #a78bfa 100%);
+
+  --btn-primary-bg: #5b6cf0;
+  --btn-primary-fg: #ffffff;
+  --c-danger: #E05A5A;
+
+  --c-text: #1E2140;
+  --c-muted: #5F6482;
+  /* 侧栏导航：默认 #8B90A5，选中 #5B6CF0，字重 400 */
+  --nav-fg: #8B90A5;
+  --nav-fg-active: #5B6CF0;
+  --nav-weight: 400;
+  --c-helper: #9aa0b8;
+  --c-focus: #5b6cf0;
+  --c-ok: #1f9c7c;
+  --c-ok-soft: rgba(52, 201, 163, 0.12);
+  --c-on: #4a5ae0;
+  --c-tag-purple: #7c5ce0;
+  --c-coral: #f59e8b;
+  --c-coral-soft: rgba(245, 158, 139, 0.16);
+  --c-warn: #f59e8b;
+  --c-warn-soft: rgba(245, 158, 139, 0.16);
+  --c-info-soft: rgba(91, 108, 240, 0.1);
+
+  --radius-card: 20px;
+  --radius-control: 12px;
+  --radius-nav: 10px;
+  --radius-panel: 20px;
+  --sidebar-width: 200px;
+  --bento-gap: 24px;
+  /* 分页脚 .table-foot：上下 12px、左右 16px */
+  --pager-pad: 12px 16px;
+  --shadow-card: none;
+  --font: Inter, 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+}

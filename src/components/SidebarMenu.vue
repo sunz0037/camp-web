@@ -198,7 +198,7 @@ onMounted(() => {
 
 <style scoped>
 .sidebar-menu {
-  width: 220px;
+  width: 200px;
   height: 100vh;
   background: #fff;
   border-right: 1px solid #f4f4f5;
@@ -266,12 +266,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   padding: 0.625rem 0.75rem;
-  color: var(--text-slate-600);
+  color: var(--nav-fg);
   text-decoration: none;
   transition: all 0.2s;
   cursor: pointer;
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: var(--nav-weight);
   border-radius: 0.75rem;
   margin-bottom: 0.75rem;
 }
@@ -280,6 +280,7 @@ onMounted(() => {
   font-size: 1.25rem;
   margin-right: 0.75rem;
   flex-shrink: 0;
+  color: currentColor;
   transition: transform 0.2s ease-out, color 0.2s ease-out;
 }
 
@@ -293,12 +294,13 @@ onMounted(() => {
 
 .menu-item:hover {
   background: #fafafa;
-  color: #18181b;
+  color: var(--nav-fg);
 }
 
 .menu-item.active {
   background: #f4f4f5;
-  color: #18181b !important;
+  color: var(--nav-fg-active);
+  font-weight: var(--nav-weight);
 }
 
 .menu-item:active {
@@ -315,7 +317,8 @@ onMounted(() => {
 
 .menu-item.menu-group-btn.active {
   background: transparent;
-  color: var(--primary-charcoal);
+  color: var(--nav-fg-active);
+  font-weight: var(--nav-weight);
 }
 
 .menu-chevron {

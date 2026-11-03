@@ -1,16 +1,14 @@
 <template>
-  <div class="app">
-    <router-view />
+  <router-view />
+  <div class="toast-wrap" aria-live="polite">
+    <div v-for="item in ui.toasts" :key="item.id" class="toast" :class="item.type">
+      {{ item.message }}
+    </div>
   </div>
 </template>
 
 <script setup>
-// 使用 Vue Router 管理路由
-</script>
+import { useUiStore } from './stores/ui.js'
 
-<style>
-.app {
-  min-height: 100vh;
-  background: var(--bg-neutral);
-}
-</style>
+const ui = useUiStore()
+</script>
