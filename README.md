@@ -46,13 +46,13 @@ npm install
 npm run dev
 ```
 
-浏览器打开 http://localhost:3000。Vite 在开发模式读取 `.env.development`：
+浏览器打开 http://localhost:5173。Vite 默认端口是 5173，与 camp-app 的 CORS 一致（3000 也可）。开发模式读取 `.env.development`：
 
 ```bash
 VITE_API_BASE=http://localhost:8080/api/v1
 ```
 
-Axios 的 `baseURL` 就是 `VITE_API_BASE`，不再在代码里另拼 `/api/v1`。请先启动 camp-app（`profile=dev`，端口 8080），并允许来源 `http://localhost:3000`。
+Axios 的 `baseURL` 就是 `VITE_API_BASE`（已含 `/api/v1`）。学生、课程、课表、考勤、公告页面请求这个地址，不再使用本地种子数据。请先启动 camp-app（`profile=dev`，端口 8080），并允许来源 `http://localhost:5173`。
 
 ### 演示账号
 
@@ -61,10 +61,9 @@ Axios 的 `baseURL` 就是 `VITE_API_BASE`，不再在代码里另拼 `/api/v1`�
 | 账号 | 身份 | 开发态 Authorization |
 | --- | --- | --- |
 | `admin` | 管理员 | `Bearer dev-ADMIN` |
-| `A1001` | 教务 | `Bearer dev-ACADEMIC` |
-| `T1001` | 教师王老师 | `Bearer dev-TEACHER` |
-| `20240101` | 学生李明 | `Bearer dev-STUDENT` |
-| `P1001` | 家长，界面与学生相同 | `Bearer dev-STUDENT` |
+| `academic01` | 教务 | `Bearer dev-ACADEMIC` |
+| `teacher01` | 教师 | `Bearer dev-TEACHER` |
+| `student01` | 学生 | `Bearer dev-STUDENT` |
 
 未登录时的默认头是 `Authorization: Bearer dev-TEACHER`。角色只取 `dev-ADMIN`、`dev-ACADEMIC`、`dev-TEACHER`、`dev-STUDENT`。
 
@@ -86,10 +85,9 @@ Axios 请求拦截器规则：
 | --- | --- | --- | --- | --- |
 | 未登录 | `dev-TEACHER` | 不发送 | 不发送 | 不发送 |
 | `admin` | `dev-ADMIN` | `u-admin` | 不发送 | 不发送 |
-| `A1001` | `dev-ACADEMIC` | `u-academic` | 不发送 | 不发送 |
-| `T1001` 王老师 | `dev-TEACHER` | `t-wang` | `c12,c13,c21` | `1,2` |
-| `T1002` 赵老师 | `dev-TEACHER` | `u-zhao` | `c11` | `1` |
-| `20240101` 李明 | `dev-STUDENT` | `u-liming` | `c13` | `1` |
+| `academic01` | `dev-ACADEMIC` | `u-academic` | 不发送 | 不发送 |
+| `teacher01` | `dev-TEACHER` | `t-wang` | `c12,c13,c21` | `1,2` |
+| `student01` | `dev-STUDENT` | `u-liming` | `c13` | `1` |
 | `P1001` 家长 | `dev-STUDENT` | `u-parent` | `c13` | `1` |
 
 年级编号：`1` 高一，`2` 高二，`3` 高三。班级编号与首期种子数据一致（如 `c13` 为高一(3)班）。
@@ -102,7 +100,7 @@ Axios 请求拦截器规则：
 npm run dev
 ```
 
-访问 http://localhost:3000
+访问 http://localhost:5173
 
 ### 构建生产版本
 
@@ -195,7 +193,7 @@ npm run preview
    ```
 
 3. **访问登录页面**
-   - 打开浏览器访问 http://localhost:3000
+   - 打开浏览器访问 http://localhost:5173
    - 选择身份类型（学生/教工）
    - 输入学号/工号进行登录
 

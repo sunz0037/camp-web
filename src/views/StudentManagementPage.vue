@@ -5,6 +5,7 @@
         <h1>学生信息</h1>
         <p>所辖班级名册 · 筛选与批量操作</p>
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
+        <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
       <div class="head-actions">
         <button v-if="auth.can('student:import')" class="btn btn-warn" type="button" @click="openImport = true">
@@ -190,58 +191,82 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AppIcon from '../components/AppIcon.vue'
+import { createEmergencyContact, createStudent, fetchClasses, fetchContacts, fetchStudentPage, toStudentPayload, updateStudent } from '../api/student.js'
 import { useAuthStore } from '../stores/auth.js'
-import { useCampusStore } from '../stores/campus.js'
 import { useUiStore } from '../stores/ui.js'
 import { downloadText, maskPhone, scopeLabel } from '../utils/format.js'
 
 const auth = useAuthStore()
-const campus = useCampusStore()
 const ui = useUiStore()
 const grade = ref('全部年级')
 const keyword = ref('')
 const page = ref(1)
-const pageSize = 5
+const pageSize = 20
+const total = ref(0)
+const rows = ref([])
+const classOptions = ref([])
+const loadError = ref('')
 const editor = ref(null)
 const detail = ref(null)
+const detailContacts = ref([])
 const formError = ref('')
 const openImport = ref(false)
 const importRows = ref([])
 const importError = ref('')
 const contactOpen = ref(false)
 const contact = reactive({ name: '', relation: '父亲', phone: '', primary: true })
+const missing = ref(0)
 
-const classOptions = computed(() => campus.classesFor(auth.user))
 const scopeText = computed(() => scopeLabel(auth.user, classOptions.value.map((item) => item.name)))
 const allowedClassNames = computed(() => classOptions.value.map((item) => item.name))
-const missing = computed(() => campus.missingContactCount(auth.user))
-
-const filtered = computed(() => {
-  const query = keyword.value.trim()
-  return campus.studentsFor(auth.user).filter((item) => {
-    const gradeOk = grade.value === '全部年级' || item.grade === grade.value
-    const text = `${item.name}${item.studentNo}`
-    return gradeOk && (!query || text.includes(query))
-  })
-})
-
-const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
-const pageRows = computed(() => filtered.value.slice((page.value - 1) * pageSize, page.value * pageSize))
+const filtered = computed(() => rows.value)
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+const pageRows = computed(() => rows.value)
 const pageList = computed(() => Array.from({ length: pageCount.value }, (_, index) => index + 1).filter((n) => {
   return n === 1 || n === pageCount.value || Math.abs(n - page.value) <= 1
 }))
 const rangeText = computed(() => {
-  if (!filtered.value.length) return '0-0'
+  if (!total.value) return '0-0'
   const from = (page.value - 1) * pageSize + 1
-  const to = Math.min(page.value * pageSize, filtered.value.length)
+  const to = Math.min(page.value * pageSize, total.value)
   return `${from}-${to}`
 })
-const detailContacts = computed(() => (detail.value ? campus.contactsFor(detail.value.id) : []))
 
-watch(filtered, () => {
-  if (page.value > pageCount.value) page.value = 1
+async function loadStudents() {
+  loadError.value = ''
+  try {
+    const result = await fetchStudentPage({
+      page: page.value,
+      size: pageSize,
+      grade: grade.value === '全部年级' ? undefined : grade.value,
+      keyword: keyword.value.trim() || undefined
+    })
+    rows.value = result.records
+    total.value = result.total
+  } catch (error) {
+    rows.value = []
+    total.value = 0
+    loadError.value = error.message || '学生列表加载失败'
+  }
+}
+
+onMounted(async () => {
+  try {
+    classOptions.value = await fetchClasses()
+  } catch {
+    classOptions.value = []
+  }
+  await loadStudents()
+})
+
+watch([page, grade], () => {
+  loadStudents()
+})
+watch(keyword, () => {
+  page.value = 1
+  loadStudents()
 })
 
 function setGrade(value) {
@@ -267,28 +292,50 @@ function openEdit(item) {
   editor.value = { ...item }
 }
 
-function openDetail(item) {
-  detail.value = item
-}
-
-function saveStudent() {
+async function saveStudent() {
   formError.value = ''
   try {
-    if (!allowedClassNames.value.includes(editor.value.className)) throw new Error('班级不在数据范围内')
-    campus.saveStudent(editor.value)
+    if (allowedClassNames.value.length && !allowedClassNames.value.includes(editor.value.className)) {
+      throw new Error('班级不在数据范围内')
+    }
+    const payload = toStudentPayload(editor.value)
+    if (editor.value.id) await updateStudent(editor.value.id, payload)
+    else await createStudent(payload)
     ui.toast('学生信息已保存', 'success')
     editor.value = null
+    await loadStudents()
   } catch (error) {
     formError.value = error.message
   }
 }
 
-function saveContact() {
-  campus.saveContact({ ...contact, studentId: detail.value.id })
-  contact.name = ''
-  contact.phone = ''
-  contactOpen.value = false
-  ui.toast('已添加应急联系人', 'success')
+async function openDetail(item) {
+  detail.value = item
+  detailContacts.value = []
+  try {
+    detailContacts.value = await fetchContacts(item.id)
+  } catch (error) {
+    ui.toast(error.message || '应急联系人加载失败', 'error')
+  }
+}
+
+async function saveContact() {
+  try {
+    await createEmergencyContact({
+      studentId: detail.value.id,
+      contactName: contact.name,
+      relationship: contact.relation,
+      phone: contact.phone,
+      isPrimary: contact.primary ? 1 : 0
+    })
+    contact.name = ''
+    contact.phone = ''
+    contactOpen.value = false
+    detailContacts.value = await fetchContacts(detail.value.id)
+    ui.toast('已添加应急联系人', 'success')
+  } catch (error) {
+    ui.toast(error.message || '保存联系人失败', 'error')
+  }
 }
 
 function exportCsv() {
@@ -324,14 +371,36 @@ function onFile(event) {
   reader.readAsText(file)
 }
 
-function doImport() {
+async function doImport() {
   if (!importRows.value.length) {
     importError.value = '请先选择 CSV 文件'
     return
   }
-  const result = campus.importStudents(importRows.value, allowedClassNames.value)
-  ui.toast(`成功导入 ${result.success} 名学生`, 'success')
-  importError.value = result.errors.slice(0, 3).join('；')
-  if (!result.errors.length) openImport.value = false
+  const errors = []
+  let success = 0
+  for (const [index, row] of importRows.value.entries()) {
+    const className = row['班级'] || ''
+    if (allowedClassNames.value.length && !allowedClassNames.value.includes(className)) {
+      errors.push(`第 ${index + 2} 行：班级不在数据范围内`)
+      continue
+    }
+    try {
+      await createStudent(toStudentPayload({
+        studentNo: row['学号'],
+        name: row['姓名'],
+        gender: row['性别'] || '男',
+        className,
+        phone: row['手机'] || '',
+        status: row['学籍'] || '在读'
+      }))
+      success += 1
+    } catch (error) {
+      errors.push(`第 ${index + 2} 行：${error.message}`)
+    }
+  }
+  ui.toast(`成功导入 ${success} 名学生`, 'success')
+  importError.value = errors.slice(0, 3).join('；')
+  await loadStudents()
+  if (!errors.length) openImport.value = false
 }
 </script>

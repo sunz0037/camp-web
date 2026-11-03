@@ -34,7 +34,7 @@ function defaultAccounts() {
     },
     {
       id: 'u-academic',
-      account: 'A1001',
+      account: 'academic01',
       password: 'Demo@123456',
       name: '周教务',
       role: 'ACADEMIC',
@@ -54,7 +54,7 @@ function defaultAccounts() {
     },
     {
       id: 't-wang',
-      account: 'T1001',
+      account: 'teacher01',
       password: 'Demo@123456',
       name: '王老师',
       role: 'TEACHER',
@@ -94,7 +94,7 @@ function defaultAccounts() {
     },
     {
       id: 'u-liming',
-      account: '20240101',
+      account: 'student01',
       password: 'Demo@123456',
       name: '李明',
       role: 'STUDENT',
@@ -224,12 +224,22 @@ export const useAuthStore = defineStore('auth', {
     },
     async login({ account, password, portal }) {
       const identifier = account.trim()
-      const payload = { account: identifier, password, portal }
+      const payload = {
+        account: identifier,
+        username: identifier,
+        identifier,
+        password,
+        portal,
+        identityType: portal === 'student' ? 1 : 2
+      }
       try {
-        const json = await api('/auth/login', { method: 'POST', auth: false, body: payload })
-        const data = json.data || {}
-        const remote = data.user || data
-        const mapped = normalizeRole(remote.role)
+        const json = await api('/api/v1/auth/login', { method: 'POST', auth: false, body: payload })
+        const data = json.data && typeof json.data === 'object' ? json.data : json
+        const remote = data.user || data.userInfo || {}
+        const roleName = remote.role
+          || ({ 1: 'STUDENT', 2: 'TEACHER', 3: 'ADMIN' }[remote.userType])
+          || (portal === 'student' ? 'STUDENT' : identifier.toLowerCase() === 'admin' ? 'ADMIN' : identifier.toLowerCase().startsWith('academic') ? 'ACADEMIC' : 'TEACHER')
+        const mapped = normalizeRole(roleName)
         const user = {
           id: remote.id || identifier,
           account: remote.account || remote.username || identifier,

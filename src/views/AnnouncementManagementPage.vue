@@ -5,6 +5,7 @@
         <h1>校园公告</h1>
         <p>{{ isMobile ? '手机端只浏览，发布请用电脑办理。' : '发布、置顶与已读回执。' }}</p>
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
+        <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
       <button v-if="canPublish" class="btn btn-primary" type="button" @click="open = true">发布公告</button>
     </header>
@@ -19,8 +20,8 @@
           <small class="muted">{{ item.publishedAt }} · {{ item.scope }} · {{ item.author }}</small>
         </div>
         <div class="news-side">
-          <span class="pill" :class="item.readBy.includes(userId) ? 'pill-muted' : 'pill-info'">
-            {{ item.readBy.includes(userId) ? '已读' : '未读' }}
+          <span class="pill" :class="item.read ? 'pill-muted' : 'pill-info'">
+            {{ item.read ? '已读' : '未读' }}
           </span>
           <button class="linkish" type="button" @click="openDetail(item)">详情</button>
         </div>
@@ -70,24 +71,25 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from '../components/AppIcon.vue'
+import { createAnnouncement, fetchAnnouncements, markAnnouncementRead } from '../api/announcement.js'
 import { useViewport } from '../composables/useViewport.js'
 import { useAuthStore } from '../stores/auth.js'
-import { useCampusStore } from '../stores/campus.js'
 import { useUiStore } from '../stores/ui.js'
 import { scopeLabel } from '../utils/format.js'
 
 const auth = useAuthStore()
-const campus = useCampusStore()
 const ui = useUiStore()
 const route = useRoute()
 const { isMobile } = useViewport()
 const open = ref(false)
 const current = ref(null)
 const formError = ref('')
-const draft = reactive({ title: '', body: '', scope: '', pinned: false })
+const loadError = ref('')
+const items = ref([])
+const draft = reactive({ title: '', body: '', scope: '全校', pinned: false })
 const userId = computed(() => auth.user?.id || '')
 const canPublish = computed(() => auth.can('announcement:publish') && !isMobile.value)
 const scopeText = computed(() => {
@@ -97,33 +99,56 @@ const scopeText = computed(() => {
 })
 
 const scopes = computed(() => {
-  if (auth.user?.role === 'TEACHER') return auth.user.classNames || []
-  return ['全校', ...campus.grades]
+  if (auth.user?.role === 'TEACHER' && auth.user.classNames?.length) return auth.user.classNames
+  return ['全校']
 })
 
 const ordered = computed(() => {
-  return [...campus.announcements].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.publishedAt.localeCompare(a.publishedAt))
+  return [...items.value].sort((a, b) => Number(b.pinned) - Number(a.pinned) || String(b.publishedAt).localeCompare(String(a.publishedAt)))
 })
 
-function openDetail(item) {
+async function load() {
+  loadError.value = ''
+  try {
+    items.value = await fetchAnnouncements()
+  } catch (error) {
+    items.value = []
+    loadError.value = error.message || '公告加载失败'
+  }
+}
+
+onMounted(load)
+
+async function openDetail(item) {
   current.value = item
-  campus.markRead(item.id, userId.value)
+  item.read = true
+  try {
+    await markAnnouncementRead(item.id)
+  } catch {
+    // 已读回执接口未接通时仍可查看正文
+  }
 }
 
 function mark() {
-  if (current.value) campus.markRead(current.value.id, userId.value)
   current.value = null
 }
 
-function publish() {
+async function publish() {
   formError.value = ''
   try {
-    campus.publishAnnouncement({ ...draft, author: auth.user?.name || '教师' }, userId.value)
+    await createAnnouncement({
+      title: draft.title.trim(),
+      content: draft.body.trim(),
+      targetAudience: draft.scope || '全校',
+      isTop: draft.pinned ? 1 : 0,
+      status: 1
+    })
     ui.toast('公告已发布', 'success')
     open.value = false
     draft.title = ''
     draft.body = ''
     draft.pinned = false
+    await load()
   } catch (error) {
     formError.value = error.message
   }

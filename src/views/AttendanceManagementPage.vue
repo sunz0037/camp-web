@@ -5,6 +5,7 @@
         <h1>{{ isMobile || auth.user?.role === 'STUDENT' ? '我的考勤' : '考勤管理' }}</h1>
         <p>{{ isMobile || auth.user?.role === 'STUDENT' ? '只读查看。登记日报请用电脑办理。' : '班级日报汇总与异常明细。课程可以不关联。' }}</p>
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
+        <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
       <button v-if="canRecord" class="btn btn-primary" type="button" @click="openRecord()">登记今日考勤</button>
     </header>
@@ -178,81 +179,47 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from '../components/AppIcon.vue'
+import { createSummary, fetchRecords, fetchSummaries } from '../api/attendance.js'
+import { fetchCourses } from '../api/course.js'
+import { fetchClasses, fetchStudentPage } from '../api/student.js'
 import { useViewport } from '../composables/useViewport.js'
 import { useAuthStore } from '../stores/auth.js'
-import { useCampusStore } from '../stores/campus.js'
 import { useUiStore } from '../stores/ui.js'
 import { ATTENDANCE_LABEL, scopeLabel, todayISO } from '../utils/format.js'
 
 const auth = useAuthStore()
-const campus = useCampusStore()
 const ui = useUiStore()
 const route = useRoute()
 const { isMobile } = useViewport()
 const tab = ref('summary')
-const className = ref('高一(3)班')
+const className = ref('')
 const date = ref(todayISO())
 const recorder = ref(null)
+const loadError = ref('')
+const summaries = ref([])
+const records = ref([])
+const classOptions = ref([])
+const courses = ref([])
 
 const personal = computed(() => auth.user?.role === 'STUDENT')
 const canRecord = computed(() => !isMobile.value && !personal.value && auth.can('attendance:record'))
-const classOptions = computed(() => campus.classesFor(auth.user))
 const scopeText = computed(() => scopeLabel(auth.user, classOptions.value.map((item) => item.name)))
-const sessions = computed(() => campus.sessionsFor(auth.user).filter((item) => {
+const summaryRows = computed(() => summaries.value.filter((item) => {
   const classOk = !className.value || item.className === className.value
-  const dateOk = !date.value || item.date === date.value
+  const dateOk = !date.value || String(item.date).slice(0, 10) === date.value
   return classOk && dateOk
 }))
-const summaryRows = computed(() => sessions.value.map((item) => ({ ...item, summary: campus.summary(item) })))
 const activeSummary = computed(() => summaryRows.value[0]?.summary || null)
-const courseChoices = computed(() => {
-  const names = new Map()
-  campus.schedules
-    .filter((item) => item.className === recorder.value?.className && item.courseId)
-    .forEach((item) => names.set(item.courseId, item.name))
-  return [...names].map(([id, name]) => ({ id, name }))
-})
-
-const anomalies = computed(() => {
-  const rows = []
-  sessions.value.forEach((session) => {
-    session.marks.forEach((mark) => {
-      if (mark.status === 'present') return
-      const student = campus.students.find((item) => item.id === mark.studentId)
-      if (!student) return
-      rows.push({
-        key: `${session.id}-${student.id}`,
-        date: session.date,
-        className: session.className,
-        courseName: session.courseName,
-        studentNo: student.studentNo,
-        name: student.name,
-        status: mark.status
-      })
-    })
-  })
-  return rows
-})
-
-const personalRows = computed(() => {
-  const self = campus.studentsFor(auth.user)[0]
-  if (!self) return []
-  return campus.sessions
-    .filter((session) => session.className === self.className)
-    .map((session) => {
-      const mark = session.marks.find((item) => item.studentId === self.id)
-      return {
-        key: session.id,
-        date: session.date,
-        courseId: session.courseId,
-        courseName: session.courseName,
-        status: mark?.status || 'present'
-      }
-    })
-})
+const courseChoices = computed(() => courses.value.map((item) => ({ id: item.id, name: item.name })))
+const anomalies = computed(() => records.value.filter((item) => {
+  const classOk = !className.value || item.className === className.value
+  const dateOk = !date.value || String(item.date).slice(0, 10) === date.value
+  return classOk && dateOk && item.status !== 'present'
+}))
+const personalRows = computed(() => records.value)
 
 function pillOf(status) {
   if (status === 'present') return 'pill-ok'
@@ -260,40 +227,102 @@ function pillOf(status) {
   return 'pill-info'
 }
 
-function rosterOf(name) {
-  return campus.students
-    .filter((item) => item.className === name && item.status === '在读')
+async function load() {
+  loadError.value = ''
+  const errors = []
+  const params = {
+    className: className.value || undefined,
+    attendanceDate: date.value || undefined
+  }
+  try {
+    summaries.value = await fetchSummaries(params)
+  } catch (error) {
+    summaries.value = []
+    errors.push(error.message || '考勤汇总加载失败')
+  }
+  try {
+    records.value = await fetchRecords({
+      ...params,
+      studentNo: personal.value ? auth.user?.studentNo || auth.user?.account : undefined
+    })
+  } catch (error) {
+    records.value = []
+    errors.push(error.message || '考勤明细加载失败')
+  }
+  loadError.value = errors.join('；')
+}
+
+onMounted(async () => {
+  try {
+    classOptions.value = await fetchClasses()
+  } catch {
+    classOptions.value = []
+  }
+  try {
+    courses.value = await fetchCourses()
+  } catch {
+    courses.value = []
+  }
+  await load()
+})
+
+watch([className, date], () => {
+  load()
+})
+
+async function rosterOf(name) {
+  const result = await fetchStudentPage({ page: 1, size: 200, className: name, keyword: undefined })
+  return result.records
+    .filter((item) => item.status === '在读' || item.status === '—')
     .map((item) => ({ studentId: item.id, studentNo: item.studentNo, name: item.name, status: 'present' }))
 }
 
-function fillRoster() {
+async function fillRoster() {
   if (!recorder.value) return
-  recorder.value.rows = rosterOf(recorder.value.className)
-}
-
-function openRecord() {
-  const pending = campus.pendingClassNames(auth.user)[0] || classOptions.value[0]?.name
-  recorder.value = {
-    className: pending,
-    date: todayISO(),
-    courseKey: '',
-    rows: rosterOf(pending)
+  try {
+    recorder.value.rows = await rosterOf(recorder.value.className)
+  } catch (error) {
+    ui.toast(error.message || '学生名册加载失败', 'error')
   }
 }
 
-function saveRecord() {
-  const course = courseChoices.value.find((item) => item.id === recorder.value.courseKey)
-  campus.saveSession({
-    date: recorder.value.date,
-    className: recorder.value.className,
-    courseId: course?.id || null,
-    courseName: course?.name || '班级日报',
-    marks: recorder.value.rows.map((row) => ({ studentId: row.studentId, status: row.status }))
+async function openRecord() {
+  const name = classOptions.value[0]?.name || ''
+  recorder.value = {
+    className: name,
+    date: todayISO(),
+    courseKey: '',
+    rows: []
+  }
+  if (name) await fillRoster()
+}
+
+async function saveRecord() {
+  const course = courseChoices.value.find((item) => String(item.id) === String(recorder.value.courseKey))
+  const counts = { present: 0, leave: 0, late: 0, absent: 0 }
+  recorder.value.rows.forEach((row) => {
+    if (counts[row.status] !== undefined) counts[row.status] += 1
   })
-  className.value = recorder.value.className
-  date.value = recorder.value.date
-  recorder.value = null
-  ui.toast('考勤日报已提交', 'success')
+  try {
+    await createSummary({
+      attendanceDate: recorder.value.date,
+      className: recorder.value.className,
+      courseId: course?.id || null,
+      courseName: course?.name || '班级日报',
+      expectedCount: recorder.value.rows.length,
+      presentCount: counts.present,
+      leaveCount: counts.leave,
+      lateCount: counts.late,
+      absentCount: counts.absent
+    })
+    className.value = recorder.value.className
+    date.value = recorder.value.date
+    recorder.value = null
+    ui.toast('考勤日报已提交', 'success')
+    await load()
+  } catch (error) {
+    ui.toast(error.message || '提交失败', 'error')
+  }
 }
 
 watch(() => route.query.record, (value) => {

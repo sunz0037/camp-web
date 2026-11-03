@@ -95,12 +95,22 @@ http.interceptors.response.use(
  * 统一请求 /api/v1，响应信封 { code, message, data, timestamp }。
  * 开发态请求头由拦截器写入，见 devHeaders.js。
  */
+/** baseURL 已含 /api/v1 时，去掉路径里重复的前缀。 */
+export function resourcePath(path) {
+  const value = String(path || '')
+  if (value === '/api/v1' || value.startsWith('/api/v1/')) {
+    return value.slice('/api/v1'.length) || '/'
+  }
+  return value.startsWith('/') ? value : `/${value}`
+}
+
 export async function api(path, options = {}) {
-  const { method = 'GET', body, _retry = false } = options
+  const { method = 'GET', body, params, _retry = false } = options
   return http.request({
-    url: path,
+    url: resourcePath(path),
     method,
     data: body,
+    params,
     _retry
   })
 }

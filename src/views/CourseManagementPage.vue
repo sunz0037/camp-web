@@ -5,6 +5,7 @@
         <h1>课程与排课</h1>
         <p>课程库与班级授课。节次记为开始节次至结束节次。</p>
         <p class="scope-line">数据范围 · {{ scopeText }}</p>
+        <p v-if="loadError" class="error-text">{{ loadError }}</p>
       </div>
       <div class="head-actions">
         <button v-if="auth.can('course:write') && tab === 'library'" class="btn btn-primary" type="button" @click="openCourse()">新增课程</button>
@@ -21,7 +22,7 @@
     <section v-if="tab === 'schedules'" class="card filters">
       <select v-model="grade" class="select">
         <option value="">全部年级</option>
-        <option v-for="item in campus.grades" :key="item">{{ item }}</option>
+        <option v-for="item in gradeOptions" :key="item">{{ item }}</option>
       </select>
       <select v-model="className" class="select">
         <option value="">全部班级</option>
@@ -75,8 +76,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in campus.courses" :key="item.id">
-              <td class="num">{{ item.id }}</td>
+            <tr v-for="item in courses" :key="item.id">
+              <td class="num">{{ item.code || item.id }}</td>
               <td>{{ item.name }}</td>
               <td class="num">{{ lessonsOf(item.id) }}</td>
             </tr>
@@ -119,7 +120,7 @@
           <label class="field-label">课程</label>
           <select v-model="scheduleEditor.courseId" class="select">
             <option value="">不关联课程</option>
-            <option v-for="item in campus.courses" :key="item.id" :value="item.id">{{ item.name }}</option>
+            <option v-for="item in courses" :key="item.id" :value="item.id">{{ item.name }}</option>
           </select>
           <label v-if="!scheduleEditor.courseId" class="field-label">名称</label>
           <input v-if="!scheduleEditor.courseId" v-model="scheduleEditor.name" class="field" placeholder="例如班会" />
@@ -169,16 +170,16 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AppIcon from '../components/AppIcon.vue'
 import ScheduleBoard from '../components/ScheduleBoard.vue'
+import { createCourse, createSchedule, fetchCourses, fetchSchedules, toSchedulePayload, updateSchedule } from '../api/course.js'
+import { fetchClasses } from '../api/student.js'
 import { useAuthStore } from '../stores/auth.js'
-import { useCampusStore } from '../stores/campus.js'
 import { useUiStore } from '../stores/ui.js'
 import { periodLabel, scopeLabel, weekdayLabel } from '../utils/format.js'
 
 const auth = useAuthStore()
-const campus = useCampusStore()
 const ui = useUiStore()
 const tab = ref('schedules')
 const grade = ref('')
@@ -187,33 +188,60 @@ const keyword = ref('')
 const courseEditor = ref(null)
 const scheduleEditor = ref(null)
 const formError = ref('')
+const loadError = ref('')
+const courses = ref([])
+const schedules = ref([])
+const classOptions = ref([])
 
-const classOptions = computed(() => {
-  if (auth.user?.role === 'TEACHER') return campus.classesFor(auth.user)
-  return campus.classes
-})
+const gradeOptions = computed(() => [...new Set(classOptions.value.map((item) => item.grade).filter(Boolean))])
 const scopeText = computed(() => scopeLabel(auth.user, classOptions.value.map((item) => item.name)))
 
 const visibleSchedules = computed(() => {
   const query = keyword.value.trim()
-  const scope = new Set(classOptions.value.map((item) => item.name))
-  return campus.schedules.filter((item) => {
-    if (auth.user?.role === 'TEACHER' && item.teacher !== auth.user.name && !scope.has(item.className)) return false
-    const cls = campus.classes.find((row) => row.name === item.className)
-    if (grade.value && cls?.grade !== grade.value) return false
+  return schedules.value.filter((item) => {
+    if (grade.value && item.grade && item.grade !== grade.value && !String(item.className).startsWith(grade.value)) return false
     if (className.value && item.className !== className.value) return false
     const text = `${item.name}${item.teacher}${item.roomNo}`
     return !query || text.includes(query)
   })
 })
 
-const mine = computed(() => campus.schedulesFor(auth.user))
+const mine = computed(() => {
+  if (auth.user?.role === 'TEACHER') return schedules.value.filter((item) => item.teacher === auth.user.name)
+  if (auth.user?.className) return schedules.value.filter((item) => item.className === auth.user.className)
+  return schedules.value
+})
 
 function lessonsOf(courseId) {
-  return campus.schedules
-    .filter((item) => item.courseId === courseId)
-    .reduce((sum, item) => sum + (item.periodEnd - item.periodStart + 1), 0)
+  return schedules.value
+    .filter((item) => String(item.courseId) === String(courseId))
+    .reduce((sum, item) => sum + Math.max(0, item.periodEnd - item.periodStart + 1), 0)
 }
+
+async function load() {
+  loadError.value = ''
+  const errors = []
+  try {
+    courses.value = await fetchCourses()
+  } catch (error) {
+    courses.value = []
+    errors.push(error.message || '课程加载失败')
+  }
+  try {
+    schedules.value = await fetchSchedules()
+  } catch (error) {
+    schedules.value = []
+    errors.push(error.message || '课表加载失败')
+  }
+  try {
+    classOptions.value = await fetchClasses()
+  } catch {
+    classOptions.value = []
+  }
+  loadError.value = errors.join('；')
+}
+
+onMounted(load)
 
 function openCourse() {
   formError.value = ''
@@ -225,7 +253,7 @@ function openSchedule(item) {
   scheduleEditor.value = item
     ? { ...item, courseId: item.courseId || '' }
     : {
-        courseId: campus.courses[0]?.id || '',
+        courseId: courses.value[0]?.id || '',
         name: '',
         className: classOptions.value[0]?.name || '',
         teacher: auth.user?.name || '',
@@ -236,21 +264,37 @@ function openSchedule(item) {
       }
 }
 
-function saveCourse() {
+async function saveCourse() {
+  formError.value = ''
   try {
-    campus.saveCourse(courseEditor.value)
+    await createCourse({
+      courseCode: courseEditor.value.code.trim(),
+      courseName: courseEditor.value.name.trim(),
+      status: 1
+    })
     ui.toast('课程已保存', 'success')
     courseEditor.value = null
+    await load()
   } catch (error) {
     formError.value = error.message
   }
 }
 
-function saveSchedule() {
+async function saveSchedule() {
+  formError.value = ''
+  const periodStart = Number(scheduleEditor.value.periodStart)
+  const periodEnd = Number(scheduleEditor.value.periodEnd)
+  if (!periodStart || !periodEnd || periodEnd < periodStart) {
+    formError.value = '结束节次不能早于开始节次'
+    return
+  }
   try {
-    campus.saveSchedule(scheduleEditor.value)
+    const payload = toSchedulePayload(scheduleEditor.value)
+    if (scheduleEditor.value.id) await updateSchedule(scheduleEditor.value.id, payload)
+    else await createSchedule(payload)
     ui.toast('排课已保存', 'success')
     scheduleEditor.value = null
+    await load()
   } catch (error) {
     formError.value = error.message
   }
