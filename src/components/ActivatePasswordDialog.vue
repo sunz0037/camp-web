@@ -317,7 +317,7 @@ watch(() => props.visible, (newVal) => {
 }
 
 .btn-primary {
-  background: #18181b;
+  background: var(--btn-primary-bg);
   color: #fff;
 }
 

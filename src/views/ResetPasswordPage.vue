@@ -750,9 +750,9 @@ const goToLogin = () => {
 .identity-btn.active,
 .submit-btn,
 .btn-primary {
-  background: #18181b;
+  background: var(--btn-primary-bg);
   color: #fff;
-  border-color: #18181b;
+  border-color: var(--btn-primary-bg);
 }
 
 .form-group input {

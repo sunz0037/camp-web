@@ -275,9 +275,9 @@
 .bento-page .btn-search,
 .bento-page .submit-btn {
   padding: 0.5rem 1rem;
-  background: #18181b;
+  background: var(--btn-primary-bg);
   color: #fff;
-  border: 1px solid #18181b;
+  border: 1px solid var(--btn-primary-bg);
   border-radius: 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
