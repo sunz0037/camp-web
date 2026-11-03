@@ -67,7 +67,49 @@
 
     <section class="card preview-card">
       <h2>表单预览</h2>
-      <div v-if="preview" class="preview-grid">
+      <form v-if="editor && auth.can('student:write')" class="form-grid" @submit.prevent="saveStudent">
+        <p class="sub" style="margin: 0">{{ editor.id ? '编辑学生' : '新增学生' }}</p>
+        <div class="form-row">
+          <div>
+            <label class="field-label">学号</label>
+            <input v-model="editor.studentNo" class="field num" :readonly="Boolean(editor.id)" required />
+          </div>
+          <div>
+            <label class="field-label">姓名</label>
+            <input v-model="editor.name" class="field" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label class="field-label">性别</label>
+            <select v-model="editor.gender" class="select">
+              <option>男</option>
+              <option>女</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">学籍</label>
+            <select v-model="editor.status" class="select">
+              <option>在读</option>
+              <option>休学</option>
+              <option>毕业</option>
+              <option>退学</option>
+            </select>
+          </div>
+        </div>
+        <label class="field-label">班级</label>
+        <select v-model="editor.classId" class="select" required @change="syncClassFromId">
+          <option v-for="item in classOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
+        </select>
+        <label class="field-label">手机</label>
+        <input v-model="editor.phone" class="field num" inputmode="numeric" />
+        <p v-if="formError" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
+        <div class="form-actions">
+          <button class="btn btn-ghost" type="button" @click="editor = null">取消</button>
+          <button class="btn btn-primary" type="submit" :disabled="saving">保存</button>
+        </div>
+      </form>
+      <div v-else-if="preview" class="preview-grid">
         <div><span class="k">学号</span><span class="v num">{{ preview.studentNo || '—' }}</span></div>
         <div><span class="k">姓名</span><span class="v">{{ preview.name || '—' }}</span></div>
         <div><span class="k">性别</span><span class="v">{{ preview.gender || '—' }}</span></div>
@@ -77,48 +119,6 @@
       </div>
       <p v-else class="sub">选择一行或点击新增，这里显示表单内容。</p>
     </section>
-
-    <div v-if="editor" class="modal-mask" @click.self="editor = null">
-      <form class="modal-card" @submit.prevent="saveStudent">
-        <div class="modal-head">
-          <h3>{{ editor.id ? '编辑学生' : '新增学生' }}</h3>
-          <button class="icon-btn" type="button" aria-label="关闭" @click="editor = null"><AppIcon name="X" :size="16" /></button>
-        </div>
-        <div class="form-grid">
-          <label class="field-label">学号</label>
-          <input v-model="editor.studentNo" class="field num" :readonly="Boolean(editor.id)" required />
-          <label class="field-label">姓名</label>
-          <input v-model="editor.name" class="field" required />
-          <div class="form-row">
-            <div>
-              <label class="field-label">性别</label>
-              <select v-model="editor.gender" class="select">
-                <option>男</option>
-                <option>女</option>
-              </select>
-            </div>
-            <div>
-              <label class="field-label">学籍</label>
-              <select v-model="editor.status" class="select">
-                <option>在读</option>
-                <option>休学</option>
-              </select>
-            </div>
-          </div>
-          <label class="field-label">班级</label>
-          <select v-model="editor.className" class="select" required>
-            <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
-          </select>
-          <label class="field-label">手机</label>
-          <input v-model="editor.phone" class="field num" inputmode="numeric" />
-          <p v-if="formError" class="error-text">{{ formError }}</p>
-          <div class="form-actions">
-            <button class="btn btn-ghost" type="button" @click="editor = null">取消</button>
-            <button class="btn btn-primary" type="submit">保存</button>
-          </div>
-        </div>
-      </form>
-    </div>
 
     <div v-if="detail" class="drawer-mask" @click.self="detail = null">
       <aside class="drawer-card">
@@ -195,7 +195,8 @@ import AppIcon from '../components/AppIcon.vue'
 import { createEmergencyContact, createStudent, fetchClasses, fetchContacts, fetchStudentPage, toStudentPayload, updateStudent } from '../api/student.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
-import { downloadText, maskPhone, scopeLabel } from '../utils/format.js'
+import { validateStudent } from '../domain/writePayloads.js'
+import { downloadText, isLoadHint, maskPhone, scopeLabel } from '../utils/format.js'
 
 const auth = useAuthStore()
 const ui = useUiStore()
@@ -209,13 +210,14 @@ const classOptions = ref([])
 const loadError = ref('')
 
 function netHint(message) {
-  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+  return isLoadHint(message)
 }
 const editor = ref(null)
 const selectedId = ref('')
 const detail = ref(null)
 const detailContacts = ref([])
 const formError = ref('')
+const saving = ref(false)
 const openImport = ref(false)
 const importRows = ref([])
 const importError = ref('')
@@ -286,15 +288,32 @@ function setGrade(value) {
   page.value = 1
 }
 
+function syncClassFromId() {
+  if (!editor.value) return
+  let cls = classOptions.value.find((item) => editor.value.classId && String(item.id) === String(editor.value.classId))
+  if (!cls && editor.value.className) {
+    cls = classOptions.value.find((item) => item.name === editor.value.className)
+  }
+  if (!cls) return
+  editor.value.classId = cls.id
+  editor.value.className = cls.name
+  editor.value.grade = cls.grade || ''
+  editor.value.gradeId = cls.gradeId || ''
+}
+
 function openCreate() {
   formError.value = ''
+  const first = classOptions.value[0]
   editor.value = {
     id: '',
     studentNo: '',
     name: '',
     gender: '男',
     status: '在读',
-    className: classOptions.value[0]?.name || '',
+    classId: first?.id || '',
+    className: first?.name || '',
+    grade: first?.grade || '',
+    gradeId: first?.gradeId || '',
     phone: ''
   }
 }
@@ -302,22 +321,31 @@ function openCreate() {
 function openEdit(item) {
   formError.value = ''
   editor.value = { ...item }
+  syncClassFromId()
 }
 
 async function saveStudent() {
   formError.value = ''
+  const errors = validateStudent(editor.value)
+  if (allowedClassNames.value.length && editor.value.className && !allowedClassNames.value.includes(editor.value.className)) {
+    errors.push('班级不在数据范围内')
+  }
+  if (errors.length) {
+    formError.value = errors[0]
+    return
+  }
+  saving.value = true
   try {
-    if (allowedClassNames.value.length && !allowedClassNames.value.includes(editor.value.className)) {
-      throw new Error('班级不在数据范围内')
-    }
-    const payload = toStudentPayload(editor.value)
+    const payload = toStudentPayload(editor.value, classOptions.value)
     if (editor.value.id) await updateStudent(editor.value.id, payload)
     else await createStudent(payload)
     ui.toast('学生信息已保存', 'success')
     editor.value = null
     await loadStudents()
   } catch (error) {
-    formError.value = error.message
+    formError.value = error.message || '保存失败'
+  } finally {
+    saving.value = false
   }
 }
 
@@ -396,21 +424,27 @@ async function doImport() {
       errors.push(`第 ${index + 2} 行：班级不在数据范围内`)
       continue
     }
+    const imported = {
+      studentNo: row['学号'],
+      name: row['姓名'],
+      gender: row['性别'] || '男',
+      className,
+      phone: row['手机'] || '',
+      status: row['学籍'] || '在读'
+    }
+    const rowErrors = validateStudent(imported)
+    if (rowErrors.length) {
+      errors.push(`第 ${index + 2} 行：${rowErrors[0]}`)
+      continue
+    }
     try {
-      await createStudent(toStudentPayload({
-        studentNo: row['学号'],
-        name: row['姓名'],
-        gender: row['性别'] || '男',
-        className,
-        phone: row['手机'] || '',
-        status: row['学籍'] || '在读'
-      }))
+      await createStudent(toStudentPayload(imported, classOptions.value))
       success += 1
     } catch (error) {
       errors.push(`第 ${index + 2} 行：${error.message}`)
     }
   }
-  ui.toast(`成功导入 ${success} 名学生`, 'success')
+  if (success) ui.toast(`成功导入 ${success} 名学生`, 'success')
   importError.value = errors.slice(0, 3).join('；')
   await loadStudents()
   if (!errors.length) openImport.value = false

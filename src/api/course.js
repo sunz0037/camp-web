@@ -1,3 +1,4 @@
+import { classCourseWritePayload } from '../domain/writePayloads.js'
 import { api } from './http.js'
 import { pageRecords } from './unwrap.js'
 
@@ -14,6 +15,11 @@ export function createCourse(data) {
 /** PUT /api/v1/courses/{id} */
 export function updateCourse(id, data) {
   return api(`/api/v1/courses/${id}`, { method: 'PUT', body: data })
+}
+
+/** DELETE /api/v1/courses/{id} */
+export function deleteCourse(id) {
+  return api(`/api/v1/courses/${id}`, { method: 'DELETE' })
 }
 
 /** GET /api/v1/class-courses */
@@ -34,6 +40,11 @@ export function createClassCourse(data) {
 /** PUT /api/v1/class-courses/{id} */
 export function updateClassCourse(id, data) {
   return api(`/api/v1/class-courses/${id}`, { method: 'PUT', body: data })
+}
+
+/** DELETE /api/v1/class-courses/{id} */
+export function deleteClassCourse(id) {
+  return api(`/api/v1/class-courses/${id}`, { method: 'DELETE' })
 }
 
 export function toCourseRow(raw) {
@@ -70,6 +81,10 @@ export function flattenClassCourses(records) {
         className: raw.className || '',
         grade: raw.gradeName || raw.grade || '',
         teacher: raw.teacherName || raw.teacher || '',
+        teacherId: raw.teacherId ?? null,
+        academicYear: raw.academicYear || '',
+        semester: raw.semester ?? '',
+        status: raw.status ?? 1,
         ...time
       })
     })
@@ -91,18 +106,7 @@ export function toTimetableRow(raw) {
 }
 
 export function toClassCoursePayload(form, siblings = []) {
-  const current = slotOf(form)
-  const sessions = siblings.length
-    ? siblings.map((row) => (row.sessionIndex === form.sessionIndex ? current : slotOf(row)))
-    : [current]
-  return {
-    classId: form.classId || undefined,
-    className: form.className,
-    courseId: form.courseId || null,
-    courseName: form.name || '',
-    teacherName: form.teacher || '',
-    sessions
-  }
+  return classCourseWritePayload(form, siblings)
 }
 
 export async function fetchCourses(params = {}) {

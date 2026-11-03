@@ -1,3 +1,4 @@
+import { studentWritePayload } from '../domain/writePayloads.js'
 import { api } from './http.js'
 import { pageRecords, unwrapData } from './unwrap.js'
 
@@ -37,7 +38,6 @@ export function createEmergencyContact(data) {
 }
 
 const STATUS_LABEL = { 0: '休学', 1: '在读', 2: '毕业', 3: '退学' }
-const STATUS_CODE = { 休学: 0, 在读: 1, 毕业: 2, 退学: 3 }
 
 export function genderLabel(value) {
   if (value === 1 || value === '1' || value === '男') return '男'
@@ -66,26 +66,16 @@ export function toStudentRow(raw) {
   }
 }
 
-export function toStudentPayload(form) {
-  return {
-    id: form.id || undefined,
-    studentNo: String(form.studentNo || '').trim(),
-    realName: String(form.name || '').trim(),
-    gender: form.gender === '女' ? 2 : 1,
-    grade: form.grade || '',
-    className: form.className || '',
-    classId: form.classId || undefined,
-    gradeId: form.gradeId || undefined,
-    phone: String(form.phone || '').trim(),
-    status: STATUS_CODE[form.status] ?? 1
-  }
+export function toStudentPayload(form, classes = []) {
+  return studentWritePayload(form, classes)
 }
 
 export function toClassOption(raw) {
   return {
     id: raw.id,
     name: raw.className || raw.name || '',
-    grade: raw.gradeName || raw.grade || ''
+    grade: raw.gradeName || raw.grade || '',
+    gradeId: raw.gradeId ?? null
   }
 }
 
