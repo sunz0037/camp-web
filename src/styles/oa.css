@@ -263,9 +263,9 @@ table.data tbody tr:hover td {
 }
 
 .pager button.active {
-  background: var(--c-brand);
-  border-color: var(--c-brand);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
 }
 
 .pager button:disabled {
@@ -1256,7 +1256,7 @@ table.data tbody tr:hover td {
   }
 
   .tab.active {
-    color: var(--c-brand);
+    color: var(--btn-primary-bg);
   }
 }
 
