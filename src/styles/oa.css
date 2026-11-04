@@ -185,6 +185,8 @@
   border-radius: 9px;
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
+  flex: none;
 }
 
 .seg button.active {
@@ -195,7 +197,7 @@
 
 .filters {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   padding: 14px;
@@ -216,6 +218,33 @@
   flex: 1;
   padding-top: 0;
   padding-bottom: 0;
+}
+
+.filters .seg,
+.filters .btn,
+.seg button {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  width: max-content;
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+.student-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.student-filters .filters {
+  padding: 0;
+}
+
+.student-filters .filter-note {
+  margin: 0;
+  white-space: normal;
+  line-height: 1.5;
 }
 
 .filters .btn {
@@ -861,8 +890,11 @@ td.muted {
 
 .filters .load-hint,
 .filters .error-text {
+  order: 1;
+  flex: 1 0 100%;
   margin: 0;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.5;
 }
 
 .sidebar {
@@ -933,6 +965,21 @@ td.muted {
   flex: none;
   color: currentColor;
   stroke: currentColor;
+}
+
+.nav-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-note {
+  margin-left: auto;
+  flex: none;
+  font-size: 11px;
+  font-weight: var(--nav-weight);
+  color: inherit;
 }
 
 .user-card {

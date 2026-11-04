@@ -1,17 +1,19 @@
 <template>
   <div class="page">
-    <section class="card filters">
-      <div class="seg">
-        <button type="button" :class="{ active: grade === '全部年级' }" @click="setGrade('全部年级')">全部年级</button>
-        <button v-for="item in ['高一', '高二', '高三']" :key="item" type="button" :class="{ active: grade === item }" @click="setGrade(item)">
-          {{ item }}
-        </button>
+    <section class="card student-filters">
+      <div class="filters">
+        <div class="seg">
+          <button type="button" :class="{ active: grade === '全部年级' }" @click="setGrade('全部年级')">全部年级</button>
+          <button v-for="item in ['高一', '高二', '高三']" :key="item" type="button" :class="{ active: grade === item }" @click="setGrade(item)">
+            {{ item }}
+          </button>
+        </div>
+        <input v-model="keyword" class="field" placeholder="搜索姓名 / 学号" />
+        <button v-if="auth.can('student:import')" class="btn btn-ghost" type="button" @click="openImport = true">导入</button>
+        <button class="btn btn-ghost" type="button" @click="exportCsv">导出</button>
+        <button v-if="auth.can('student:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
       </div>
-      <input v-model="keyword" class="field" placeholder="搜索姓名 / 学号" />
-      <button v-if="auth.can('student:import')" class="btn btn-ghost" type="button" @click="openImport = true">导入</button>
-      <button class="btn btn-ghost" type="button" @click="exportCsv">导出</button>
-      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
-      <button v-if="auth.can('student:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
+      <p v-if="loadError" class="filter-note" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
     </section>
 
     <section class="card table-card">

@@ -42,11 +42,20 @@ http.interceptors.request.use((config) => {
   return config
 })
 
+function presentApiMessage(message) {
+  const text = String(message || '').replace(/\s+/g, ' ').trim()
+  if (!text) return '请求失败'
+  if (text.includes('开发态请使用') || text.includes('Bearer dev-ADMIN')) {
+    return '未登录。请重新登录；开发环境使用 dev-ADMIN、dev-ACADEMIC、dev-TEACHER 或 dev-STUDENT。'
+  }
+  return text
+}
+
 function envelopeError(data, status) {
   if (!data || typeof data !== 'object' || Array.isArray(data) || data.code === undefined) {
     return new ApiError('服务暂不可用', { network: true, code: status })
   }
-  return new ApiError(data.message || '请求失败', { code: data.code })
+  return new ApiError(presentApiMessage(data.message), { code: data.code })
 }
 
 /** 首期占位：只有真实 refreshToken 才尝试一次。 */
@@ -69,7 +78,7 @@ http.interceptors.response.use(
   (response) => {
     const data = response.data ?? {}
     if (data && typeof data === 'object' && data.code !== undefined && data.code !== 0 && data.code !== 200) {
-      return Promise.reject(new ApiError(data.message || '请求失败', { code: data.code }))
+      return Promise.reject(new ApiError(presentApiMessage(data.message), { code: data.code }))
     }
     return data
   },
