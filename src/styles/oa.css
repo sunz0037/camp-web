@@ -185,6 +185,8 @@
   border-radius: 9px;
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
+  flex: none;
 }
 
 .seg button.active {
@@ -195,7 +197,7 @@
 
 .filters {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   padding: 14px;
@@ -216,6 +218,12 @@
   flex: 1;
   padding-top: 0;
   padding-bottom: 0;
+}
+
+.filters .seg,
+.filters .btn {
+  flex: none;
+  white-space: nowrap;
 }
 
 .filters .btn {
@@ -861,8 +869,11 @@ td.muted {
 
 .filters .load-hint,
 .filters .error-text {
+  order: 1;
+  flex: 1 0 100%;
   margin: 0;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.5;
 }
 
 .sidebar {
