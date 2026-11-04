@@ -78,7 +78,7 @@ http.interceptors.response.use(
   (response) => {
     const data = response.data ?? {}
     if (data && typeof data === 'object' && data.code !== undefined && data.code !== 0 && data.code !== 200) {
-      return Promise.reject(new ApiError(data.message || '请求失败', { code: data.code }))
+      return Promise.reject(new ApiError(presentApiMessage(data.message), { code: data.code }))
     }
     return data
   },

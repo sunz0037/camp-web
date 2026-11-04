@@ -221,9 +221,30 @@
 }
 
 .filters .seg,
-.filters .btn {
-  flex: none;
+.filters .btn,
+.seg button {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  width: max-content;
+  min-width: max-content;
   white-space: nowrap;
+}
+
+.student-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.student-filters .filters {
+  padding: 0;
+}
+
+.student-filters .filter-note {
+  margin: 0;
+  white-space: normal;
+  line-height: 1.5;
 }
 
 .filters .btn {
