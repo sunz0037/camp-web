@@ -39,11 +39,16 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
+import { useThemeStore } from '../stores/theme.js'
 import { useUiStore } from '../stores/ui.js'
+import { resetRouteInstall } from '../router/index.js'
 
 const auth = useAuthStore()
+const theme = useThemeStore()
 const ui = useUiStore()
+const router = useRouter()
 const phone = ref(auth.user?.phone || '')
 const email = ref(auth.user?.email || '')
 
