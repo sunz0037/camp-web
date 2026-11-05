@@ -19,6 +19,6 @@ export function pageRecords(json) {
     records: list,
     total: Number(data.total ?? list.length),
     page: Number(data.page ?? 1),
-    size: Number(data.size ?? list.length)
+    size: Number(data.pageSize ?? data.size ?? list.length)
   }
 }

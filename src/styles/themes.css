@@ -1,0 +1,81 @@
+/*
+ * 用户主题。只在 html[data-theme] 下生效。
+ * default 不写任何规则，:root 仍是 tokens.css 的 v1.3.4（主色 #5B6CF0、导航 #8B90A5 / #5B6CF0、字重 400）。
+ *
+ * dark
+ *   --canvas / --c-canvas     #14161f
+ *   --c-sidebar               #101218
+ *   --c-card / --c-surface    #1c1f2b
+ *   --c-subtle                #171a24
+ *   --c-table-head            #222636
+ *   --c-stripe                #181b26
+ *   --c-control               #1c1f2b
+ *   --c-border                #2c3142
+ *   --c-text                  #e8eaf4
+ *   --c-muted                 #a7aec4
+ *   --nav-fg                  #9aa3b8
+ *   --nav-fg-active           #9aa6ff
+ *   --c-brand / 按钮          #5b6cf0（实色，不用渐变）
+ *   --c-logo                  #5b6cf0
+ *
+ * campus-green（浅底第二套主色，不改画布与中性色）
+ *   --c-brand / --btn-primary-bg / --nav-fg-active / --c-focus   #1f8a5b
+ *   --c-brand-deep            #176b46
+ *   --nav-fg                  #7e8a84
+ *   --c-logo                  #1f8a5b
+ */
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #14161f;
+  --c-canvas: #14161f;
+  --c-sidebar: #101218;
+  --c-card: #1c1f2b;
+  --c-surface: #1c1f2b;
+  --c-subtle: #171a24;
+  --c-table-head: #222636;
+  --c-stripe: #181b26;
+  --c-control: #1c1f2b;
+  --c-border: #2c3142;
+  --c-text: #e8eaf4;
+  --c-muted: #a7aec4;
+  --c-helper: #8b93ad;
+  --nav-fg: #9aa3b8;
+  --nav-fg-active: #9aa6ff;
+  --c-brand: #5b6cf0;
+  --brand-600: #5b6cf0;
+  --c-brand-deep: #7f8ef5;
+  --c-brand-soft: rgba(91, 108, 240, 0.22);
+  --c-focus: #9aa6ff;
+  --c-on: #9aa6ff;
+  --btn-primary-bg: #5b6cf0;
+  --btn-primary-fg: #ffffff;
+  --c-logo: #5b6cf0;
+  --c-info-soft: rgba(154, 166, 255, 0.16);
+}
+
+html[data-theme="campus-green"] {
+  --brand-600: #1f8a5b;
+  --c-brand: #1f8a5b;
+  --c-brand-deep: #176b46;
+  --c-brand-soft: rgba(31, 138, 91, 0.12);
+  --btn-primary-bg: #1f8a5b;
+  --nav-fg: #7e8a84;
+  --nav-fg-active: #1f8a5b;
+  --c-focus: #1f8a5b;
+  --c-on: #1f8a5b;
+  --c-logo: #1f8a5b;
+  --c-accent: #3e9b6d;
+  --c-accent-soft: rgba(62, 155, 109, 0.16);
+  --c-info-soft: rgba(31, 138, 91, 0.12);
+  --c-tag-purple: #1f8a5b;
+}
+
+html[data-theme="dark"] .field:focus,
+html[data-theme="dark"] .select:focus,
+html[data-theme="dark"] .textarea:focus,
+html[data-theme="campus-green"] .field:focus,
+html[data-theme="campus-green"] .select:focus,
+html[data-theme="campus-green"] .textarea:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-focus) 20%, transparent);
+}

@@ -1,607 +1,315 @@
 <template>
-  <div class="visitor-management-page bento-page">
-    <div class="page-header">
-      <h1>来访登记管理</h1>
-      <button class="btn-primary" @click="handleCreate">新增来访登记</button>
-    </div>
+  <div class="page stack">
+    <section class="card filters filters-wrap">
+      <select v-model="status" class="select" aria-label="状态">
+        <option value="">全部状态</option>
+        <option value="PENDING">待审</option>
+        <option value="APPROVED">已批准</option>
+        <option value="REJECTED">已拒绝</option>
+        <option value="CHECKED_IN">已入校</option>
+        <option value="CHECKED_OUT">已离校</option>
+      </select>
+      <input v-model="keyword" class="field" placeholder="搜索访客 / 被访人 / 事由" @keyup.enter="load" />
+      <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
+      <button v-if="canWrite" class="btn btn-primary" type="button" @click="openCreate">+ 登记</button>
+    </section>
 
-    <!-- 搜索筛选 -->
-    <div class="filter-section">
-      <div class="filter-group">
-        <label>来访日期：</label>
-        <input type="date" v-model="filters.visitDate" @change="loadData" />
+    <section class="card table-card">
+      <div class="status-legend">
+        <span>状态</span>
+        <span class="pill pill-warn">待审</span>
+        <span class="pill pill-on">已批准</span>
+        <span class="pill pill-muted">已拒绝</span>
+        <span class="pill pill-info">已入校</span>
+        <span class="pill pill-ok">已离校</span>
       </div>
-      <div class="filter-group">
-        <label>状态：</label>
-        <select v-model="filters.status" @change="loadData">
-          <option :value="null">全部</option>
-          <option :value="0">待审核</option>
-          <option :value="1">已批准</option>
-          <option :value="2">已进入</option>
-          <option :value="3">已离开</option>
-          <option :value="4">已拒绝</option>
-        </select>
+      <div class="table-scroll">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>访客</th>
+              <th>证件</th>
+              <th>电话</th>
+              <th>事由</th>
+              <th>被访人</th>
+              <th>预约</th>
+              <th>到访 / 离校</th>
+              <th>状态</th>
+              <th class="ops">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading">
+              <td colspan="9" class="muted">加载中…</td>
+            </tr>
+            <tr v-else-if="!rows.length">
+              <td colspan="9" class="muted">没有符合条件的来访登记</td>
+            </tr>
+            <tr
+              v-for="item in rows"
+              v-else
+              :key="item.id"
+              class="row-pick"
+              :class="{ picked: selectedId === item.id }"
+              @click="selectedId = item.id"
+            >
+              <td>{{ item.visitorName }}</td>
+              <td class="num">{{ maskId(item.idNo) }}</td>
+              <td class="num">{{ maskPhone(item.phone) }}</td>
+              <td>{{ item.reason || '—' }}</td>
+              <td>{{ item.hostName || '—' }}</td>
+              <td class="num">{{ formatDateTime(item.appointmentTime) }}</td>
+              <td class="num">{{ visitSpan(item) }}</td>
+              <td><span class="pill" :class="statusClass(item.status)">{{ statusText(item.status) }}</span></td>
+              <td class="ops">
+                <button v-if="canReview && item.status === 'PENDING'" class="linkish" type="button" @click.stop="runAction(item, 'approve')">批准</button>
+                <button v-if="canReview && item.status === 'PENDING'" class="link-danger" type="button" @click.stop="runAction(item, 'reject')">拒绝</button>
+                <button v-if="canReview && item.status === 'APPROVED'" class="linkish" type="button" @click.stop="runAction(item, 'check-in')">入校</button>
+                <button v-if="canReview && item.status === 'CHECKED_IN'" class="linkish" type="button" @click.stop="runAction(item, 'check-out')">离校</button>
+                <button v-if="canWrite && (item.status === 'PENDING' || item.status === 'APPROVED')" class="linkish" type="button" @click.stop="openEdit(item)">编辑</button>
+                <button v-if="canWrite" class="link-danger" type="button" @click.stop="removeVisitor(item)">删除</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div class="filter-group">
-        <input 
-          type="text" 
-          v-model="filters.keyword" 
-          placeholder="搜索来访人姓名、电话..."
-          @keyup.enter="loadData"
-        />
-        <button @click="loadData">搜索</button>
-      </div>
-    </div>
-
-    <!-- 数据表格 -->
-    <div class="table-section">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>来访人姓名</th>
-            <th>来访人电话</th>
-            <th>访问目标</th>
-            <th>来访目的</th>
-            <th>来访日期</th>
-            <th>预计时间</th>
-            <th>实际进入时间</th>
-            <th>实际离开时间</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading">
-            <td colspan="10" class="text-center">加载中...</td>
-          </tr>
-          <tr v-else-if="visitorList.length === 0">
-            <td colspan="10" class="text-center">暂无数据</td>
-          </tr>
-          <tr v-else v-for="visitor in visitorList" :key="visitor.id">
-            <td>{{ visitor.visitorName }}</td>
-            <td>{{ visitor.visitorPhone }}</td>
-            <td>{{ visitor.visitTargetName || '-' }}</td>
-            <td>{{ visitor.visitPurpose || '-' }}</td>
-            <td>{{ formatDate(visitor.visitDate) }}</td>
-            <td>
-              <span v-if="visitor.visitTimeStart && visitor.visitTimeEnd">
-                {{ formatDateTime(visitor.visitTimeStart) }} - {{ formatDateTime(visitor.visitTimeEnd) }}
-              </span>
-              <span v-else>-</span>
-            </td>
-            <td>{{ formatDateTime(visitor.entryTime) }}</td>
-            <td>{{ formatDateTime(visitor.exitTime) }}</td>
-            <td>
-              <span :class="getStatusClass(visitor.status)">
-                {{ getStatusText(visitor.status) }}
-              </span>
-            </td>
-            <td>
-              <button class="btn-edit" @click="handleEdit(visitor)">编辑</button>
-              <button 
-                v-if="visitor.status === 0" 
-                class="btn-approve" 
-                @click="handleApprove(visitor)"
-              >
-                批准
-              </button>
-              <button 
-                v-if="visitor.status === 0" 
-                class="btn-reject" 
-                @click="handleReject(visitor)"
-              >
-                拒绝
-              </button>
-              <button 
-                v-if="visitor.status === 1" 
-                class="btn-entry" 
-                @click="handleEntry(visitor)"
-              >
-                登记进入
-              </button>
-              <button 
-                v-if="visitor.status === 2" 
-                class="btn-exit" 
-                @click="handleExit(visitor)"
-              >
-                登记离开
-              </button>
-              <button class="btn-delete" @click="handleDelete(visitor)">删除</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- 分页 -->
-      <div class="pagination" v-if="total > 0">
-        <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>
-        <span>第 {{ currentPage }} 页，共 {{ totalPages }} 页，共 {{ total }} 条</span>
-        <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>
-      </div>
-    </div>
-
-    <!-- 新增/编辑对话框 -->
-    <div v-if="showDialog" class="dialog-overlay" @click="closeDialog">
-      <div class="dialog-content dialog-content-large" @click.stop>
-        <div class="dialog-header">
-          <h2>{{ dialogMode === 'create' ? '新增来访登记' : '编辑来访登记' }}</h2>
-          <button class="btn-close" @click="closeDialog">×</button>
-        </div>
-        <div class="dialog-body">
-          <form @submit.prevent="handleSubmit">
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>来访人姓名 <span class="required">*</span></label>
-                <input type="text" v-model="formData.visitorName" required placeholder="来访人姓名" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>来访人电话 <span class="required">*</span></label>
-                <input type="tel" v-model="formData.visitorPhone" required placeholder="11位手机号" maxlength="11" />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>身份证号</label>
-                <input type="text" v-model="formData.visitorIdCard" placeholder="18位身份证号" maxlength="18" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>访问目标用户ID</label>
-                <input type="number" v-model.number="formData.visitTargetUserId" placeholder="被访问人的用户ID" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>来访目的 <span class="required">*</span></label>
-              <textarea v-model="formData.visitPurpose" required rows="2" placeholder="来访目的"></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>来访日期 <span class="required">*</span></label>
-                <input type="date" v-model="formData.visitDate" required />
-              </div>
-              <div class="form-group form-group-half">
-                <label>预计来访时间（开始）</label>
-                <input type="datetime-local" v-model="formData.visitTimeStart" />
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group form-group-half">
-                <label>预计来访时间（结束）</label>
-                <input type="datetime-local" v-model="formData.visitTimeEnd" />
-              </div>
-              <div class="form-group form-group-half">
-                <label>陪同人数</label>
-                <input type="number" v-model.number="formData.accompanyCount" min="0" placeholder="0" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>车辆信息</label>
-              <input type="text" v-model="formData.vehicleInfo" placeholder="车牌号等信息（可选）" />
-            </div>
-            <div class="form-group">
-              <label>备注</label>
-              <textarea v-model="formData.remark" rows="2" placeholder="备注信息"></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="button" @click="closeDialog">取消</button>
-              <button type="submit" class="btn-primary">保存</button>
-            </div>
-          </form>
+      <div class="table-foot">
+        <span>共 {{ total }} 条来访 · 显示 {{ rangeText }}</span>
+        <div class="pager">
+          <button type="button" :disabled="page === 1" @click="page -= 1">上一页</button>
+          <template v-for="(n, index) in pageList" :key="n">
+            <span v-if="index > 0 && n - pageList[index - 1] > 1">…</span>
+            <button type="button" :class="{ active: n === page }" @click="page = n">{{ n }}</button>
+          </template>
+          <button type="button" :disabled="page === pageCount" @click="page += 1">下一页</button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- 审核对话框 -->
-    <div v-if="showApproveDialog" class="dialog-overlay" @click="closeApproveDialog">
-      <div class="dialog-content" @click.stop>
-        <div class="dialog-header">
-          <h2>审核来访登记</h2>
-          <button class="btn-close" @click="closeApproveDialog">×</button>
+    <section class="card preview-card">
+      <h2>表单预览</h2>
+      <div v-if="preview" class="preview-grid">
+        <div><span class="k">访客</span><span class="v">{{ preview.visitorName || '—' }}</span></div>
+        <div><span class="k">证件</span><span class="v num">{{ editor ? (preview.idNo || '—') : maskId(preview.idNo) }}</span></div>
+        <div><span class="k">电话</span><span class="v num">{{ editor ? (preview.phone || '—') : maskPhone(preview.phone) }}</span></div>
+        <div><span class="k">事由</span><span class="v">{{ preview.reason || '—' }}</span></div>
+        <div><span class="k">被访人</span><span class="v">{{ preview.hostName || '—' }}</span></div>
+        <div><span class="k">预约</span><span class="v num">{{ formatDateTime(preview.appointmentTime) }}</span></div>
+        <div><span class="k">状态</span><span class="v">{{ editor ? '待审' : statusText(preview.status) }}</span></div>
+      </div>
+      <p v-else class="sub">选择一条登记，或点击登记后在这里预览。</p>
+    </section>
+
+    <div v-if="editor" class="modal-mask" @click.self="editor = null">
+      <form class="modal-card" @submit.prevent="save">
+        <div class="modal-head">
+          <h3>{{ editor.id ? '编辑来访登记' : '新增来访登记' }}</h3>
+          <button class="icon-btn" type="button" aria-label="关闭" @click="editor = null"><AppIcon name="X" :size="16" /></button>
         </div>
-        <div class="dialog-body">
-          <div class="form-group">
-            <label>审核备注</label>
-            <textarea v-model="approveRemark" rows="3" placeholder="审核备注（可选）"></textarea>
+        <div class="form-grid">
+          <div class="form-row">
+            <div>
+              <label class="field-label">访客姓名</label>
+              <input v-model="editor.visitorName" class="field" required />
+            </div>
+            <div>
+              <label class="field-label">联系电话</label>
+              <input v-model="editor.phone" class="field num" required />
+            </div>
           </div>
+          <label class="field-label">证件号</label>
+          <input v-model="editor.idNo" class="field num" placeholder="身份证或其他证件" />
+          <label class="field-label">事由</label>
+          <textarea v-model="editor.reason" class="textarea" required></textarea>
+          <div class="form-row">
+            <div>
+              <label class="field-label">被访人</label>
+              <input v-model="editor.hostName" class="field" required />
+            </div>
+            <div>
+              <label class="field-label">预约时间</label>
+              <input v-model="editor.appointmentTime" class="field" type="datetime-local" required />
+            </div>
+          </div>
+          <p v-if="formError" class="error-text">{{ formError }}</p>
           <div class="form-actions">
-            <button type="button" @click="closeApproveDialog">取消</button>
-            <button type="button" class="btn-primary" @click="handleConfirmApprove">确定批准</button>
+            <button class="btn btn-ghost" type="button" @click="editor = null">取消</button>
+            <button class="btn btn-primary" type="submit">保存</button>
           </div>
         </div>
-      </div>
+      </form>
     </div>
-
-    <!-- 拒绝对话框 -->
-    <div v-if="showRejectDialog" class="dialog-overlay" @click="closeRejectDialog">
-      <div class="dialog-content" @click.stop>
-        <div class="dialog-header">
-          <h2>拒绝来访登记</h2>
-          <button class="btn-close" @click="closeRejectDialog">×</button>
-        </div>
-        <div class="dialog-body">
-          <div class="form-group">
-            <label>拒绝原因</label>
-            <textarea v-model="rejectRemark" rows="3" placeholder="请输入拒绝原因"></textarea>
-          </div>
-          <div class="form-actions">
-            <button type="button" @click="closeRejectDialog">取消</button>
-            <button type="button" class="btn-reject" @click="handleConfirmReject">确定拒绝</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 进入/离开时间登记对话框 -->
-    <div v-if="showTimeDialog" class="dialog-overlay" @click="closeTimeDialog">
-      <div class="dialog-content" @click.stop>
-        <div class="dialog-header">
-          <h2>{{ timeDialogType === 'entry' ? '登记进入时间' : '登记离开时间' }}</h2>
-          <button class="btn-close" @click="closeTimeDialog">×</button>
-        </div>
-        <div class="dialog-body">
-          <div class="form-group">
-            <label>{{ timeDialogType === 'entry' ? '进入时间' : '离开时间' }} <span class="required">*</span></label>
-            <input type="datetime-local" v-model="timeValue" required />
-          </div>
-          <div class="form-actions">
-            <button type="button" @click="closeTimeDialog">取消</button>
-            <button type="button" class="btn-primary" @click="handleConfirmTime">确定</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Toast 提示 -->
-    <Toast
-      v-model:visible="toastVisible"
-      :message="toastMessage"
-      :type="toastType"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import * as visitorAPI from '../api/visitor.js'
-import Toast from '../components/Toast.vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import AppIcon from '../components/AppIcon.vue'
+import { canReviewVisitor, canWriteVisitor } from '../access.js'
+import {
+  approveVisitor,
+  checkInVisitor,
+  checkOutVisitor,
+  createVisitor,
+  deleteVisitor,
+  fetchVisitorPage,
+  rejectVisitor,
+  toVisitorPayload,
+  updateVisitor,
+  visitorStatusLabel
+} from '../api/visitor.js'
+import { useAuthStore } from '../stores/auth.js'
+import { useUiStore } from '../stores/ui.js'
+import { formatDateTime, maskId, maskPhone, toInputDateTime } from '../utils/format.js'
 
-const loading = ref(false)
-const visitorList = ref([])
+const auth = useAuthStore()
+const ui = useUiStore()
+const status = ref('')
+const keyword = ref('')
+const page = ref(1)
+const pageSize = 10
 const total = ref(0)
-const currentPage = ref(1)
-const pageSize = ref(20)
-const showDialog = ref(false)
-const showApproveDialog = ref(false)
-const showRejectDialog = ref(false)
-const showTimeDialog = ref(false)
-const dialogMode = ref('create')
-const currentVisitor = ref(null)
-const approveRemark = ref('')
-const rejectRemark = ref('')
-const timeDialogType = ref('entry') // 'entry' 或 'exit'
-const timeValue = ref('')
+const rows = ref([])
+const loading = ref(false)
+const loadError = ref('')
+const selectedId = ref('')
+const editor = ref(null)
+const formError = ref('')
+const canWrite = computed(() => canWriteVisitor(auth.user))
+const canReview = computed(() => canReviewVisitor(auth.user))
 
-// Toast 提示
-const toastVisible = ref(false)
-const toastMessage = ref('')
-const toastType = ref('success')
-
-const showToast = (message, type = 'success') => {
-  toastMessage.value = message
-  toastType.value = type
-  toastVisible.value = true
+const actions = {
+  approve: { run: approveVisitor, ok: '已批准来访', ask: '批准这条来访？' },
+  reject: { run: rejectVisitor, ok: '已拒绝来访', ask: '拒绝这条来访？' },
+  'check-in': { run: checkInVisitor, ok: '已登记入校', ask: '登记入校？' },
+  'check-out': { run: checkOutVisitor, ok: '已登记离校', ask: '登记离校？' }
 }
 
-const formData = ref({
-  visitorName: '',
-  visitorPhone: '',
-  visitorIdCard: '',
-  visitPurpose: '',
-  visitTargetUserId: null,
-  visitDate: '',
-  visitTimeStart: '',
-  visitTimeEnd: '',
-  vehicleInfo: '',
-  accompanyCount: 0,
-  remark: ''
+function netHint(message) {
+  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+}
+
+function statusText(value) {
+  return visitorStatusLabel(value)
+}
+
+function statusClass(value) {
+  return {
+    PENDING: 'pill-warn',
+    APPROVED: 'pill-on',
+    REJECTED: 'pill-muted',
+    CHECKED_IN: 'pill-info',
+    CHECKED_OUT: 'pill-ok'
+  }[value] || 'pill-muted'
+}
+
+function visitSpan(item) {
+  const arrival = formatDateTime(item.arrivalTime)
+  const leave = formatDateTime(item.leaveTime)
+  if (arrival === '—' && leave === '—') return '—'
+  return `${arrival} / ${leave}`
+}
+
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+const pageList = computed(() => Array.from({ length: pageCount.value }, (_, index) => index + 1).filter((n) => {
+  return n === 1 || n === pageCount.value || Math.abs(n - page.value) <= 1
+}))
+const rangeText = computed(() => {
+  if (!total.value) return '0-0'
+  const from = (page.value - 1) * pageSize + 1
+  const to = Math.min(page.value * pageSize, total.value)
+  return `${from}-${to}`
+})
+const preview = computed(() => {
+  if (editor.value) return editor.value
+  return rows.value.find((item) => item.id === selectedId.value) || rows.value[0] || null
 })
 
-const filters = ref({
-  visitDate: '',
-  status: null,
-  keyword: ''
-})
-
-const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
-
-// 获取状态文本
-const getStatusText = (status) => {
-  const statusMap = {
-    0: '待审核',
-    1: '已批准',
-    2: '已进入',
-    3: '已离开',
-    4: '已拒绝'
-  }
-  return statusMap[status] || '-'
-}
-
-// 获取状态样式类
-const getStatusClass = (status) => {
-  if (status === 0) return 'status-pending'
-  if (status === 1) return 'status-approved'
-  if (status === 2) return 'status-entered'
-  if (status === 3) return 'status-exited'
-  if (status === 4) return 'status-rejected'
-  return ''
-}
-
-// 格式化日期
-const formatDate = (date) => {
-  if (!date) return '-'
-  if (typeof date === 'string') {
-    return date.split('T')[0]
-  }
-  return date
-}
-
-// 格式化日期时间
-const formatDateTime = (dateTime) => {
-  if (!dateTime) return '-'
-  if (typeof dateTime === 'string') {
-    return dateTime.split('T')[0] + ' ' + dateTime.split('T')[1].split('.')[0]
-  }
-  return dateTime
-}
-
-// 格式化日期时间为输入框格式
-const formatDateTimeForInput = (dateTime) => {
-  if (!dateTime) return ''
-  if (typeof dateTime === 'string') {
-    return dateTime.replace(' ', 'T').substring(0, 16)
-  }
-  return dateTime
-}
-
-onMounted(() => {
-  loadData()
-})
-
-const loadData = async () => {
+async function load() {
   loading.value = true
+  loadError.value = ''
   try {
-    const result = await visitorAPI.getVisitorList({
-      page: currentPage.value,
-      size: pageSize.value,
-      visitDate: filters.value.visitDate || undefined,
-      status: filters.value.status,
-      keyword: filters.value.keyword || undefined
+    const result = await fetchVisitorPage({
+      page: page.value,
+      pageSize,
+      status: status.value || undefined,
+      keyword: keyword.value.trim() || undefined
     })
-    
-    if (result.code === 200 && result.data) {
-      visitorList.value = result.data.records || []
-      total.value = result.data.total || 0
-    }
+    rows.value = result.records
+    total.value = result.total
+    if (!rows.value.some((item) => item.id === selectedId.value)) selectedId.value = rows.value[0]?.id || ''
   } catch (error) {
-    showToast('加载数据失败：' + error.message, 'error')
+    rows.value = []
+    total.value = 0
+    loadError.value = error.message || '来访登记加载失败'
   } finally {
     loading.value = false
   }
 }
 
-const changePage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-    loadData()
-  }
-}
+onMounted(load)
+watch(page, load)
+watch([status, keyword], () => {
+  if (page.value !== 1) page.value = 1
+  else load()
+})
 
-const handleCreate = () => {
-  dialogMode.value = 'create'
-  formData.value = {
+function openCreate() {
+  formError.value = ''
+  editor.value = {
+    id: '',
     visitorName: '',
-    visitorPhone: '',
-    visitorIdCard: '',
-    visitPurpose: '',
-    visitTargetUserId: null,
-    visitDate: '',
-    visitTimeStart: '',
-    visitTimeEnd: '',
-    vehicleInfo: '',
-    accompanyCount: 0,
-    remark: ''
+    idNo: '',
+    phone: '',
+    reason: '',
+    hostName: '',
+    appointmentTime: '',
+    status: 'PENDING'
   }
-  showDialog.value = true
 }
 
-const handleEdit = async (visitor) => {
-  dialogMode.value = 'edit'
+function openEdit(item) {
+  formError.value = ''
+  editor.value = {
+    ...item,
+    appointmentTime: toInputDateTime(item.appointmentTime)
+  }
+}
+
+async function save() {
+  formError.value = ''
+  const payload = toVisitorPayload(editor.value)
   try {
-    const result = await visitorAPI.getVisitorDetail(visitor.id)
-    if (result.code === 200 && result.data) {
-      const data = result.data
-      formData.value = {
-        id: data.id,
-        visitorName: data.visitorName,
-        visitorPhone: data.visitorPhone,
-        visitorIdCard: data.visitorIdCard || '',
-        visitPurpose: data.visitPurpose || '',
-        visitTargetUserId: data.visitTargetUserId,
-        visitDate: formatDate(data.visitDate),
-        visitTimeStart: formatDateTimeForInput(data.visitTimeStart),
-        visitTimeEnd: formatDateTimeForInput(data.visitTimeEnd),
-        vehicleInfo: data.vehicleInfo || '',
-        accompanyCount: data.accompanyCount || 0,
-        remark: data.remark || ''
-      }
-      showDialog.value = true
-    }
+    if (editor.value.id) await updateVisitor(editor.value.id, payload)
+    else await createVisitor(payload)
+    ui.toast('来访登记已保存', 'success')
+    editor.value = null
+    await load()
   } catch (error) {
-    showToast('加载来访登记详情失败：' + error.message, 'error')
+    formError.value = error.message || '保存失败'
   }
 }
 
-const handleApprove = (visitor) => {
-  currentVisitor.value = visitor
-  approveRemark.value = ''
-  showApproveDialog.value = true
-}
-
-const handleConfirmApprove = async () => {
-  if (!currentVisitor.value) {
-    return
-  }
-  
+async function runAction(item, name) {
+  const action = actions[name]
+  if (!window.confirm(action.ask)) return
   try {
-    await visitorAPI.approveVisitor(currentVisitor.value.id, 1, approveRemark.value)
-    showToast('批准成功', 'success')
-    closeApproveDialog()
-    loadData()
+    await action.run(item.id)
+    ui.toast(action.ok, 'success')
+    await load()
   } catch (error) {
-    showToast('批准失败：' + error.message, 'error')
+    ui.toast(error.message || '操作失败', 'error')
   }
 }
 
-const handleReject = (visitor) => {
-  currentVisitor.value = visitor
-  rejectRemark.value = ''
-  showRejectDialog.value = true
-}
-
-const handleConfirmReject = async () => {
-  if (!currentVisitor.value) {
-    return
-  }
-  
-  if (!rejectRemark.value.trim()) {
-    showToast('请输入拒绝原因', 'error')
-    return
-  }
-  
+async function removeVisitor(item) {
+  if (!window.confirm(`删除「${item.visitorName}」的来访登记？`)) return
   try {
-    await visitorAPI.rejectVisitor(currentVisitor.value.id, rejectRemark.value)
-    showToast('拒绝成功', 'success')
-    closeRejectDialog()
-    loadData()
+    await deleteVisitor(item.id)
+    ui.toast('来访登记已删除', 'success')
+    await load()
   } catch (error) {
-    showToast('拒绝失败：' + error.message, 'error')
+    ui.toast(error.message || '删除失败', 'error')
   }
-}
-
-const handleEntry = (visitor) => {
-  currentVisitor.value = visitor
-  timeDialogType.value = 'entry'
-  timeValue.value = new Date().toISOString().substring(0, 16)
-  showTimeDialog.value = true
-}
-
-const handleExit = (visitor) => {
-  currentVisitor.value = visitor
-  timeDialogType.value = 'exit'
-  timeValue.value = new Date().toISOString().substring(0, 16)
-  showTimeDialog.value = true
-}
-
-const handleConfirmTime = async () => {
-  if (!currentVisitor.value || !timeValue.value) {
-    return
-  }
-  
-  try {
-    const timeStr = new Date(timeValue.value).toISOString()
-    if (timeDialogType.value === 'entry') {
-      await visitorAPI.recordEntry(currentVisitor.value.id, timeStr)
-      showToast('登记进入时间成功', 'success')
-    } else {
-      await visitorAPI.recordExit(currentVisitor.value.id, timeStr)
-      showToast('登记离开时间成功', 'success')
-    }
-    closeTimeDialog()
-    loadData()
-  } catch (error) {
-    showToast('操作失败：' + error.message, 'error')
-  }
-}
-
-const handleDelete = async (visitor) => {
-  if (!confirm(`确定要删除来访登记"${visitor.visitorName}"吗？`)) {
-    return
-  }
-  
-  try {
-    await visitorAPI.deleteVisitor(visitor.id)
-    showToast('删除成功', 'success')
-    loadData()
-  } catch (error) {
-    showToast('删除失败：' + error.message, 'error')
-  }
-}
-
-const handleSubmit = async () => {
-  // 验证必填字段
-  if (!formData.value.visitorName) {
-    showToast('请输入来访人姓名', 'error')
-    return
-  }
-  if (!formData.value.visitorPhone) {
-    showToast('请输入来访人电话', 'error')
-    return
-  }
-  if (!formData.value.visitPurpose) {
-    showToast('请输入来访目的', 'error')
-    return
-  }
-  if (!formData.value.visitDate) {
-    showToast('请选择来访日期', 'error')
-    return
-  }
-  
-  try {
-    const data = { ...formData.value }
-    // 处理日期时间格式
-    if (data.visitTimeStart) {
-      data.visitTimeStart = new Date(data.visitTimeStart).toISOString()
-    }
-    if (data.visitTimeEnd) {
-      data.visitTimeEnd = new Date(data.visitTimeEnd).toISOString()
-    }
-    if (!data.visitTargetUserId) {
-      data.visitTargetUserId = null
-    }
-    
-    if (dialogMode.value === 'create') {
-      await visitorAPI.createVisitor(data)
-      showToast('创建成功', 'success')
-    } else {
-      await visitorAPI.updateVisitor(data.id, data)
-      showToast('更新成功', 'success')
-    }
-    closeDialog()
-    loadData()
-  } catch (error) {
-    showToast('操作失败：' + (error.message || '未知错误'), 'error')
-  }
-}
-
-const closeDialog = () => {
-  showDialog.value = false
-}
-
-const closeApproveDialog = () => {
-  showApproveDialog.value = false
-  currentVisitor.value = null
-  approveRemark.value = ''
-}
-
-const closeRejectDialog = () => {
-  showRejectDialog.value = false
-  currentVisitor.value = null
-  rejectRemark.value = ''
-}
-
-const closeTimeDialog = () => {
-  showTimeDialog.value = false
-  currentVisitor.value = null
-  timeValue.value = ''
 }
 </script>
-
