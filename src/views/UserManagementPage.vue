@@ -191,6 +191,7 @@ async function save() {
       }
     } else {
       await updateUser(editor.value.id, userUpdatePayload(editor.value))
+      // PHASE2-BLOCKED: 请求体已是 { roleCodes }。冒烟 PUT /users/{id}/roles 返回 409「数据冲突或仍被引用，无法保存」，是后端数据完整性异常，交给 camp-app。
       await replaceUserRoles(editor.value.id, roleCodesPayload(editor.value.role))
     }
     ui.toast(creating ? '账号已创建' : '账号已保存', 'success')

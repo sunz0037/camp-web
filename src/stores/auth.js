@@ -1,14 +1,10 @@
 import { defineStore } from 'pinia'
 import { api, ApiError } from '../api/http.js'
 import { changePassword as changePasswordApi } from '../api/password.js'
+import { loginIdentity, normalizeRole, ROLE_PERMISSIONS } from '../domain/sessionIdentity.js'
 import { useThemeStore } from './theme.js'
 
-export const ROLE_PERMISSIONS = {
-  ADMIN: ['org:write', 'student:import', 'student:write', 'course:write', 'attendance:record', 'announcement:publish', 'announcement:top', 'user:write'],
-  ACADEMIC: ['org:write', 'student:import', 'student:write', 'course:write', 'attendance:record', 'announcement:publish', 'announcement:top'],
-  TEACHER: ['student:write', 'course:write', 'attendance:record', 'announcement:publish'],
-  STUDENT: []
-}
+export { ROLE_PERMISSIONS }
 
 const ACCOUNTS_KEY = 'camp.accounts'
 
@@ -167,13 +163,6 @@ function persistAccounts(accounts) {
   localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts))
 }
 
-function normalizeRole(role) {
-  const value = String(role || 'STUDENT').toUpperCase()
-  if (value === 'PARENT') return { role: 'STUDENT', actor: 'PARENT', title: '家长' }
-  const title = { ADMIN: '管理员', ACADEMIC: '教务', TEACHER: '教师', STUDENT: '学生' }[value] || '学生'
-  return { role: value === 'ADMIN' || value === 'ACADEMIC' || value === 'TEACHER' ? value : 'STUDENT', actor: value, title }
-}
-
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     accessToken: '',
@@ -232,23 +221,25 @@ export const useAuthStore = defineStore('auth', {
         identifier,
         password,
         portal,
+        // PHASE2-BLOCKED: identityType=1 时 camp-app 只按学号查找。student01 是用户名，学号是 S20260001，学生入口用用户名会「账号或密码错误」。
         identityType: portal === 'student' ? 1 : 2
       }
       try {
         const json = await api('/api/v1/auth/login', { method: 'POST', auth: false, body: payload })
         const data = json.data && typeof json.data === 'object' ? json.data : json
         const remote = data.user || data.userInfo || {}
-        const roleName = remote.role
-          || ({ 1: 'STUDENT', 2: 'TEACHER', 3: 'ADMIN' }[remote.userType])
-          || (portal === 'student' ? 'STUDENT' : identifier.toLowerCase() === 'admin' ? 'ADMIN' : identifier.toLowerCase().startsWith('academic') ? 'ACADEMIC' : 'TEACHER')
-        const mapped = normalizeRole(roleName)
+        const identity = loginIdentity({
+          ...remote,
+          roles: remote.roles ?? remote.roleCodes ?? data.roles ?? data.roleCodes ?? remote.role,
+          permissions: remote.permissions ?? data.permissions
+        }, { portal, identifier })
         const user = {
           id: remote.id || identifier,
           account: remote.account || remote.username || identifier,
           name: remote.name || remote.realName || identifier,
-          role: mapped.role,
-          actor: remote.actor || mapped.actor,
-          title: remote.title || mapped.title,
+          role: identity.role,
+          actor: remote.actor || identity.actor,
+          title: identity.title,
           employeeNo: remote.employeeNo || '',
           studentNo: remote.studentNo || '',
           phone: remote.phone || '',
@@ -258,7 +249,7 @@ export const useAuthStore = defineStore('auth', {
           gradeIds: remote.gradeIds || [],
           className: remote.className || '',
           linkedStudentName: remote.linkedStudentName || '',
-          permissions: remote.permissions || ROLE_PERMISSIONS[mapped.role] || [],
+          permissions: identity.permissions,
           mustChangePassword: Boolean(remote.mustChangePassword),
           status: '启用'
         }
