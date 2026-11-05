@@ -20,8 +20,6 @@
             <label class="field-label">手机</label>
             <input v-model="phone" class="field num" inputmode="tel" autocomplete="tel" />
           </div>
-        </div>
-        <div class="form-row">
           <div>
             <label class="field-label">邮箱</label>
             <input v-model="email" class="field" type="email" autocomplete="email" />
