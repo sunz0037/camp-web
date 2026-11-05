@@ -158,6 +158,7 @@ export const PHASE_ROUTES = [
   }
 ]
 
+// PHASE2-BLOCKED: 统计报表与短信不挂路由、不做页面。Framer /statistics 仍是占位，找回密码不做验证码发送。
 export const MOBILE_NAV = [
   { name: 'Announcements', label: '公告', icon: 'Megaphone', to: '/home/announcements' },
   { name: 'MySchedule', label: '课表', icon: 'CalendarDays', to: '/home/my-schedule' },
