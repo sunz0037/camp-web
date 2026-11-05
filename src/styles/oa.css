@@ -235,24 +235,52 @@
 .filters .btn,
 .seg button {
   flex: 0 0 auto;
-  flex-shrink: 0;
-  width: max-content;
+  width: auto;
   min-width: max-content;
+  max-width: none;
   white-space: nowrap;
+  writing-mode: horizontal-tb;
 }
 
 .student-filters {
   display: flex;
   flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: 10px;
   padding: 14px;
 }
 
-.student-filters .filters {
+.student-filters > .filters {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  min-width: min-content;
   padding: 0;
 }
 
-.student-filters .filter-note {
+.student-filters .seg {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: auto;
+}
+
+.student-filters .seg button,
+.student-filters > .filters > .btn {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: max-content;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+}
+
+.student-filters > .filter-note {
+  display: block;
+  width: 100%;
+  min-width: 100%;
   margin: 0;
   white-space: normal;
   line-height: 1.5;
