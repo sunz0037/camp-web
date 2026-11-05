@@ -28,9 +28,20 @@
             <label class="field-label">密码</label>
             <p class="sub"><router-link to="/home/change-password">修改密码</router-link></p>
           </div>
+          <div>
+            <label class="field-label">邮箱</label>
+            <input v-model="email" class="field" type="email" autocomplete="email" />
+          </div>
         </div>
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+        <p v-if="error" class="error-text">{{ error }}</p>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" :disabled="passwordLoading">{{ passwordLoading ? '提交中…' : '更新密码' }}</button>
         </div>
       </form>
     </section>
