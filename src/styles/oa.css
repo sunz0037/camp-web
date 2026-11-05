@@ -1210,28 +1210,6 @@ td.muted {
   border-radius: 12px;
 }
 
-.profile-form {
-  max-width: 760px;
-}
-
-.profile-fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 240px));
-  gap: 12px 16px;
-}
-
-.profile-form .form-actions {
-  justify-content: flex-start;
-}
-
-.profile-next {
-  margin-top: 28px;
-}
-
-.preview-card .seg {
-  margin-top: 12px;
-}
-
 .login-page {
   min-height: 100vh;
   display: flex;
