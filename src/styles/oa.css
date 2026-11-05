@@ -101,6 +101,17 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
+.preview-card .field,
+.preview-card .select,
+.preview-card .textarea,
+.form-grid .field,
+.form-grid .select,
+.form-grid .textarea {
+  border: 1px solid var(--c-border);
+  background: var(--c-card);
+  font-size: 13px;
+}
+
 .field-label {
   display: block;
   margin-bottom: 8px;

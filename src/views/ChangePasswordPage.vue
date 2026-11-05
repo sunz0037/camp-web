@@ -1,22 +1,30 @@
 <template>
-  <div class="page">
-    <form class="card block password-card" @submit.prevent="submit">
-      <h2>修改密码</h2>
-      <p class="sub">修改成功后需要重新登录。新密码至少 6 位。</p>
-      <div class="form-grid" style="margin-top: 14px">
-        <label class="field-label">当前密码</label>
-        <input v-model="oldPassword" class="field" type="password" autocomplete="current-password" required />
-        <label class="field-label">新密码</label>
-        <input v-model="nextPassword" class="field" type="password" autocomplete="new-password" minlength="6" required />
-        <label class="field-label">确认新密码</label>
-        <input v-model="confirmPassword" class="field" type="password" autocomplete="new-password" minlength="6" required />
+  <div class="page stack">
+    <section class="card preview-card">
+      <h2>表单预览</h2>
+      <form class="form-grid" @submit.prevent="submit">
+        <p class="sub" style="margin: 0">修改成功后需要重新登录。新密码至少 6 位。</p>
+        <div class="preview-grid">
+          <div>
+            <label class="field-label">当前密码</label>
+            <input v-model="oldPassword" class="field" type="password" autocomplete="current-password" required />
+          </div>
+          <div>
+            <label class="field-label">新密码</label>
+            <input v-model="nextPassword" class="field" type="password" autocomplete="new-password" minlength="6" required />
+          </div>
+          <div>
+            <label class="field-label">确认新密码</label>
+            <input v-model="confirmPassword" class="field" type="password" autocomplete="new-password" minlength="6" required />
+          </div>
+        </div>
         <p v-if="error" class="error-text">{{ error }}</p>
         <div class="form-actions">
           <router-link class="btn btn-ghost" to="/home/profile">取消</router-link>
           <button class="btn btn-primary" type="submit" :disabled="loading">{{ loading ? '提交中…' : '确认修改' }}</button>
         </div>
-      </div>
-    </form>
+      </form>
+    </section>
   </div>
 </template>
 
@@ -66,9 +74,3 @@ async function submit() {
   }
 }
 </script>
-
-<style scoped>
-.password-card {
-  max-width: 560px;
-}
-</style>
