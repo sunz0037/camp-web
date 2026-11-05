@@ -26,7 +26,7 @@
           </div>
           <div>
             <label class="field-label">密码</label>
-            <p class="sub"><router-link to="/home/change-password">修改密码</router-link></p>
+            <p class="field-link"><router-link to="/home/change-password">修改密码</router-link></p>
           </div>
         </div>
         <div class="form-actions">

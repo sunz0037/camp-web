@@ -6,6 +6,7 @@
         校园OA
       </router-link>
       <nav class="side-nav">
+        <p class="nav-kicker">功能菜单</p>
         <router-link
           v-for="item in sideItems"
           :key="item.name"
@@ -27,23 +28,22 @@
           <span>/</span>
           <strong>{{ crumb }}</strong>
         </nav>
-        <button class="jump" type="button" @click="ui.openPalette()">
-          <AppIcon name="Search" :size="16" />
-          <span>搜索菜单</span>
-        </button>
-        <div class="top-user">
-          <button class="note-btn" type="button" aria-label="通知">
-            <AppIcon name="Bell" :size="16" />
-            <span class="note-badge">3</span>
+        <div class="top-actions">
+          <button class="jump" type="button" @click="ui.openPalette()">
+            <AppIcon name="Search" :size="16" />
+            <span>搜索…</span>
           </button>
-          <div class="user-pill">
-            <div class="avatar">{{ avatar }}</div>
-            <div>
-              <strong>{{ auth.user?.name }}</strong>
-              <span>{{ auth.user?.title }}</span>
+          <div class="top-user">
+            <button class="note-btn" type="button">
+              <AppIcon name="Bell" :size="16" />
+              通知
+            </button>
+            <div class="user-pill">
+              <div class="avatar">{{ avatar }}</div>
+              <strong>{{ who }}</strong>
             </div>
+            <button class="logout-btn" type="button" @click="logout">退出登录</button>
           </div>
-          <button class="btn btn-danger" type="button" @click="logout">退出登录</button>
         </div>
       </header>
       <PcOnly v-if="blocked" />
@@ -95,6 +95,12 @@ const sideItems = computed(() => {
     noteTitle: item.meta.noteTitle || '',
     to: `/home/${item.path}`
   }))
+})
+
+const who = computed(() => {
+  const name = auth.user?.name || '用户'
+  const title = auth.user?.title
+  return title ? `${name} · ${title}` : name
 })
 
 const avatar = computed(() => {

@@ -11,8 +11,7 @@
       <button v-if="auth.can('user:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增权限配置</button>
     </section>
 
-    <section class="card table-card">
-      <div class="status-legend">
+    <div class="status-legend">
         <span>状态</span>
         <button
           v-for="item in DATA_TYPES"
@@ -24,7 +23,8 @@
         >
           {{ item.label }}
         </button>
-      </div>
+    </div>
+    <section class="card table-card">
       <div class="table-scroll">
         <table class="data">
           <thead>

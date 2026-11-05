@@ -12,12 +12,13 @@
       <button v-if="auth.can('course:write')" class="btn btn-primary" type="button" @click="openCreate">+ 添加授课科目</button>
     </section>
 
+    <div class="status-legend">
+      <span>状态</span>
+      <span class="pill pill-on">已启用</span>
+      <span class="pill pill-ok">未启用</span>
+    </div>
+
     <section class="card table-card">
-      <div class="status-legend">
-        <span>状态</span>
-        <span class="pill pill-on">已启用</span>
-        <span class="pill pill-ok">未启用</span>
-      </div>
       <div class="table-scroll">
         <table class="data">
           <thead>

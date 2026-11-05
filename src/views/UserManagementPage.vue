@@ -5,12 +5,12 @@
       <p v-if="loadError" :class="isLoadHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
       <button v-if="auth.can('user:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
     </section>
+    <div class="status-legend">
+      <span>状态</span>
+      <span class="pill pill-on">启用</span>
+      <span class="pill pill-ok">禁用</span>
+    </div>
     <section class="card table-card">
-      <div class="status-legend">
-        <span>状态</span>
-        <span class="pill pill-on">启用</span>
-        <span class="pill pill-ok">禁用</span>
-      </div>
       <div class="table-scroll">
         <table class="data">
           <thead>
