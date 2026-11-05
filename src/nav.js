@@ -62,6 +62,7 @@ export const PHASE_ROUTES = [
     component: () => import('./views/OrgClassesPage.vue'),
     meta: {
       title: '年级班级',
+      // PHASE2-BLOCKED: 年级班级拆页后置。保持 /home/org-classes 合并入口，不拆 /grades 与 /classes。
       note: '合并',
       noteTitle: '年级与班级仍合并在本页，待产品确认后再拆为 /grades 与 /classes',
       roles: STAFF,
@@ -120,6 +121,7 @@ export const PHASE_ROUTES = [
   }
 ]
 
+// PHASE2-BLOCKED: 统计报表与短信不挂路由、不做页面。Framer /statistics 仍是占位，找回密码不做验证码发送。
 export const MOBILE_NAV = [
   { name: 'Announcements', label: '公告', icon: 'Megaphone', to: '/home/announcements' },
   { name: 'MySchedule', label: '课表', icon: 'CalendarDays', to: '/home/my-schedule' },

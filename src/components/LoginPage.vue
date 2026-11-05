@@ -85,6 +85,7 @@ const password = ref('')
 const error = ref('')
 const loading = ref(false)
 const forgot = ref(false)
+// PHASE2-BLOCKED: 短信通道与在线自助找回后置。弹层只说明联系教务，不发送验证码。
 
 const features = [
   { title: '学生与学籍', desc: '花名册、导入导出、应急联系人' },
