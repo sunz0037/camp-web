@@ -20,6 +20,8 @@
             <label class="field-label">手机</label>
             <input v-model="phone" class="field num" inputmode="tel" autocomplete="tel" />
           </div>
+        </div>
+        <div class="form-row">
           <div>
             <label class="field-label">邮箱</label>
             <input v-model="email" class="field" type="email" autocomplete="email" />
@@ -50,16 +52,11 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
-import { useThemeStore } from '../stores/theme.js'
 import { useUiStore } from '../stores/ui.js'
-import { resetRouteInstall } from '../router/index.js'
 
 const auth = useAuthStore()
-const theme = useThemeStore()
 const ui = useUiStore()
-const router = useRouter()
 const phone = ref(auth.user?.phone || '')
 const email = ref(auth.user?.email || '')
 
