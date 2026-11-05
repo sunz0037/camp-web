@@ -24,12 +24,13 @@
       <button v-if="canWrite" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
     </section>
 
+    <div class="status-legend">
+      <span>状态</span>
+      <span class="pill pill-ok">正常</span>
+      <span class="pill pill-muted">已取消</span>
+    </div>
+
     <section class="card table-card">
-      <div class="status-legend">
-        <span>状态</span>
-        <span class="pill pill-ok">正常</span>
-        <span class="pill pill-muted">已取消</span>
-      </div>
       <div class="table-scroll">
         <table class="data">
           <thead>

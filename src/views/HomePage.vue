@@ -36,14 +36,17 @@
             <AppIcon name="Bell" :size="16" />
             <span class="note-badge">3</span>
           </button>
-          <div class="user-pill">
-            <div class="avatar">{{ avatar }}</div>
-            <div>
-              <strong>{{ auth.user?.name }}</strong>
-              <span>{{ auth.user?.title }}</span>
+          <div class="top-user">
+            <button class="note-btn" type="button">
+              <AppIcon name="Bell" :size="16" />
+              通知
+            </button>
+            <div class="user-pill">
+              <div class="avatar">{{ avatar }}</div>
+              <strong>{{ who }}</strong>
             </div>
+            <button class="logout-btn" type="button" @click="logout">退出登录</button>
           </div>
-          <button class="btn btn-danger" type="button" @click="logout">退出登录</button>
         </div>
       </header>
       <PcOnly v-if="blocked" />
@@ -102,6 +105,12 @@ const sideItems = computed(() => {
       }
     })
   })
+})
+
+const who = computed(() => {
+  const name = auth.user?.name || '用户'
+  const title = auth.user?.title
+  return title ? `${name} · ${title}` : name
 })
 
 const avatar = computed(() => {

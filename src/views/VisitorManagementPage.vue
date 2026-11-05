@@ -14,15 +14,16 @@
       <button v-if="canWrite" class="btn btn-primary" type="button" @click="openCreate">+ 登记</button>
     </section>
 
+    <div class="status-legend">
+      <span>状态</span>
+      <span class="pill pill-warn">待审</span>
+      <span class="pill pill-on">已批准</span>
+      <span class="pill pill-muted">已拒绝</span>
+      <span class="pill pill-info">已入校</span>
+      <span class="pill pill-ok">已离校</span>
+    </div>
+
     <section class="card table-card">
-      <div class="status-legend">
-        <span>状态</span>
-        <span class="pill pill-warn">待审</span>
-        <span class="pill pill-on">已批准</span>
-        <span class="pill pill-muted">已拒绝</span>
-        <span class="pill pill-info">已入校</span>
-        <span class="pill pill-ok">已离校</span>
-      </div>
       <div class="table-scroll">
         <table class="data">
           <thead>
