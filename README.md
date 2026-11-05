@@ -2,6 +2,10 @@
 
 Vue 3 + Vite 前端项目
 
+## 二期状态
+
+已合入的验收闸门见 [docs/W5-ACCEPTANCE.md](docs/W5-ACCEPTANCE.md)。剩余队列（W4 体验、P2+ 后置、W5 收口）见 [docs/PHASE2-REMAINING.md](docs/PHASE2-REMAINING.md)。
+
 ## 技术栈
 
 - Vue 3 (Composition API)
