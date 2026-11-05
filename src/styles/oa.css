@@ -215,8 +215,7 @@
   padding: 0;
 }
 
-.card.filters,
-.card.student-filters {
+.card.filters {
   background: transparent;
   border: 0;
   border-radius: 0;
@@ -264,7 +263,7 @@
   flex-wrap: nowrap;
   align-items: stretch;
   gap: 10px;
-  padding: 0;
+  padding: 14px;
 }
 
 .student-filters > .filters {
@@ -880,25 +879,21 @@ td.muted {
   min-width: 0;
   color: var(--c-helper);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 600;
 }
 
-.crumb a,
-.crumb strong {
-  color: var(--c-helper);
-  font-weight: 400;
+.crumb a {
+  color: var(--c-muted);
   text-decoration: none;
 }
 
-.top-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
+.crumb strong {
+  color: var(--c-text);
+  font-weight: 700;
 }
 
 .top-user {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -907,46 +902,24 @@ td.muted {
 .user-pill {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: auto;
-  padding: 6px 14px 6px 6px;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px 0 4px;
   border: 1px solid var(--c-border);
   border-radius: 999px;
   background: var(--c-control);
-  color: var(--c-text);
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .note-btn {
   position: relative;
-  width: auto;
-  height: auto;
-  padding: 10px 14px;
-  gap: 6px;
+  width: 36px;
+  height: 36px;
   border: 1px solid var(--c-border);
   border-radius: var(--radius-control);
   background: var(--c-control);
   color: var(--c-text);
-  display: inline-flex;
-  align-items: center;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.logout-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 14px;
-  border-radius: var(--radius-control);
-  border: 1px solid var(--c-border);
-  background: var(--c-card);
-  color: var(--c-danger);
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
+  display: grid;
+  place-items: center;
 }
 
 .note-badge {
@@ -964,11 +937,15 @@ td.muted {
   font-weight: 700;
 }
 
-.user-pill strong {
+.user-pill strong,
+.user-pill span {
   display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--c-text);
+}
+
+.user-pill span {
+  color: var(--c-brand);
+  font-size: 12px;
+  font-weight: 650;
 }
 
 .preview-card {
@@ -1011,11 +988,6 @@ td.muted {
 .topbar .jump {
   width: 240px;
   min-width: 240px;
-  height: auto;
-  padding: 10px 14px;
-  color: var(--c-helper);
-  font-size: 13px;
-  font-weight: 400;
 }
 
 .field-link {

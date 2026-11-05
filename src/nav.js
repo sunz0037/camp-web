@@ -27,24 +27,6 @@ export const PHASE_ROUTES = [
     meta: { title: '学生信息管理', roles: STAFF, pcOnly: true, icon: 'Users', sidebar: 'staff' }
   },
   {
-    path: 'exam-schedules',
-    name: 'ExamSchedules',
-    component: () => import('./views/ExamScheduleManagementPage.vue'),
-    meta: { title: '考试安排', roles: ALL, pcOnly: true, icon: 'CalendarCheck', sidebar: 'all' }
-  },
-  {
-    path: 'scores',
-    name: 'Scores',
-    component: () => import('./views/ScoreManagementPage.vue'),
-    meta: { title: '考试成绩', roles: ALL, pcOnly: true, icon: 'ClipboardList', sidebar: 'all' }
-  },
-  {
-    path: 'visitors',
-    name: 'Visitors',
-    component: () => import('./views/VisitorManagementPage.vue'),
-    meta: { title: '来访登记', roles: STAFF, pcOnly: true, icon: 'Contact', sidebar: 'staff' }
-  },
-  {
     path: 'org-classes',
     name: 'OrgClasses',
     component: () => import('./views/OrgClassesPage.vue'),
