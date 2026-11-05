@@ -9,72 +9,44 @@ export const PHASE_ROUTES = [
     meta: { title: '首页概览', roles: ALL, pcOnly: true, icon: 'LayoutDashboard', sidebar: 'all' }
   },
   {
+    path: 'users',
+    name: 'Users',
+    component: () => import('./views/UserManagementPage.vue'),
+    meta: { title: '用户管理', roles: ['ADMIN'], pcOnly: true, icon: 'UserCog', sidebar: 'admin' }
+  },
+  {
+    path: 'roles',
+    name: 'Roles',
+    component: () => import('./views/RoleManagementPage.vue'),
+    meta: { title: '角色权限管理', roles: ['ADMIN'], pcOnly: true, icon: 'Shield', sidebar: 'admin' }
+  },
+  {
     path: 'students',
     name: 'Students',
     component: () => import('./views/StudentManagementPage.vue'),
-    meta: { title: '学生信息', roles: STAFF, pcOnly: true, icon: 'Users', sidebar: 'staff' }
-  },
-  {
-    path: 'courses',
-    name: 'Courses',
-    component: () => import('./views/CourseManagementPage.vue'),
-    meta: { title: '课程与排课', roles: STAFF, pcOnly: true, icon: 'BookOpen', sidebar: 'staff' }
-  },
-  {
-    path: 'my-schedule',
-    name: 'MySchedule',
-    component: () => import('./views/MySchedulePage.vue'),
-    meta: { title: '我的课表', roles: ALL, pcOnly: false, icon: 'CalendarDays', sidebar: 'student' }
-  },
-  {
-    path: 'attendance',
-    name: 'Attendance',
-    component: () => import('./views/AttendanceManagementPage.vue'),
-    meta: { title: '考勤管理', roles: ALL, pcOnly: false, icon: 'ClipboardCheck', sidebar: 'all' }
-  },
-  {
-    path: 'announcements',
-    name: 'Announcements',
-    component: () => import('./views/AnnouncementManagementPage.vue'),
-    meta: { title: '校园公告', roles: ALL, pcOnly: false, icon: 'Megaphone', sidebar: 'all' }
-  },
-  {
-    path: 'exam-schedules',
-    name: 'ExamSchedules',
-    component: () => import('./views/ExamScheduleManagementPage.vue'),
-    meta: { title: '考试安排', roles: ALL, pcOnly: true, icon: 'CalendarCheck', sidebar: 'all' }
-  },
-  {
-    path: 'scores',
-    name: 'Scores',
-    component: () => import('./views/ScoreManagementPage.vue'),
-    meta: { title: '考试成绩', roles: ALL, pcOnly: true, icon: 'ClipboardList', sidebar: 'all' }
-  },
-  {
-    path: 'visitors',
-    name: 'Visitors',
-    component: () => import('./views/VisitorManagementPage.vue'),
-    meta: { title: '来访登记', roles: STAFF, pcOnly: true, icon: 'Contact', sidebar: 'staff' }
+    meta: { title: '学生信息管理', roles: STAFF, pcOnly: true, icon: 'Users', sidebar: 'staff' }
   },
   {
     path: 'org-classes',
     name: 'OrgClasses',
     component: () => import('./views/OrgClassesPage.vue'),
     meta: {
-      title: '年级班级',
-      note: '合并',
-      noteTitle: '年级与班级仍合并在本页，待产品确认后再拆为 /grades 与 /classes',
+      title: '班级管理',
       roles: STAFF,
       pcOnly: true,
       icon: 'Network',
-      sidebar: 'staff'
+      sidebar: 'staff',
+      links: [
+        { key: 'classes', title: '班级管理', icon: 'Network', query: { tab: 'classes' } },
+        { key: 'grades', title: '年级管理', icon: 'Building2', query: { tab: 'grades' } }
+      ]
     }
   },
   {
-    path: 'users',
-    name: 'Users',
-    component: () => import('./views/UserManagementPage.vue'),
-    meta: { title: '用户账号', roles: ['ADMIN'], pcOnly: true, icon: 'UserCog', sidebar: 'admin' }
+    path: 'courses',
+    name: 'Courses',
+    component: () => import('./views/CourseManagementPage.vue'),
+    meta: { title: '科目管理', roles: STAFF, pcOnly: true, icon: 'BookOpen', sidebar: 'staff' }
   },
   {
     path: 'class-courses',
@@ -95,10 +67,46 @@ export const PHASE_ROUTES = [
     meta: { title: '年级管理员关联', roles: ['ADMIN', 'ACADEMIC'], pcOnly: true, icon: 'Link2', sidebar: 'staff' }
   },
   {
-    path: 'roles',
-    name: 'Roles',
-    component: () => import('./views/RoleManagementPage.vue'),
-    meta: { title: '角色权限管理', roles: ['ADMIN'], pcOnly: true, icon: 'Shield', sidebar: 'admin' }
+    path: 'my-schedule',
+    name: 'MySchedule',
+    component: () => import('./views/MySchedulePage.vue'),
+    meta: { title: '我的课表', roles: ALL, pcOnly: false, icon: 'CalendarDays', sidebar: 'student' }
+  },
+  {
+    path: 'attendance',
+    name: 'Attendance',
+    component: () => import('./views/AttendanceManagementPage.vue'),
+    meta: { title: '考勤管理', roles: ALL, pcOnly: false, icon: 'ClipboardCheck', sidebar: 'all' }
+  },
+  {
+    path: 'exam-schedules',
+    name: 'ExamSchedules',
+    component: () => import('./views/ExamScheduleManagementPage.vue'),
+    meta: { title: '考试安排管理', roles: ALL, pcOnly: true, icon: 'CalendarCheck', sidebar: 'all' }
+  },
+  {
+    path: 'scores',
+    name: 'Scores',
+    component: () => import('./views/ScoreManagementPage.vue'),
+    meta: { title: '考试成绩管理', roles: ALL, pcOnly: true, icon: 'ClipboardList', sidebar: 'all' }
+  },
+  {
+    path: 'announcements',
+    name: 'Announcements',
+    component: () => import('./views/AnnouncementManagementPage.vue'),
+    meta: { title: '校园公告管理', roles: ALL, pcOnly: false, icon: 'Megaphone', sidebar: 'all' }
+  },
+  {
+    path: 'visitors',
+    name: 'Visitors',
+    component: () => import('./views/VisitorManagementPage.vue'),
+    meta: { title: '来访登记管理', roles: STAFF, pcOnly: true, icon: 'Contact', sidebar: 'staff' }
+  },
+  {
+    path: 'emergency-contacts',
+    name: 'EmergencyContacts',
+    component: () => import('./views/EmergencyContactsPage.vue'),
+    meta: { title: '应急联系人管理', roles: STAFF, pcOnly: true, icon: 'UserRound', sidebar: 'staff' }
   },
   {
     path: 'data-permissions',
@@ -107,10 +115,22 @@ export const PHASE_ROUTES = [
     meta: { title: '数据查询权限', roles: ['ADMIN'], pcOnly: true, icon: 'ShieldCheck', sidebar: 'admin' }
   },
   {
+    path: 'batch-operations',
+    name: 'BatchOperations',
+    component: () => import('./views/ComingSoonPage.vue'),
+    meta: { title: '批量导入导出', roles: ['ADMIN'], pcOnly: true, icon: 'Download', sidebar: 'admin' }
+  },
+  {
+    path: 'statistics',
+    name: 'Statistics',
+    component: () => import('./views/ComingSoonPage.vue'),
+    meta: { title: '统计报表', roles: ['ADMIN'], pcOnly: true, icon: 'Monitor', sidebar: 'admin' }
+  },
+  {
     path: 'profile',
     name: 'Profile',
     component: () => import('./views/ProfilePage.vue'),
-    meta: { title: '个人中心', roles: ALL, pcOnly: false, icon: 'UserRound', sidebar: 'all' }
+    meta: { title: '个人信息', roles: ALL, pcOnly: false, icon: 'UserRound', sidebar: 'all' }
   },
   {
     path: 'change-password',
@@ -143,7 +163,17 @@ export function inSidebar(route, role) {
   return false
 }
 
-export function navLabel(route, role) {
-  if (route.name === 'Attendance' && role === 'STUDENT') return '我的考勤'
-  return route.meta.title
+export function navLabel(route, role, query = {}) {
+  if (route?.name === 'Attendance' && role === 'STUDENT') return '我的考勤'
+  if (route?.name === 'OrgClasses') return query.tab === 'grades' ? '年级管理' : '班级管理'
+  return route?.meta?.title || '工作台'
+}
+
+/** 侧栏条目。年级和班级共用已有页面，只按 Framer 菜单拆成两个入口。 */
+export function sidebarLinks(route) {
+  const links = route.meta.links
+  if (!links?.length) {
+    return [{ key: route.name, title: route.meta.title, icon: route.meta.icon, query: {} }]
+  }
+  return links.map((link) => ({ key: link.key, title: link.title, icon: link.icon, query: link.query || {} }))
 }

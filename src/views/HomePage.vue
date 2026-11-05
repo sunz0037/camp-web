@@ -6,16 +6,16 @@
         校园OA
       </router-link>
       <nav class="side-nav">
+        <p class="nav-label">功能菜单</p>
         <router-link
           v-for="item in sideItems"
-          :key="item.name"
+          :key="item.key"
           class="nav-link"
-          active-class="active"
+          :class="{ active: item.active }"
           :to="item.to"
         >
           <AppIcon :name="item.icon" :size="16" />
           <span class="nav-text">{{ item.label }}</span>
-          <small v-if="item.note" class="nav-note" :title="item.noteTitle">{{ item.note }}</small>
         </router-link>
       </nav>
     </aside>
@@ -29,7 +29,7 @@
         </nav>
         <button class="jump" type="button" @click="ui.openPalette()">
           <AppIcon name="Search" :size="16" />
-          <span>搜索菜单</span>
+          <span>搜索…</span>
         </button>
         <div class="top-user">
           <button class="note-btn" type="button" aria-label="通知">
@@ -76,7 +76,7 @@ import CommandPalette from '../components/CommandPalette.vue'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
 import { resetRouteInstall } from '../router/index.js'
-import { MOBILE_NAV, PHASE_ROUTES, inSidebar, navLabel } from '../nav.js'
+import { MOBILE_NAV, PHASE_ROUTES, inSidebar, navLabel, sidebarLinks } from '../nav.js'
 import { useViewport } from '../composables/useViewport.js'
 
 const auth = useAuthStore()
@@ -87,14 +87,21 @@ const { isMobile } = useViewport()
 
 const sideItems = computed(() => {
   const role = auth.user?.role
-  return PHASE_ROUTES.filter((item) => inSidebar(item, role)).map((item) => ({
-    name: item.name,
-    icon: item.meta.icon,
-    label: navLabel(item, role),
-    note: item.meta.note || '',
-    noteTitle: item.meta.noteTitle || '',
-    to: `/home/${item.path}`
-  }))
+  return PHASE_ROUTES.filter((item) => inSidebar(item, role)).flatMap((item) => {
+    return sidebarLinks(item).map((link) => {
+      const active = route.name === item.name && Object.entries(link.query).every(([key, value]) => {
+        const current = route.query[key]
+        return (current || (item.name === 'OrgClasses' && key === 'tab' ? 'classes' : '')) === value
+      })
+      return {
+        key: `${item.name}-${link.key}`,
+        icon: link.icon,
+        label: item.name === 'Attendance' ? navLabel(item, role) : link.title,
+        active,
+        to: { path: `/home/${item.path}`, query: link.query }
+      }
+    })
+  })
 })
 
 const avatar = computed(() => {
@@ -109,7 +116,7 @@ const avatar = computed(() => {
 const blocked = computed(() => isMobile.value && route.meta.pcOnly === true)
 const crumb = computed(() => {
   const item = PHASE_ROUTES.find((entry) => entry.name === route.name)
-  return item ? navLabel(item, auth.user?.role) : (route.meta.title || '工作台')
+  return item ? navLabel(item, auth.user?.role, route.query) : (route.meta.title || '工作台')
 })
 
 function logout() {

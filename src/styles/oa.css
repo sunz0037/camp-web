@@ -998,6 +998,13 @@ td.muted {
   gap: 4px;
 }
 
+.nav-label {
+  margin: 0 8px 6px;
+  font-size: 12px;
+  font-weight: var(--nav-weight);
+  color: var(--nav-fg);
+}
+
 .nav-link {
   display: flex;
   align-items: center;
