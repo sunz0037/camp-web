@@ -2,8 +2,8 @@ import { defineStore } from 'pinia'
 import { api, ApiError } from '../api/http.js'
 
 export const ROLE_PERMISSIONS = {
-  ADMIN: ['org:write', 'student:import', 'student:write', 'course:write', 'attendance:record', 'announcement:publish', 'user:write'],
-  ACADEMIC: ['org:write', 'student:import', 'student:write', 'course:write', 'attendance:record', 'announcement:publish'],
+  ADMIN: ['org:write', 'student:import', 'student:write', 'course:write', 'attendance:record', 'announcement:publish', 'announcement:top', 'user:write'],
+  ACADEMIC: ['org:write', 'student:import', 'student:write', 'course:write', 'attendance:record', 'announcement:publish', 'announcement:top'],
   TEACHER: ['student:write', 'course:write', 'attendance:record', 'announcement:publish'],
   STUDENT: []
 }

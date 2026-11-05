@@ -41,7 +41,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in visibleSchedules" :key="item.id" class="row-pick" :class="{ picked: pickedScheduleId === item.id }" @click="pickedScheduleId = item.id">
+            <tr v-for="item in visibleSchedules" :key="`${item.id}-${item.sessionIndex}`" class="row-pick" :class="{ picked: pickedScheduleId === scheduleKey(item) }" @click="pickedScheduleId = scheduleKey(item)">
               <td>
                 {{ item.name }}
                 <small v-if="!item.courseId" class="muted"> · 未关联课程</small>
@@ -52,7 +52,8 @@
               <td class="num">{{ periodLabel(item.periodStart, item.periodEnd) }}</td>
               <td class="num">{{ item.roomNo }}</td>
               <td v-if="auth.can('course:write')">
-                <button class="linkish" type="button" @click="openSchedule(item)">编辑</button>
+                <button class="linkish" type="button" @click.stop="openSchedule(item)">编辑</button>
+                <button class="link-danger" type="button" @click.stop="removeSchedule(item)">删除</button>
               </td>
             </tr>
           </tbody>
@@ -68,6 +69,7 @@
               <th>课程编号</th>
               <th>课程名称</th>
               <th>已排课时</th>
+              <th v-if="auth.can('course:write')">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -75,6 +77,10 @@
               <td class="num">{{ item.code || item.id }}</td>
               <td>{{ item.name }}</td>
               <td class="num">{{ lessonsOf(item.id) }}</td>
+              <td v-if="auth.can('course:write')">
+                <button class="linkish" type="button" @click.stop="openCourse(item)">编辑</button>
+                <button class="link-danger" type="button" @click.stop="removeCourse(item)">删除</button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -100,14 +106,13 @@
     </section>
 
     <section v-else class="card block">
-      <h2 style="margin-bottom: 12px">我的课表</h2>
-      <ScheduleBoard :items="mine" />
+      <ScheduleBoard :items="weekItems" />
     </section>
 
     <div v-if="courseEditor" class="modal-mask" @click.self="courseEditor = null">
       <form class="modal-card" @submit.prevent="saveCourse">
         <div class="modal-head">
-          <h3>新增课程</h3>
+          <h3>{{ courseEditor.id ? '编辑课程' : '新增课程' }}</h3>
           <button class="icon-btn" type="button" aria-label="关闭" @click="courseEditor = null"><AppIcon name="X" :size="16" /></button>
         </div>
         <div class="form-grid">
@@ -115,7 +120,9 @@
           <input v-model="courseEditor.code" class="field" placeholder="例如 CHEM-01" required />
           <label class="field-label">课程名称</label>
           <input v-model="courseEditor.name" class="field" required />
-          <p v-if="formError" class="error-text">{{ formError }}</p>
+          <label class="field-label">学分</label>
+          <input v-model="courseEditor.credit" class="field num" inputmode="decimal" />
+          <p v-if="formError" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
           <div class="form-actions">
             <button class="btn btn-primary" type="submit">保存</button>
           </div>
@@ -131,22 +138,35 @@
         </div>
         <div class="form-grid">
           <label class="field-label">课程</label>
-          <select v-model="scheduleEditor.courseId" class="select">
-            <option value="">不关联课程</option>
+          <select v-model="scheduleEditor.courseId" class="select" required>
             <option v-for="item in courses" :key="item.id" :value="item.id">{{ item.name }}</option>
           </select>
-          <label v-if="!scheduleEditor.courseId" class="field-label">名称</label>
-          <input v-if="!scheduleEditor.courseId" v-model="scheduleEditor.name" class="field" placeholder="例如班会" />
           <div class="form-row">
             <div>
               <label class="field-label">班级</label>
-              <select v-model="scheduleEditor.className" class="select">
-                <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
+              <select v-model="scheduleEditor.classId" class="select">
+                <option v-for="item in classOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
               </select>
             </div>
             <div>
               <label class="field-label">教师</label>
-              <input v-model="scheduleEditor.teacher" class="field" :readonly="auth.user?.role === 'TEACHER'" />
+              <select v-model="scheduleEditor.teacherId" class="select">
+                <option value="">不指定</option>
+                <option v-for="item in teachers" :key="item.id" :value="item.id">{{ item.name }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="field-label">学年</label>
+              <input v-model="scheduleEditor.academicYear" class="field" placeholder="2026-2027" />
+            </div>
+            <div>
+              <label class="field-label">学期</label>
+              <select v-model="scheduleEditor.semester" class="select">
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
             </div>
           </div>
           <div class="form-row">
@@ -171,7 +191,7 @@
               <input v-model.number="scheduleEditor.periodEnd" class="field num" type="number" min="1" max="8" required />
             </div>
           </div>
-          <p v-if="formError" class="error-text">{{ formError }}</p>
+          <p v-if="formError" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
           <div class="form-actions">
             <button class="btn btn-ghost" type="button" @click="scheduleEditor = null">取消</button>
             <button class="btn btn-primary" type="submit">保存</button>
@@ -186,11 +206,13 @@
 import { computed, onMounted, ref } from 'vue'
 import AppIcon from '../components/AppIcon.vue'
 import ScheduleBoard from '../components/ScheduleBoard.vue'
-import { createClassCourse, createCourse, fetchClassCourses, fetchCourses, toClassCoursePayload, updateClassCourse } from '../api/course.js'
+import { createClassCourse, createCourse, deleteClassCourse, deleteCourse, fetchClassCourses, fetchCourses, fetchMyTimetable, toClassCoursePayload, updateClassCourse, updateCourse } from '../api/course.js'
 import { fetchClasses } from '../api/student.js'
+import { fetchStaffOptions } from '../api/users.js'
+import { courseWritePayload, validateClassCourse, validateCourse } from '../domain/writePayloads.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
-import { periodLabel, scopeLabel, weekdayLabel } from '../utils/format.js'
+import { isLoadHint, periodLabel, scopeLabel, weekdayLabel } from '../utils/format.js'
 
 const auth = useAuthStore()
 const ui = useUiStore()
@@ -206,11 +228,23 @@ const formError = ref('')
 const loadError = ref('')
 
 function netHint(message) {
-  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+  return isLoadHint(message)
 }
 const courses = ref([])
 const schedules = ref([])
 const classOptions = ref([])
+const teachers = ref([])
+const weekItems = ref([])
+
+function scheduleKey(item) {
+  return `${item.id}-${item.sessionIndex}`
+}
+
+function schoolYear() {
+  const now = new Date()
+  const start = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1
+  return `${start}-${start + 1}`
+}
 
 const gradeOptions = computed(() => [...new Set(classOptions.value.map((item) => item.grade).filter(Boolean))])
 const scopeText = computed(() => scopeLabel(auth.user, classOptions.value.map((item) => item.name)))
@@ -237,15 +271,18 @@ const preview = computed(() => {
   if (scheduleEditor.value) {
     const form = scheduleEditor.value
     const linked = courses.value.find((row) => String(row.id) === String(form.courseId))
-    return { kind: 'schedule', ...form, name: form.name || linked?.name || '' }
+    const cls = classOptions.value.find((row) => String(row.id) === String(form.classId))
+    const teacher = teachers.value.find((row) => String(row.id) === String(form.teacherId))
+    return {
+      kind: 'schedule',
+      ...form,
+      name: linked?.name || form.name || '',
+      className: cls?.name || form.className || '',
+      teacher: teacher?.name || form.teacher || ''
+    }
   }
-  const item = visibleSchedules.value.find((row) => row.id === pickedScheduleId.value) || visibleSchedules.value[0]
+  const item = visibleSchedules.value.find((row) => scheduleKey(row) === pickedScheduleId.value) || visibleSchedules.value[0]
   return item ? { kind: 'schedule', ...item } : null
-})
-const mine = computed(() => {
-  if (auth.user?.role === 'TEACHER') return schedules.value.filter((item) => item.teacher === auth.user.name)
-  if (auth.user?.className) return schedules.value.filter((item) => item.className === auth.user.className)
-  return schedules.value
 })
 
 function lessonsOf(courseId) {
@@ -274,25 +311,48 @@ async function load() {
   } catch {
     classOptions.value = []
   }
+  try {
+    teachers.value = await fetchStaffOptions(2)
+  } catch (error) {
+    teachers.value = []
+    errors.push(error.message || '教师列表加载失败')
+  }
+  try {
+    weekItems.value = await fetchMyTimetable()
+  } catch (error) {
+    weekItems.value = []
+    errors.push(error.message || '周课表加载失败')
+  }
   loadError.value = errors.join('；')
 }
 
 onMounted(load)
 
-function openCourse() {
+function openCourse(item) {
   formError.value = ''
-  courseEditor.value = { code: '', name: '' }
+  courseEditor.value = item
+    ? { id: item.id, code: item.code, name: item.name, credit: item.credit ?? '', status: item.status ?? 1 }
+    : { id: '', code: '', name: '', credit: '', status: 1 }
 }
 
 function openSchedule(item) {
   formError.value = ''
+  const teacherId = item?.teacherId || (auth.user?.role === 'TEACHER' && Number(auth.user.id) ? auth.user.id : '')
   scheduleEditor.value = item
-    ? { ...item, courseId: item.courseId || '' }
+    ? {
+        ...item,
+        courseId: item.courseId || courses.value[0]?.id || '',
+        classId: item.classId || '',
+        teacherId: teacherId || '',
+        academicYear: item.academicYear || schoolYear(),
+        semester: item.semester ? String(item.semester) : '1'
+      }
     : {
         courseId: courses.value[0]?.id || '',
-        name: '',
-        className: classOptions.value[0]?.name || '',
-        teacher: auth.user?.name || '',
+        classId: classOptions.value[0]?.id || '',
+        teacherId: teacherId || teachers.value[0]?.id || '',
+        academicYear: schoolYear(),
+        semester: '1',
         weekday: 1,
         periodStart: 1,
         periodEnd: 2,
@@ -302,32 +362,43 @@ function openSchedule(item) {
 
 async function saveCourse() {
   formError.value = ''
+  const errors = validateCourse(courseEditor.value)
+  if (errors.length) {
+    formError.value = errors[0]
+    return
+  }
   try {
-    await createCourse({
-      courseCode: courseEditor.value.code.trim(),
-      courseName: courseEditor.value.name.trim(),
-      status: 1
-    })
+    const payload = courseWritePayload(courseEditor.value)
+    if (courseEditor.value.id) await updateCourse(courseEditor.value.id, payload)
+    else await createCourse(payload)
     ui.toast('课程已保存', 'success')
     courseEditor.value = null
     await load()
   } catch (error) {
-    formError.value = error.message
+    formError.value = error.message || '保存失败'
+  }
+}
+
+async function removeCourse(item) {
+  if (!window.confirm(`删除课程「${item.name}」？已排课的课程可能被拒绝。`)) return
+  try {
+    await deleteCourse(item.id)
+    ui.toast('课程已删除', 'success')
+    await load()
+  } catch (error) {
+    ui.toast(error.message || '删除失败', 'error')
   }
 }
 
 async function saveSchedule() {
   formError.value = ''
-  const periodStart = Number(scheduleEditor.value.periodStart)
-  const periodEnd = Number(scheduleEditor.value.periodEnd)
-  if (!periodStart || !periodEnd || periodEnd < periodStart) {
-    formError.value = '结束节次不能早于开始节次'
+  const form = scheduleEditor.value
+  const errors = validateClassCourse(form)
+  if (errors.length) {
+    formError.value = errors[0]
     return
   }
   try {
-    const form = scheduleEditor.value
-    const cls = classOptions.value.find((item) => item.name === form.className)
-    form.classId = cls?.id || form.classId
     const siblings = form.id ? schedules.value.filter((row) => row.id === form.id) : []
     const payload = toClassCoursePayload(form, siblings)
     if (form.id) await updateClassCourse(form.id, payload)
@@ -336,7 +407,18 @@ async function saveSchedule() {
     scheduleEditor.value = null
     await load()
   } catch (error) {
-    formError.value = error.message
+    formError.value = error.message || '保存失败'
+  }
+}
+
+async function removeSchedule(item) {
+  if (!window.confirm(`删除「${item.className} · ${item.name}」的授课？同一授课下的全部节次会一起删除。`)) return
+  try {
+    await deleteClassCourse(item.id)
+    ui.toast('授课已删除', 'success')
+    await load()
+  } catch (error) {
+    ui.toast(error.message || '删除失败', 'error')
   }
 }
 </script>

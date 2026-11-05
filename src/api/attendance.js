@@ -16,9 +16,22 @@ export function listAttendanceRecords(params = {}) {
   return api('/api/v1/attendances/records', { params })
 }
 
-/** POST /api/v1/attendances/summaries */
+/**
+ * POST /api/v1/attendances/summaries
+ * 二期 M1 汇总只读，页面不调用此写接口。
+ */
 export function createSummary(data) {
   return api('/api/v1/attendances/summaries', { method: 'POST', body: data })
+}
+
+/** POST /api/v1/attendances/records */
+export function createAttendanceRecord(data) {
+  return api('/api/v1/attendances/records', { method: 'POST', body: data })
+}
+
+/** PUT /api/v1/attendances/records/{id} */
+export function updateAttendanceRecord(id, data) {
+  return api(`/api/v1/attendances/records/${id}`, { method: 'PUT', body: data })
 }
 
 const RECORD_STATUS = { 1: 'absent', 2: 'late', 3: 'leave', 4: 'early' }
@@ -64,9 +77,12 @@ export function toRecordRow(raw) {
     className: raw.className || (raw.classId != null ? `班级#${raw.classId}` : '—'),
     courseName: raw.courseName || raw.course || (raw.courseId != null ? `课程#${raw.courseId}` : '—'),
     courseId: raw.courseId ?? null,
+    classId: raw.classId ?? null,
     studentId,
     studentNo: raw.studentNo || (studentId != null ? String(studentId) : '—'),
     name: raw.studentName || raw.realName || raw.name || (studentId != null ? `学生#${studentId}` : '—'),
+    exceptionType: raw.exceptionType || '',
+    reason: raw.reasonDetail || raw.reason || '',
     status
   }
 }

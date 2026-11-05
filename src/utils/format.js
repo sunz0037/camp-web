@@ -1,3 +1,9 @@
+export function isLoadHint(message) {
+  const text = String(message || '')
+  if (!text) return false
+  return text.split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+}
+
 export function maskPhone(phone) {
   const value = String(phone || '')
   if (value.length < 7) return value || '—'

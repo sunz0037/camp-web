@@ -50,7 +50,7 @@
         </select>
         <input v-model="date" class="field" type="date" />
         <p v-if="loadError" :class="netHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
-        <button v-if="canRecord" class="btn btn-primary" type="button" @click="openRecord()">+ 新增</button>
+        <button v-if="canRecord && tab === 'anomaly'" class="btn btn-primary" type="button" @click="openRecord()">补录</button>
       </section>
 
       <section class="card table-card">
@@ -94,6 +94,7 @@
                 <th>班级</th>
                 <th>课程</th>
                 <th>类型</th>
+                <th v-if="canRecord">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -103,10 +104,13 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.className }}</td>
                 <td>{{ item.courseName }}</td>
-                <td><span class="pill" :class="pillOf(item.status)">{{ ATTENDANCE_LABEL[item.status] }}</span></td>
+                <td><span class="pill" :class="pillOf(item.status)">{{ exceptionLabel(item) }}</span></td>
+                <td v-if="canRecord">
+                  <button class="linkish" type="button" @click.stop="openRecord(item)">编辑</button>
+                </td>
               </tr>
               <tr v-if="!anomalies.length">
-                <td colspan="6" class="muted">没有异常记录</td>
+                <td :colspan="canRecord ? 7 : 6" class="muted">没有异常记录</td>
               </tr>
             </tbody>
           </table>
@@ -116,13 +120,54 @@
 
     <section v-if="!personal" class="card preview-card">
       <h2>表单预览</h2>
-      <div v-if="preview && preview.kind === 'anomaly'" class="preview-grid">
+      <form v-if="recorder" class="form-grid" @submit.prevent="saveRecord">
+        <p class="sub" style="margin: 0">{{ recorder.id ? '编辑异常' : '补录异常' }}。班级日报汇总只读。</p>
+        <div class="form-row">
+          <div>
+            <label class="field-label">班级</label>
+            <select v-model="recorder.classId" class="select" @change="fillRoster">
+              <option v-for="item in classOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">日期</label>
+            <input v-model="recorder.date" class="field" type="date" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label class="field-label">学生</label>
+            <select v-model="recorder.studentId" class="select">
+              <option v-for="item in recorder.students" :key="item.id" :value="item.id">{{ item.studentNo }} {{ item.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">类型</label>
+            <select v-model="recorder.exceptionType" class="select">
+              <option v-for="item in EXCEPTION_TYPES" :key="item" :value="item">{{ EXCEPTION_LABEL[item] }}</option>
+            </select>
+          </div>
+        </div>
+        <label class="field-label">课程</label>
+        <select v-model="recorder.courseId" class="select">
+          <option value="">不关联课程</option>
+          <option v-for="item in courseChoices" :key="item.id" :value="item.id">{{ item.name }}</option>
+        </select>
+        <label class="field-label">说明</label>
+        <input v-model="recorder.reason" class="field" />
+        <p v-if="formError" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
+        <div class="form-actions">
+          <button class="btn btn-ghost" type="button" @click="recorder = null">取消</button>
+          <button class="btn btn-primary" type="submit" :disabled="saving">保存</button>
+        </div>
+      </form>
+      <div v-else-if="preview && preview.kind === 'anomaly'" class="preview-grid">
         <div><span class="k">日期</span><span class="v num">{{ preview.date || '—' }}</span></div>
         <div><span class="k">学号</span><span class="v num">{{ preview.studentNo || '—' }}</span></div>
         <div><span class="k">姓名</span><span class="v">{{ preview.name || '—' }}</span></div>
         <div><span class="k">班级</span><span class="v">{{ preview.className || '—' }}</span></div>
         <div><span class="k">课程</span><span class="v">{{ preview.courseName || '—' }}</span></div>
-        <div><span class="k">类型</span><span class="v">{{ ATTENDANCE_LABEL[preview.status] || preview.status || '—' }}</span></div>
+        <div><span class="k">类型</span><span class="v">{{ exceptionLabel(preview) }}</span></div>
       </div>
       <div v-else-if="preview" class="preview-grid">
         <div><span class="k">日期</span><span class="v num">{{ preview.date || '—' }}</span></div>
@@ -133,77 +178,22 @@
         <div><span class="k">请假 / 迟到</span><span class="v num">{{ preview.leaveOrLate ?? '—' }}</span></div>
         <div><span class="k">旷课</span><span class="v num">{{ preview.absent ?? '—' }}</span></div>
       </div>
-      <p v-else class="sub">选择一条日报，或登记后在这里预览。</p>
+      <p v-else class="sub">选择一条日报。异常补录会显示在这里。</p>
     </section>
-
-    <div v-if="recorder" class="modal-mask" @click.self="recorder = null">
-      <form class="modal-card" style="width: min(720px, 100%)" @submit.prevent="saveRecord">
-        <div class="modal-head">
-          <h3>登记今日考勤</h3>
-          <button class="icon-btn" type="button" aria-label="关闭" @click="recorder = null"><AppIcon name="X" :size="16" /></button>
-        </div>
-        <div class="form-row">
-          <div>
-            <label class="field-label">班级</label>
-            <select v-model="recorder.className" class="select" @change="fillRoster">
-              <option v-for="item in classOptions" :key="item.id" :value="item.name">{{ item.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="field-label">日期</label>
-            <input v-model="recorder.date" class="field" type="date" />
-          </div>
-        </div>
-        <label class="field-label" style="margin-top: 12px">课程</label>
-        <select v-model="recorder.courseKey" class="select">
-          <option value="">不关联课程</option>
-          <option v-for="item in courseChoices" :key="item.id" :value="item.id">{{ item.name }}</option>
-        </select>
-        <div class="table-scroll" style="margin-top: 12px; max-height: 360px">
-          <table class="data">
-            <thead>
-              <tr>
-                <th>学号</th>
-                <th>姓名</th>
-                <th>状态</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in recorder.rows" :key="row.studentId">
-                <td class="num">{{ row.studentNo }}</td>
-                <td>{{ row.name }}</td>
-                <td>
-                  <select v-model="row.status" class="select">
-                    <option value="present">出勤</option>
-                    <option value="leave">请假</option>
-                    <option value="late">迟到</option>
-                    <option value="absent">旷课</option>
-                  </select>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-ghost" type="button" @click="recorder = null">取消</button>
-          <button class="btn btn-primary" type="submit">提交日报</button>
-        </div>
-      </form>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import AppIcon from '../components/AppIcon.vue'
-import { createSummary, fetchRecords, fetchSummaries } from '../api/attendance.js'
+import { createAttendanceRecord, fetchRecords, fetchSummaries, updateAttendanceRecord } from '../api/attendance.js'
 import { fetchCourses } from '../api/course.js'
 import { fetchClasses, fetchStudentPage } from '../api/student.js'
+import { EXCEPTION_LABEL, EXCEPTION_TYPES, attendanceRecordPayload, validateAttendanceRecord } from '../domain/writePayloads.js'
 import { useViewport } from '../composables/useViewport.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
-import { ATTENDANCE_LABEL, scopeLabel, todayISO } from '../utils/format.js'
+import { ATTENDANCE_LABEL, isLoadHint, scopeLabel, todayISO } from '../utils/format.js'
 
 const auth = useAuthStore()
 const ui = useUiStore()
@@ -215,9 +205,15 @@ const className = ref('')
 const date = ref(todayISO())
 const recorder = ref(null)
 const loadError = ref('')
+const formError = ref('')
+const saving = ref(false)
 
 function netHint(message) {
-  return String(message).split('；').every((part) => part === '网络不可用' || part === '服务暂不可用')
+  return isLoadHint(message)
+}
+
+function exceptionLabel(item) {
+  return EXCEPTION_LABEL[item.exceptionType] || ATTENDANCE_LABEL[item.status] || item.status || '—'
 }
 const summaries = ref([])
 const records = ref([])
@@ -241,22 +237,6 @@ const anomalies = computed(() => records.value.filter((item) => {
 }))
 const personalRows = computed(() => records.value)
 const preview = computed(() => {
-  if (recorder.value) {
-    const counts = { present: 0, leave: 0, late: 0, absent: 0 }
-    recorder.value.rows.forEach((row) => {
-      if (counts[row.status] !== undefined) counts[row.status] += 1
-    })
-    return {
-      kind: 'summary',
-      date: recorder.value.date,
-      className: recorder.value.className,
-      courseName: courseChoices.value.find((item) => String(item.id) === String(recorder.value.courseKey))?.name || '不关联课程',
-      expected: recorder.value.rows.length,
-      actual: counts.present,
-      leaveOrLate: counts.leave + counts.late,
-      absent: counts.absent
-    }
-  }
   if (tab.value === 'anomaly') {
     const row = anomalies.value.find((item) => item.key === pickedKey.value) || anomalies.value[0]
     return row ? { kind: 'anomaly', ...row } : null
@@ -324,58 +304,70 @@ watch([className, date], () => {
   load()
 })
 
-async function rosterOf(name) {
-  const result = await fetchStudentPage({ page: 1, size: 200, className: name, keyword: undefined })
-  return result.records
-    .filter((item) => item.status === '在读' || item.status === '—')
-    .map((item) => ({ studentId: item.id, studentNo: item.studentNo, name: item.name, status: 'present' }))
+async function rosterOf(classId) {
+  const cls = classOptions.value.find((item) => String(item.id) === String(classId))
+  const result = await fetchStudentPage({ page: 1, size: 200, className: cls?.name, keyword: undefined })
+  return result.records.filter((item) => !cls?.name || item.className === cls.name || item.classId === cls.id)
 }
 
 async function fillRoster() {
   if (!recorder.value) return
   try {
-    recorder.value.rows = await rosterOf(recorder.value.className)
+    const students = await rosterOf(recorder.value.classId)
+    recorder.value.students = students
+    if (!students.some((item) => String(item.id) === String(recorder.value.studentId))) {
+      recorder.value.studentId = students[0]?.id || ''
+    }
   } catch (error) {
-    ui.toast(error.message || '学生名册加载失败', 'error')
+    recorder.value.students = []
+    formError.value = error.message || '学生名册加载失败'
   }
 }
 
-async function openRecord() {
-  const name = classOptions.value[0]?.name || ''
+async function openRecord(item) {
+  formError.value = ''
+  const cls = classOptions.value.find((row) => row.name === item?.className) || classOptions.value[0]
   recorder.value = {
-    className: name,
-    date: todayISO(),
-    courseKey: '',
-    rows: []
+    id: item?.id || '',
+    classId: item?.classId || cls?.id || '',
+    date: item?.date ? String(item.date).slice(0, 10) : date.value || todayISO(),
+    studentId: item?.studentId || '',
+    courseId: item?.courseId || '',
+    exceptionType: EXCEPTION_TYPES.includes(item?.exceptionType) ? item.exceptionType : 'ABSENT',
+    reason: item?.reason || '',
+    students: []
   }
-  if (name) await fillRoster()
+  tab.value = 'anomaly'
+  await fillRoster()
 }
 
 async function saveRecord() {
-  const course = courseChoices.value.find((item) => String(item.id) === String(recorder.value.courseKey))
-  const counts = { present: 0, leave: 0, late: 0, absent: 0 }
-  recorder.value.rows.forEach((row) => {
-    if (counts[row.status] !== undefined) counts[row.status] += 1
-  })
+  formError.value = ''
+  const cls = classOptions.value.find((item) => String(item.id) === String(recorder.value.classId))
+  const form = {
+    ...recorder.value,
+    className: cls?.name || '',
+    grade: cls?.grade || ''
+  }
+  const errors = validateAttendanceRecord(form)
+  if (errors.length) {
+    formError.value = errors[0]
+    return
+  }
+  saving.value = true
   try {
-    await createSummary({
-      attendanceDate: recorder.value.date,
-      className: recorder.value.className,
-      courseId: course?.id || null,
-      courseName: course?.name || '班级日报',
-      expectedCount: recorder.value.rows.length,
-      presentCount: counts.present,
-      leaveCount: counts.leave,
-      lateCount: counts.late,
-      absentCount: counts.absent
-    })
-    className.value = recorder.value.className
-    date.value = recorder.value.date
+    const payload = attendanceRecordPayload(form)
+    if (form.id) await updateAttendanceRecord(form.id, payload)
+    else await createAttendanceRecord(payload)
+    className.value = form.className
+    date.value = form.date
     recorder.value = null
-    ui.toast('考勤日报已提交', 'success')
+    ui.toast(form.id ? '异常记录已更新' : '异常已补录', 'success')
     await load()
   } catch (error) {
-    ui.toast(error.message || '提交失败', 'error')
+    formError.value = error.message || '保存失败'
+  } finally {
+    saving.value = false
   }
 }
 

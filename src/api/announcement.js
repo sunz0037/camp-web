@@ -16,6 +16,16 @@ export function createAnnouncement(data) {
   return api('/api/v1/announcements', { method: 'POST', body: data })
 }
 
+/** PUT /api/v1/announcements/{id} */
+export function updateAnnouncement(id, data) {
+  return api(`/api/v1/announcements/${id}`, { method: 'PUT', body: data })
+}
+
+/** PUT /api/v1/announcements/{id}/top?isTop= */
+export function pinAnnouncement(id, isTop) {
+  return api(`/api/v1/announcements/${id}/top`, { method: 'PUT', params: { isTop } })
+}
+
 /** POST /api/v1/announcements/{id}/read */
 export function markAnnouncementRead(id) {
   return api(`/api/v1/announcements/${id}/read`, { method: 'POST', body: {} })
@@ -32,7 +42,11 @@ export function toAnnouncementRow(raw) {
     title: raw.title || '',
     body: raw.content || raw.body || '',
     pinned: raw.isTop === 1 || raw.pinned === true,
-    scope: raw.targetAudience || raw.scope || '全校',
+    scopeType: raw.scopeType || 'ALL',
+    scopeIds: Array.isArray(raw.scopeIds) ? raw.scopeIds : [],
+    scope: raw.scopeType === 'GRADE' ? '年级' : raw.scopeType === 'CLASS' ? '班级' : (raw.targetAudience || raw.scope || '全校'),
+    publisherId: raw.publisherId ?? null,
+    status: raw.status ?? 1,
     author: raw.publisherName || raw.author || '',
     publishedAt: String(publishedAt).replace('T', ' ').slice(0, 16),
     read: raw.read === true || raw.isRead === 1

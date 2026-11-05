@@ -2,7 +2,8 @@
   <div class="page stack">
     <section class="card filters">
       <input v-model="keyword" class="field" placeholder="搜索姓名 / 账号" />
-      <button class="btn btn-primary" type="button" @click="open = true">+ 新增</button>
+      <p v-if="loadError" :class="isLoadHint(loadError) ? 'load-hint' : 'error-text'">{{ loadError }}</p>
+      <button v-if="auth.can('user:write')" class="btn btn-primary" type="button" @click="openCreate">+ 新增</button>
     </section>
     <section class="card table-card">
       <div class="status-legend">
@@ -25,18 +26,22 @@
             <tr v-for="item in filtered" :key="item.id" class="row-pick" :class="{ picked: selectedId === item.id }" @click="selectedId = item.id">
               <td class="num">{{ item.account }}</td>
               <td>{{ item.name }}</td>
-              <td>{{ item.actor === 'PARENT' ? '家长' : item.title }}</td>
+              <td>{{ item.title }}</td>
               <td><span class="pill" :class="item.status === '启用' ? 'pill-on' : 'pill-ok'">{{ item.status === '启用' ? '启用' : '禁用' }}</span></td>
               <td>
+                <button v-if="auth.can('user:write')" class="linkish" type="button" @click.stop="openEdit(item)">编辑</button>
                 <button
-                  v-if="item.id !== auth.user?.id"
+                  v-if="auth.can('user:write') && String(item.id) !== String(auth.user?.id)"
                   :class="item.status === '启用' ? 'link-danger' : 'linkish'"
                   type="button"
-                  @click="toggle(item)"
+                  @click.stop="toggle(item)"
                 >
                   {{ item.status === '启用' ? '停用' : '启用' }}
                 </button>
               </td>
+            </tr>
+            <tr v-if="!filtered.length">
+              <td colspan="5" class="muted">没有符合条件的账号</td>
             </tr>
           </tbody>
         </table>
@@ -45,105 +50,167 @@
 
     <section class="card preview-card">
       <h2>表单预览</h2>
-      <div v-if="formPreview" class="preview-grid">
+      <form v-if="editor && auth.can('user:write')" class="form-grid" @submit.prevent="save">
+        <p class="sub" style="margin: 0">{{ editor.id ? '编辑账号' : '新增账号' }}</p>
+        <div class="form-row">
+          <div>
+            <label class="field-label">账号</label>
+            <input v-model="editor.account" class="field" required />
+          </div>
+          <div>
+            <label class="field-label">姓名</label>
+            <input v-model="editor.name" class="field" required />
+          </div>
+        </div>
+        <label class="field-label">身份</label>
+        <select v-model="editor.role" class="select">
+          <option value="ADMIN">管理员</option>
+          <option value="ACADEMIC">教务</option>
+          <option value="TEACHER">教师</option>
+          <option value="STUDENT">学生</option>
+        </select>
+        <div class="form-row">
+          <div>
+            <label class="field-label">手机</label>
+            <input v-model="editor.phone" class="field num" inputmode="numeric" />
+          </div>
+          <div>
+            <label class="field-label">邮箱</label>
+            <input v-model="editor.email" class="field" />
+          </div>
+        </div>
+        <template v-if="!editor.id">
+          <label class="field-label">初始密码</label>
+          <input v-model="editor.password" class="field" placeholder="默认 Demo@123456" />
+          <p class="field-help">初始密码只在新增时提交。留空时由服务端生成默认口令。</p>
+        </template>
+        <p v-if="formError" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
+        <div class="form-actions">
+          <button class="btn btn-ghost" type="button" @click="editor = null">取消</button>
+          <button class="btn btn-primary" type="submit" :disabled="saving">保存</button>
+        </div>
+      </form>
+      <div v-else-if="formPreview" class="preview-grid">
         <div><span class="k">账号</span><span class="v">{{ formPreview.account || '—' }}</span></div>
         <div><span class="k">姓名</span><span class="v">{{ formPreview.name || '—' }}</span></div>
-        <div><span class="k">身份</span><span class="v">{{ formPreview.roleLabel || '—' }}</span></div>
-        <div><span class="k">状态</span><span class="v">{{ formPreview.status }}</span></div>
-        <div v-if="open"><span class="k">初始密码</span><span class="v">{{ formPreview.password || '—' }}</span></div>
+        <div><span class="k">身份</span><span class="v">{{ formPreview.title || '—' }}</span></div>
+        <div><span class="k">状态</span><span class="v">{{ formPreview.status === '启用' ? '启用' : '禁用' }}</span></div>
       </div>
       <p v-else class="sub">选择一行或点击新增，这里显示账号、姓名、身份和状态。</p>
     </section>
-
-    <div v-if="open" class="modal-mask" @click.self="open = false">
-      <form class="modal-card" @submit.prevent="save">
-        <div class="modal-head">
-          <h3>新增账号</h3>
-          <button class="icon-btn" type="button" aria-label="关闭" @click="open = false"><AppIcon name="X" :size="16" /></button>
-        </div>
-        <div class="form-grid">
-          <label class="field-label">账号</label>
-          <input v-model="draft.account" class="field" required />
-          <label class="field-label">姓名</label>
-          <input v-model="draft.name" class="field" required />
-          <label class="field-label">身份</label>
-          <select v-model="draft.role" class="select">
-            <option value="ADMIN">管理员</option>
-            <option value="ACADEMIC">教务</option>
-            <option value="TEACHER">教师</option>
-            <option value="STUDENT">学生</option>
-            <option value="PARENT">家长</option>
-          </select>
-          <label class="field-label">初始密码</label>
-          <input v-model="draft.password" class="field" placeholder="默认 Demo@123456" />
-          <p class="field-help">初始密码默认 Demo@123456，与数据库种子一致，之后可在个人中心修改。</p>
-          <p v-if="formError" class="error-text">{{ formError }}</p>
-          <div class="form-actions">
-            <button class="btn btn-primary" type="submit">保存</button>
-          </div>
-        </div>
-      </form>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
-import AppIcon from '../components/AppIcon.vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { createUser, fetchUserPage, replaceUserRoles, updateUser, updateUserStatus } from '../api/users.js'
+import { roleCodesPayload, userCreatePayload, userUpdatePayload, validateUser } from '../domain/writePayloads.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useUiStore } from '../stores/ui.js'
+import { isLoadHint } from '../utils/format.js'
 
 const auth = useAuthStore()
 const ui = useUiStore()
 const keyword = ref('')
-const open = ref(false)
+const rows = ref([])
+const loadError = ref('')
 const selectedId = ref('')
+const editor = ref(null)
 const formError = ref('')
-const draft = reactive({ account: '', name: '', role: 'TEACHER', password: 'Demo@123456' })
+const saving = ref(false)
 
-const roleLabel = { ADMIN: '管理员', ACADEMIC: '教务', TEACHER: '教师', STUDENT: '学生', PARENT: '家长' }
-
-const filtered = computed(() => {
-  const query = keyword.value.trim()
-  return auth.accounts.filter((item) => !query || `${item.name}${item.account}`.includes(query))
-})
+const filtered = computed(() => rows.value)
 
 const formPreview = computed(() => {
-  if (open.value) {
-    return {
-      account: draft.account,
-      name: draft.name,
-      roleLabel: roleLabel[draft.role] || draft.role,
-      status: '启用',
-      password: draft.password
-    }
-  }
-  const item = filtered.value.find((row) => row.id === selectedId.value) || filtered.value[0]
-  if (!item) return null
-  return {
-    account: item.account,
-    name: item.name,
-    roleLabel: item.actor === 'PARENT' ? '家长' : item.title,
-    status: item.status === '启用' ? '启用' : '禁用',
-    password: ''
-  }
+  return filtered.value.find((row) => row.id === selectedId.value) || filtered.value[0] || null
 })
 
-function toggle(item) {
-  auth.setAccountStatus(item.id, item.status === '启用' ? '停用' : '启用')
-  ui.toast('账号状态已更新', 'success')
+async function load() {
+  loadError.value = ''
+  try {
+    const result = await fetchUserPage({ keyword: keyword.value.trim() || undefined })
+    rows.value = result.records
+  } catch (error) {
+    rows.value = []
+    loadError.value = error.message || '用户列表加载失败'
+  }
 }
 
-function save() {
+onMounted(load)
+
+let keywordTimer = 0
+watch(keyword, () => {
+  window.clearTimeout(keywordTimer)
+  keywordTimer = window.setTimeout(load, 250)
+})
+
+function openCreate() {
   formError.value = ''
+  editor.value = { id: '', account: '', name: '', role: 'TEACHER', phone: '', email: '', password: 'Demo@123456' }
+}
+
+function openEdit(item) {
+  formError.value = ''
+  selectedId.value = item.id
+  editor.value = {
+    id: item.id,
+    account: item.account,
+    name: item.name,
+    role: item.role || 'TEACHER',
+    phone: item.phone,
+    email: item.email,
+    userType: item.userType
+  }
+}
+
+async function save() {
+  formError.value = ''
+  const creating = !editor.value.id
+  const errors = validateUser(editor.value, { creating })
+  if (errors.length) {
+    formError.value = errors[0]
+    return
+  }
+  saving.value = true
   try {
-    auth.registerAccount(draft)
-    ui.toast('账号已创建', 'success')
-    open.value = false
-    draft.account = ''
-    draft.name = ''
+    if (creating) {
+      const payload = userCreatePayload(editor.value)
+      await createUser(payload)
+      await load()
+      const created = rows.value.find((item) => item.account === payload.username)
+      if (!created) {
+        formError.value = '账号已创建，但列表里还找不到它，身份尚未写入'
+        return
+      }
+      editor.value = { ...editor.value, id: created.id }
+      try {
+        await replaceUserRoles(created.id, roleCodesPayload(editor.value.role))
+      } catch (error) {
+        formError.value = `账号已创建，身份未写入：${error.message || '请求失败'}`
+        return
+      }
+    } else {
+      await updateUser(editor.value.id, userUpdatePayload(editor.value))
+      await replaceUserRoles(editor.value.id, roleCodesPayload(editor.value.role))
+    }
+    ui.toast(creating ? '账号已创建' : '账号已保存', 'success')
+    editor.value = null
+    await load()
   } catch (error) {
-    formError.value = error.message
+    formError.value = error.message || '保存失败'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function toggle(item) {
+  const next = item.status === '启用' ? 0 : 1
+  try {
+    await updateUserStatus(item.id, next)
+    ui.toast('账号状态已更新', 'success')
+    await load()
+  } catch (error) {
+    ui.toast(error.message || '更新状态失败', 'error')
   }
 }
 </script>
