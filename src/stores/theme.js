@@ -8,6 +8,7 @@ function applyDom(themeKey) {
   else root.setAttribute('data-theme', themeKey)
 }
 
+// PHASE2-BLOCKED: 换肤入口已隐藏，勿在页面渲染主题切换。
 export const useThemeStore = defineStore('theme', {
   state: () => ({
     themeKey: 'default'

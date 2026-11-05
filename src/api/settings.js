@@ -2,6 +2,7 @@ import { api } from './http.js'
 import { unwrapData } from './unwrap.js'
 
 /** default 对应 v1.3.4 壳层，不得改写 :root 默认令牌。 */
+// PHASE2-BLOCKED: 换肤 UI 后置。接口可留，页面不得展示暗色 / 校园绿切换。
 export const THEME_KEYS = ['default', 'dark', 'campus-green']
 
 export function normalizeThemeKey(value) {

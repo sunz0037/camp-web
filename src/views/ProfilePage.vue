@@ -2,9 +2,8 @@
   <div class="page stack">
     <section class="card preview-card">
       <h2>表单预览</h2>
-      <form class="form-grid" @submit.prevent="saveProfile">
-        <p class="sub" style="margin: 0">个人档案</p>
-        <div class="form-row">
+      <form @submit.prevent="saveProfile">
+        <div class="preview-grid">
           <div>
             <label class="field-label">姓名</label>
             <input class="field" :value="auth.user?.name || ''" readonly />
@@ -13,8 +12,6 @@
             <label class="field-label">身份</label>
             <input class="field" :value="auth.user?.title || ''" readonly />
           </div>
-        </div>
-        <div class="form-row">
           <div>
             <label class="field-label">账号</label>
             <input class="field" :value="idLine" readonly />
@@ -23,8 +20,6 @@
             <label class="field-label">手机</label>
             <input v-model="phone" class="field num" inputmode="tel" autocomplete="tel" />
           </div>
-        </div>
-        <div class="form-row">
           <div>
             <label class="field-label">邮箱</label>
             <input v-model="email" class="field" type="email" autocomplete="email" />
