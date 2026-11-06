@@ -50,42 +50,40 @@
 
     <section class="card preview-card">
       <h2>表单预览</h2>
-      <form v-if="editor && auth.can('user:write')" class="form-grid" @submit.prevent="save">
-        <p class="sub" style="margin: 0">{{ editor.id ? '编辑账号' : '新增账号' }}</p>
-        <div class="form-row">
-          <div>
-            <label class="field-label">账号</label>
-            <input v-model="editor.account" class="field" required />
-          </div>
-          <div>
-            <label class="field-label">姓名</label>
-            <input v-model="editor.name" class="field" required />
-          </div>
+      <form v-if="editor && auth.can('user:write')" class="form-grid form-band" @submit.prevent="save">
+        <p class="sub span-all" style="margin: 0">{{ editor.id ? '编辑账号' : '新增账号' }}</p>
+        <div>
+          <label class="field-label">账号</label>
+          <input v-model="editor.account" class="field" required />
         </div>
-        <label class="field-label">身份</label>
-        <select v-model="editor.role" class="select">
-          <option value="ADMIN">管理员</option>
-          <option value="ACADEMIC">教务</option>
-          <option value="TEACHER">教师</option>
-          <option value="STUDENT">学生</option>
-        </select>
-        <div class="form-row">
-          <div>
-            <label class="field-label">手机</label>
-            <input v-model="editor.phone" class="field num" inputmode="numeric" />
-          </div>
-          <div>
-            <label class="field-label">邮箱</label>
-            <input v-model="editor.email" class="field" />
-          </div>
+        <div>
+          <label class="field-label">姓名</label>
+          <input v-model="editor.name" class="field" required />
         </div>
-        <template v-if="!editor.id">
+        <div>
+          <label class="field-label">身份</label>
+          <select v-model="editor.role" class="select">
+            <option value="ADMIN">管理员</option>
+            <option value="ACADEMIC">教务</option>
+            <option value="TEACHER">教师</option>
+            <option value="STUDENT">学生</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">手机</label>
+          <input v-model="editor.phone" class="field num" inputmode="numeric" />
+        </div>
+        <div>
+          <label class="field-label">邮箱</label>
+          <input v-model="editor.email" class="field" />
+        </div>
+        <div v-if="!editor.id">
           <label class="field-label">初始密码</label>
           <input v-model="editor.password" class="field" placeholder="默认 Demo@123456" />
-          <p class="field-help">初始密码只在新增时提交。留空时由服务端生成默认口令。</p>
-        </template>
-        <p v-if="formError" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
-        <div class="form-actions">
+        </div>
+        <p v-if="!editor.id" class="field-help span-all">初始密码只在新增时提交。留空时由服务端生成默认口令。</p>
+        <p v-if="formError" class="span-all" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
+        <div class="form-actions span-all">
           <button class="btn btn-ghost" type="button" @click="editor = null">取消</button>
           <button class="btn btn-primary" type="submit" :disabled="saving">保存</button>
         </div>

@@ -120,43 +120,43 @@
 
     <section v-if="!personal" class="card preview-card">
       <h2>表单预览</h2>
-      <form v-if="recorder" class="form-grid" @submit.prevent="saveRecord">
-        <p class="sub" style="margin: 0">{{ recorder.id ? '编辑异常' : '补录异常' }}。班级日报汇总只读。</p>
-        <div class="form-row">
-          <div>
-            <label class="field-label">班级</label>
-            <select v-model="recorder.classId" class="select" @change="fillRoster">
-              <option v-for="item in classOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="field-label">日期</label>
-            <input v-model="recorder.date" class="field" type="date" />
-          </div>
+      <form v-if="recorder" class="form-grid form-band" @submit.prevent="saveRecord">
+        <p class="sub span-all" style="margin: 0">{{ recorder.id ? '编辑异常' : '补录异常' }}。班级日报汇总只读。</p>
+        <div>
+          <label class="field-label">班级</label>
+          <select v-model="recorder.classId" class="select" @change="fillRoster">
+            <option v-for="item in classOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
+          </select>
         </div>
-        <div class="form-row">
-          <div>
-            <label class="field-label">学生</label>
-            <select v-model="recorder.studentId" class="select">
-              <option v-for="item in recorder.students" :key="item.id" :value="item.id">{{ item.studentNo }} {{ item.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="field-label">类型</label>
-            <select v-model="recorder.exceptionType" class="select">
-              <option v-for="item in EXCEPTION_TYPES" :key="item" :value="item">{{ EXCEPTION_LABEL[item] }}</option>
-            </select>
-          </div>
+        <div>
+          <label class="field-label">日期</label>
+          <input v-model="recorder.date" class="field" type="date" />
         </div>
-        <label class="field-label">课程</label>
-        <select v-model="recorder.courseId" class="select">
-          <option value="">不关联课程</option>
-          <option v-for="item in courseChoices" :key="item.id" :value="item.id">{{ item.name }}</option>
-        </select>
-        <label class="field-label">说明</label>
-        <input v-model="recorder.reason" class="field" />
-        <p v-if="formError" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
-        <div class="form-actions">
+        <div>
+          <label class="field-label">学生</label>
+          <select v-model="recorder.studentId" class="select">
+            <option v-for="item in recorder.students" :key="item.id" :value="item.id">{{ item.studentNo }} {{ item.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">类型</label>
+          <select v-model="recorder.exceptionType" class="select">
+            <option v-for="item in EXCEPTION_TYPES" :key="item" :value="item">{{ EXCEPTION_LABEL[item] }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">课程</label>
+          <select v-model="recorder.courseId" class="select">
+            <option value="">不关联课程</option>
+            <option v-for="item in courseChoices" :key="item.id" :value="item.id">{{ item.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">说明</label>
+          <input v-model="recorder.reason" class="field" />
+        </div>
+        <p v-if="formError" class="span-all" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
+        <div class="form-actions span-all">
           <button class="btn btn-ghost" type="button" @click="recorder = null">取消</button>
           <button class="btn btn-primary" type="submit" :disabled="saving">保存</button>
         </div>

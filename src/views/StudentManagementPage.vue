@@ -67,44 +67,44 @@
 
     <section class="card preview-card">
       <h2>表单预览</h2>
-      <form v-if="editor && auth.can('student:write')" class="form-grid" @submit.prevent="saveStudent">
-        <p class="sub" style="margin: 0">{{ editor.id ? '编辑学生' : '新增学生' }}</p>
-        <div class="form-row">
-          <div>
-            <label class="field-label">学号</label>
-            <input v-model="editor.studentNo" class="field num" :readonly="Boolean(editor.id)" required />
-          </div>
-          <div>
-            <label class="field-label">姓名</label>
-            <input v-model="editor.name" class="field" required />
-          </div>
+      <form v-if="editor && auth.can('student:write')" class="form-grid form-band" @submit.prevent="saveStudent">
+        <p class="sub span-all" style="margin: 0">{{ editor.id ? '编辑学生' : '新增学生' }}</p>
+        <div>
+          <label class="field-label">学号</label>
+          <input v-model="editor.studentNo" class="field num" :readonly="Boolean(editor.id)" required />
         </div>
-        <div class="form-row">
-          <div>
-            <label class="field-label">性别</label>
-            <select v-model="editor.gender" class="select">
-              <option>男</option>
-              <option>女</option>
-            </select>
-          </div>
-          <div>
-            <label class="field-label">学籍</label>
-            <select v-model="editor.status" class="select">
-              <option>在读</option>
-              <option>休学</option>
-              <option>毕业</option>
-              <option>退学</option>
-            </select>
-          </div>
+        <div>
+          <label class="field-label">姓名</label>
+          <input v-model="editor.name" class="field" required />
         </div>
-        <label class="field-label">班级</label>
-        <select v-model="editor.classId" class="select" required @change="syncClassFromId">
-          <option v-for="item in classOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
-        </select>
-        <label class="field-label">手机</label>
-        <input v-model="editor.phone" class="field num" inputmode="numeric" />
-        <p v-if="formError" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
-        <div class="form-actions">
+        <div>
+          <label class="field-label">性别</label>
+          <select v-model="editor.gender" class="select">
+            <option>男</option>
+            <option>女</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">学籍</label>
+          <select v-model="editor.status" class="select">
+            <option>在读</option>
+            <option>休学</option>
+            <option>毕业</option>
+            <option>退学</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">班级</label>
+          <select v-model="editor.classId" class="select" required @change="syncClassFromId">
+            <option v-for="item in classOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">手机</label>
+          <input v-model="editor.phone" class="field num" inputmode="numeric" />
+        </div>
+        <p v-if="formError" class="span-all" :class="isLoadHint(formError) ? 'load-hint' : 'error-text'">{{ formError }}</p>
+        <div class="form-actions span-all">
           <button class="btn btn-ghost" type="button" @click="editor = null">取消</button>
           <button class="btn btn-primary" type="submit" :disabled="saving">保存</button>
         </div>

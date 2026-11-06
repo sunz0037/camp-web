@@ -62,40 +62,40 @@
 
     <section class="card preview-card">
       <h2>表单预览</h2>
-      <form v-if="editor" class="form-grid" @submit.prevent="save">
-        <p class="sub" style="margin: 0">{{ editor.id ? '编辑应急联系人' : '新增应急联系人' }}</p>
-        <label class="field-label">学生</label>
-        <select v-model="editor.studentId" class="select" required>
-          <option value="">请选择学生</option>
-          <option v-for="item in students" :key="item.id" :value="item.id">{{ item.name }}</option>
-        </select>
-        <div class="form-row">
-          <div>
-            <label class="field-label">联系人姓名</label>
-            <input v-model="editor.name" class="field" required />
-          </div>
-          <div>
-            <label class="field-label">关系</label>
-            <select v-model="editor.relation" class="select" required>
-              <option v-for="item in relations" :key="item" :value="item">{{ item }}</option>
-            </select>
-          </div>
+      <form v-if="editor" class="form-grid form-band" @submit.prevent="save">
+        <p class="sub span-all" style="margin: 0">{{ editor.id ? '编辑应急联系人' : '新增应急联系人' }}</p>
+        <div>
+          <label class="field-label">学生</label>
+          <select v-model="editor.studentId" class="select" required>
+            <option value="">请选择学生</option>
+            <option v-for="item in students" :key="item.id" :value="item.id">{{ item.name }}</option>
+          </select>
         </div>
-        <div class="form-row">
-          <div>
-            <label class="field-label">电话</label>
-            <input v-model="editor.phone" class="field num" required />
-          </div>
-          <div>
-            <label class="field-label">备用电话</label>
-            <input v-model="editor.backup" class="field num" />
-          </div>
+        <div>
+          <label class="field-label">联系人姓名</label>
+          <input v-model="editor.name" class="field" required />
         </div>
-        <label class="field-label">地址</label>
-        <input v-model="editor.address" class="field" />
-        <label class="check"><input v-model="editor.primary" type="checkbox" /> 设为主要联系人</label>
-        <p v-if="formError" class="error-text">{{ formError }}</p>
-        <div class="form-actions">
+        <div>
+          <label class="field-label">关系</label>
+          <select v-model="editor.relation" class="select" required>
+            <option v-for="item in relations" :key="item" :value="item">{{ item }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">电话</label>
+          <input v-model="editor.phone" class="field num" required />
+        </div>
+        <div>
+          <label class="field-label">备用电话</label>
+          <input v-model="editor.backup" class="field num" />
+        </div>
+        <div>
+          <label class="field-label">地址</label>
+          <input v-model="editor.address" class="field" />
+        </div>
+        <label class="check span-all"><input v-model="editor.primary" type="checkbox" /> 设为主要联系人</label>
+        <p v-if="formError" class="error-text span-all">{{ formError }}</p>
+        <div class="form-actions span-all">
           <button class="btn btn-ghost" type="button" @click="editor = null">取消</button>
           <button class="btn btn-primary" type="submit">保存</button>
         </div>

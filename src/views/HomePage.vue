@@ -14,7 +14,9 @@
           :class="{ active: item.active }"
           :to="item.to"
         >
-          <AppIcon :name="item.icon" :size="16" />
+          <span class="nav-ico" :class="`nav-ico-${item.icon}`">
+            <AppIcon :name="item.icon" :size="15" />
+          </span>
           <span class="nav-text">{{ item.label }}</span>
         </router-link>
       </nav>
@@ -36,14 +38,21 @@
             <AppIcon name="Bell" :size="16" />
             <span class="note-badge">3</span>
           </button>
-          <div class="user-pill">
-            <div class="avatar">{{ avatar }}</div>
-            <div>
-              <strong>{{ auth.user?.name }}</strong>
-              <span>{{ auth.user?.title }}</span>
+          <div class="user-menu" ref="userMenu">
+            <button class="user-pill" type="button" aria-haspopup="menu" :aria-expanded="menuOpen" @click="menuOpen = !menuOpen">
+              <div class="avatar">{{ avatar }}</div>
+              <div>
+                <strong>{{ auth.user?.name }}</strong>
+                <span>{{ auth.user?.title }}</span>
+              </div>
+              <AppIcon name="ChevronDown" :size="14" />
+            </button>
+            <div v-if="menuOpen" class="user-drop" role="menu">
+              <router-link role="menuitem" to="/home/profile" @click="menuOpen = false">个人信息</router-link>
+              <router-link role="menuitem" to="/home/change-password" @click="menuOpen = false">修改密码</router-link>
+              <button role="menuitem" type="button" @click="logout">退出登录</button>
             </div>
           </div>
-          <button class="btn btn-danger" type="button" @click="logout">退出登录</button>
         </div>
       </header>
       <PcOnly v-if="blocked" />
@@ -68,7 +77,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppIcon from '../components/AppIcon.vue'
 import PcOnly from '../components/PcOnly.vue'
@@ -84,6 +93,8 @@ const ui = useUiStore()
 const route = useRoute()
 const router = useRouter()
 const { isMobile } = useViewport()
+const menuOpen = ref(false)
+const userMenu = ref(null)
 
 const sideItems = computed(() => {
   const role = auth.user?.role
@@ -126,6 +137,7 @@ function logout() {
 }
 
 function onKey(event) {
+  if (event.key === 'Escape') menuOpen.value = false
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
     event.preventDefault()
     if (ui.palette) ui.closePalette()
@@ -133,6 +145,16 @@ function onKey(event) {
   }
 }
 
-onMounted(() => window.addEventListener('keydown', onKey))
-onUnmounted(() => window.removeEventListener('keydown', onKey))
+function onPointer(event) {
+  if (!userMenu.value?.contains(event.target)) menuOpen.value = false
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onKey)
+  document.addEventListener('pointerdown', onPointer)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKey)
+  document.removeEventListener('pointerdown', onPointer)
+})
 </script>
